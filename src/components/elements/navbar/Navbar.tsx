@@ -1,28 +1,18 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { StaticImageData } from "next/image";
 import Link from "next/link";
 import { RoundedButton } from "../../commons/buttons/RoundedButton";
 import { LoadingRoundedButton } from "@/components/loading/buttons/LoadingRoundedButton";
 
-type UserParameters = {
-  username: string;
-  imageUrl: string | StaticImageData;
-};
-
-interface Props {
-  hasSearchBar?: boolean;
-}
-
-export const Navbar = ({ hasSearchBar = false }: Props) => {
+export const Navbar = () => {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {}, []);
 
   return (
     <>
-      <div className="relative z-10 h-20 w-full bg-theme-background-light">
+      <div className="relative z-10 h-20 w-full bg-slate-700">
         <div className="absolute bottom-0 left-0 top-0 ml-2 flex items-center md:ml-6">
           <NavbarBudgetTrackerLogo />
         </div>
@@ -43,9 +33,9 @@ const NavbarBudgetTrackerLogo = () => {
       {/*  src={}*/}
       {/*  alt="Budget Tracker Logo"*/}
       {/*/>*/}
-      <div className="mt-3 text-base font-extrabold text-theme-text-black">
+      <h1 className="text-base font-extrabold tracking-widest text-white">
         Budget Tracker
-      </div>
+      </h1>
     </Link>
   );
 };
