@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { RoundedButton } from "../../commons/buttons/RoundedButton";
 import { LoadingRoundedButton } from "@/components/loading/buttons/LoadingRoundedButton";
+import { signOut } from "next-auth/react";
 
 export const Navbar = () => {
   const [loading, setLoading] = useState<boolean>(true);
@@ -17,6 +18,12 @@ export const Navbar = () => {
           <NavbarBudgetTrackerLogo />
         </div>
         <div className="absolute bottom-0 right-0 top-0 mr-2 mt-3 flex items-center md:mr-4">
+          <button
+            className="mr-5 font-bold text-white underline"
+            onClick={() => signOut()}
+          >
+            Sign Out
+          </button>
           {loading ? <NavbarLoadingSkeleton /> : <NavbarSignInOptions />}
         </div>
       </div>

@@ -3,15 +3,18 @@ import { AlertSnackbar } from "@/components/alerts/AlertSnackbar";
 import { AlertContextProvider } from "@/contexts/AlertContext";
 import { Metadata } from "next";
 import { ReactNode } from "react";
+import { SessionProvider } from "next-auth/react";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body className="bg-theme-background-light">
-        <AlertContextProvider>
-          <AlertSnackbar />
-          {children}
-        </AlertContextProvider>
+        <SessionProvider>
+          <AlertContextProvider>
+            <AlertSnackbar />
+            {children}
+          </AlertContextProvider>
+        </SessionProvider>
       </body>
     </html>
   );
