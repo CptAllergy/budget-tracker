@@ -2,16 +2,23 @@
 
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Navbar } from "@/components/elements/navbar/Navbar";
-import { TransactionDTO, UserDTO } from "@/types/DTO/dataTypes";
+import {
+  CreateTransactionDTO,
+  TransactionDTO,
+  UserDTO,
+} from "@/types/DTO/dataTypes";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { FirebaseOptions, initializeApp } from "firebase/app";
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   Firestore,
+  getDoc,
   getDocs,
   getFirestore,
+  orderBy,
   query,
   setDoc,
   Timestamp,
@@ -66,12 +73,20 @@ const Home = () => {
 
           // Get All Transactions
           // TODO don't get all, use some kind of pagination for this
-          const q2 = query(collection(db, "transactions"));
+          const q2 = query(
+            collection(db, "transactions"),
+            orderBy("timestamp", "desc")
+          );
           getDocs(q2).then((querySnapshot) => {
             const savedTransactions: TransactionDTO[] = [];
             querySnapshot.forEach((doc) => {
-              savedTransactions.push(doc.data() as TransactionDTO);
+              const savedTransaction = {
+                id: doc.id,
+                ...doc.data(),
+              } as TransactionDTO;
+              savedTransactions.push(savedTransaction);
             });
+
             setTransactions(savedTransactions);
           });
         })
@@ -100,12 +115,20 @@ const Home = () => {
           <NewTransaction
             transactions={transactions}
             setTransactions={setTransactions}
-            userTotal={currentUser}
-            setUserTotal={setCurrentUser}
+            user={currentUser}
+            setUser={setCurrentUser}
             db={db}
           />
         </section>
-        <Transactions transactions={transactions} />
+        <Transactions
+          transactions={transactions}
+          setTransactions={setTransactions}
+          user1={currentUser}
+          setUser1={setCurrentUser}
+          user2={secondUser}
+          setUser2={setSecondUser}
+          db={db}
+        />
       </div>
     </div>
   );
@@ -117,7 +140,7 @@ const Totals = ({ user1, user2 }: { user1: UserDTO; user2: UserDTO }) => {
   const [balance, setBalance] = useState(0);
 
   useEffect(() => {
-    const balance = user1.total - user2.total;
+    const balance = user1.total / 2 - user2.total / 2;
 
     const [sender, receiver] =
       balance > 0 ? [user2.name, user1.name] : [user1.name, user2.name];
@@ -140,7 +163,61 @@ const Totals = ({ user1, user2 }: { user1: UserDTO; user2: UserDTO }) => {
   );
 };
 
-const Transactions = ({ transactions }: { transactions: TransactionDTO[] }) => {
+const Transactions = ({
+  transactions,
+  setTransactions,
+  user1,
+  setUser1,
+  user2,
+  setUser2,
+  db,
+}: {
+  transactions: TransactionDTO[];
+  setTransactions: Dispatch<SetStateAction<TransactionDTO[]>>;
+  user1: UserDTO;
+  setUser1: Dispatch<SetStateAction<UserDTO>>;
+  user2: UserDTO;
+  setUser2: Dispatch<SetStateAction<UserDTO>>;
+  db: Firestore;
+}) => {
+  const removeTransaction = async (transaction: TransactionDTO) => {
+    // TODO these operations should be atomic
+    // Decrease the user's total by the removed transaction
+    // TODO What happens when this fails
+    const userRef = doc(db, "users", transaction.userId);
+    const userDocument = (await getDoc(userRef)).data() as UserDTO;
+
+    setDoc(
+      userRef,
+      { total: userDocument.total - Number(transaction.amount) },
+      { merge: true }
+    ).then(() => {
+      if (transaction.userId === user1.id) {
+        setUser1((prevState) => {
+          return {
+            ...prevState,
+            total: userDocument.total - Number(transaction.amount),
+          };
+        });
+      } else if (transaction.userId === user2.id) {
+        setUser2((prevState) => {
+          return {
+            ...prevState,
+            total: userDocument.total - Number(transaction.amount),
+          };
+        });
+      }
+    });
+
+    // Delete transaction and update list
+    deleteDoc(doc(db, "transactions", transaction.id)).then(() => {
+      const filteredTransactions = transactions.filter(
+        (value) => value.id != transaction.id
+      );
+      setTransactions(filteredTransactions);
+    });
+  };
+
   return (
     <div className="mt-3">
       <h2 className="mb-3 text-xl font-bold">Transactions</h2>
@@ -148,7 +225,13 @@ const Transactions = ({ transactions }: { transactions: TransactionDTO[] }) => {
         <div key={index}>
           <span className="font-bold">{transaction.label} - </span>
           <span>{Number(transaction.amount).toFixed(2)}€ - </span>
-          <span>{transaction.username}</span>
+          <span>{transaction.username} - </span>
+          <button
+            className="rounded-md bg-slate-700 px-0.5 text-white transition-colors hover:bg-slate-900"
+            onClick={() => removeTransaction(transaction)}
+          >
+            Remove
+          </button>
         </div>
       ))}
     </div>
@@ -158,14 +241,14 @@ const Transactions = ({ transactions }: { transactions: TransactionDTO[] }) => {
 const NewTransaction = ({
   transactions,
   setTransactions,
-  userTotal,
-  setUserTotal,
+  user,
+  setUser,
   db,
 }: {
   transactions: TransactionDTO[];
   setTransactions: Dispatch<SetStateAction<TransactionDTO[]>>;
-  userTotal: UserDTO;
-  setUserTotal: Dispatch<SetStateAction<UserDTO>>;
+  user: UserDTO;
+  setUser: Dispatch<SetStateAction<UserDTO>>;
   db: Firestore;
 }) => {
   const {
@@ -173,44 +256,51 @@ const NewTransaction = ({
     handleSubmit,
     watch,
     formState: { errors },
-  } = useForm<TransactionDTO>();
+  } = useForm<CreateTransactionDTO>();
 
   // TODO initial value for what? confirm this later
-  const [formData, setFormData] = useState<TransactionDTO>({
+  const [formData, setFormData] = useState<CreateTransactionDTO>({
     label: "",
     amount: 0,
+    userId: "",
     username: "",
     // TODO what is this even? might not make sense
     timestamp: Timestamp.fromDate(new Date()),
   });
 
-  const onSubmit: SubmitHandler<TransactionDTO> = (data) => {
-    const newTransaction: TransactionDTO = {
-      label: data.label,
-      amount: data.amount as number,
-      username: userTotal.name,
+  const onSubmit: SubmitHandler<CreateTransactionDTO> = async (newData) => {
+    const newTransaction: CreateTransactionDTO = {
+      label: newData.label,
+      amount: newData.amount as number,
+      userId: user.id,
+      username: user.name,
       timestamp: Timestamp.fromDate(new Date()),
     };
 
     // TODO What happens when this fails
-    addDoc(collection(db, "transactions"), newTransaction).then(() => {
-      // Update transactions list
-      setTransactions([...transactions, newTransaction]);
-    });
+    const transactionRef = await addDoc(
+      collection(db, "transactions"),
+      newTransaction
+    );
+    setTransactions([
+      ...transactions,
+      { id: transactionRef.id, ...newTransaction },
+    ]);
 
     // Update the user total by adding the new transaction
     // TODO What happens when this fails
-    const userRef = doc(db, "users", userTotal.id);
-    // TODO don't use the last value from user total, it could be mismatched somehow, actually get it from the database before
+    const userRef = doc(db, "users", user.id);
+    const userDocument = (await getDoc(userRef)).data() as UserDTO;
+
     setDoc(
       userRef,
-      { total: userTotal.total + Number(data.amount) },
+      { total: userDocument.total + Number(newData.amount) },
       { merge: true }
     ).then(() => {
-      setUserTotal((prevState) => {
+      setUser((prevState) => {
         return {
           ...prevState,
-          total: Number(prevState.total) + Number(data.amount),
+          total: userDocument.total + Number(newData.amount),
         };
       });
     });
@@ -218,9 +308,7 @@ const NewTransaction = ({
 
   return (
     <form className="mt-10 flex flex-col" onSubmit={handleSubmit(onSubmit)}>
-      <h2 className="mb-3 text-xl font-bold">
-        New {userTotal.name} Transaction
-      </h2>
+      <h2 className="mb-3 text-xl font-bold">New {user.name} Transaction</h2>
       <div>
         <input
           type="text"
