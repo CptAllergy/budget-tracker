@@ -1,10 +1,7 @@
-"use client";
-
 import { Navbar } from "@/components/elements/navbar/Navbar";
 import Link from "next/link";
 
 const Forbidden = () => {
-  // TODO a preview here and improve this page
   return (
     <div className="flex flex-col items-center">
       <Navbar />

@@ -94,7 +94,7 @@ const Home = () => {
   return (
     <div className="flex flex-col items-center">
       <Navbar />
-      <p className="text-red-600">
+      <p className="mx-3 font-semibold text-red-600">
         Notice: This ui is still under development, to see changes from other
         users you must refresh the page{" "}
       </p>

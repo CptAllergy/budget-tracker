@@ -1,7 +1,4 @@
-"use client";
-
 import { Navbar } from "@/components/elements/navbar/Navbar";
-import SignIn from "@/components/elements/login/SignIn";
 
 const Login = () => {
   return (

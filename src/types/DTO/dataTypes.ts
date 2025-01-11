@@ -23,3 +23,7 @@ export type UserDTO = {
   email: string;
   total: number;
 };
+
+export type AuthorizedDTO = {
+  email: string;
+};
