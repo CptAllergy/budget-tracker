@@ -97,8 +97,10 @@ const NewTransaction = ({
     });
   };
 
+  // TODO clear input after submitting
+
   return (
-    <form className="mt-10 flex flex-col" onSubmit={handleSubmit(onSubmit)}>
+    <form className="flex flex-col" onSubmit={handleSubmit(onSubmit)}>
       <h2 className="mb-3 text-xl font-bold">New {user.name} Transaction</h2>
       <div>
         <input

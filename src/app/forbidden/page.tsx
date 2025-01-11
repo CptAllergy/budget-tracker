@@ -1,6 +1,7 @@
 "use client";
 
 import { Navbar } from "@/components/elements/navbar/Navbar";
+import Link from "next/link";
 
 const Forbidden = () => {
   // TODO a preview here and improve this page
@@ -11,7 +12,12 @@ const Forbidden = () => {
         You do not have permission to access Budget Tracker. Only authorized
         users can access the application.
       </p>
-      <p>You can check a preview here</p>
+      <p>
+        You can check a preview{" "}
+        <Link href="/preview" className="font-bold hover:underline">
+          here
+        </Link>
+      </p>
     </div>
   );
 };

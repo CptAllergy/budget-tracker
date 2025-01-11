@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Navbar } from "@/components/elements/navbar/Navbar";
 import { TransactionDTO, UserDTO } from "@/types/DTO/dataTypes";
 import { FirebaseOptions, initializeApp } from "firebase/app";
@@ -18,20 +18,18 @@ import {
 } from "firebase/auth";
 
 import { signOut, useSession } from "next-auth/react";
-import NewTransaction from "@/components/elements/Home/NewTransaction";
-import Totals from "@/components/elements/Home/Totals";
-import TransactionList from "@/components/elements/Home/TransactionList";
+import NewTransaction from "@/components/elements/home/NewTransaction";
+import Totals from "@/components/elements/home/Totals";
+import TransactionList from "@/components/elements/home/TransactionList";
+import { LoadingRoundedText } from "@/components/loading/text/LoadingRoundedText";
 
 // TODO make the application refresh automatically somehow, no need to refresh to see changes (web socket, temporary refresh...)
 const Home = () => {
   const { data: session } = useSession();
 
-  // TODO add some loading states to avoid this initial value
-  const defaultUser = { id: "", name: "", email: "", total: 0 };
-
   const [loading, setLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<UserDTO>(defaultUser);
-  const [secondUser, setSecondUser] = useState<UserDTO>(defaultUser);
+  const [currentUser, setCurrentUser] = useState<UserDTO>();
+  const [secondUser, setSecondUser] = useState<UserDTO>();
   const [transactions, setTransactions] = useState<TransactionDTO[]>([]);
 
   const firebaseConfig: FirebaseOptions = JSON.parse(
@@ -100,27 +98,71 @@ const Home = () => {
         Notice: This ui is still under development, to see changes from other
         users you must refresh the page{" "}
       </p>
-      <div className="mt-10">
-        <Totals user1={currentUser} user2={secondUser} />
-        <section className="-mt-5 flex flex-col md:flex-row md:space-x-10">
-          <NewTransaction
+      {/*TODO configure some proper width*/}
+      <div className="mx-3 mt-10">
+        {currentUser && secondUser ? (
+          <Totals user1={currentUser} user2={secondUser} />
+        ) : (
+          <TotalsLoading />
+        )}
+        <section className="mt-5 flex flex-col md:flex-row md:space-x-10">
+          {currentUser ? (
+            <NewTransaction
+              transactions={transactions}
+              setTransactions={setTransactions}
+              user={currentUser}
+              setUser={setCurrentUser as Dispatch<SetStateAction<UserDTO>>}
+              db={db}
+            />
+          ) : (
+            <NewTransactionLoading />
+          )}
+        </section>
+        {currentUser && secondUser ? (
+          <TransactionList
             transactions={transactions}
             setTransactions={setTransactions}
-            user={currentUser}
-            setUser={setCurrentUser}
+            user1={currentUser}
+            setUser1={setCurrentUser as Dispatch<SetStateAction<UserDTO>>}
+            user2={secondUser}
+            setUser2={setSecondUser as Dispatch<SetStateAction<UserDTO>>}
             db={db}
           />
-        </section>
-        <TransactionList
-          transactions={transactions}
-          setTransactions={setTransactions}
-          user1={currentUser}
-          setUser1={setCurrentUser}
-          user2={secondUser}
-          setUser2={setSecondUser}
-          db={db}
-        />
+        ) : (
+          <TransactionListLoading />
+        )}
       </div>
+    </div>
+  );
+};
+
+const TotalsLoading = () => {
+  return (
+    <div className="mt-2">
+      <LoadingRoundedText theme="dark" className="h-4 w-16" />
+      <LoadingRoundedText theme="dark" className="mt-6 h-3 w-60" />
+    </div>
+  );
+};
+
+const NewTransactionLoading = () => {
+  return (
+    <div className="mt-2">
+      <LoadingRoundedText theme="dark" className="h-4 w-64" />
+      <LoadingRoundedText theme="dark" className="mt-6 h-10 w-40" />
+      <LoadingRoundedText theme="dark" className="mt-3 h-5 w-20" />
+    </div>
+  );
+};
+
+const TransactionListLoading = () => {
+  return (
+    <div className="mt-10">
+      <LoadingRoundedText theme="dark" className="h-4 w-36" />
+      <LoadingRoundedText theme="dark" className="mt-6 h-3 w-60" />
+      <LoadingRoundedText theme="dark" className="mt-6 h-3 w-60" />
+      <LoadingRoundedText theme="dark" className="mt-6 h-3 w-60" />
+      <LoadingRoundedText theme="dark" className="mt-6 h-3 w-44" />
     </div>
   );
 };

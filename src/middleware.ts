@@ -26,7 +26,8 @@ export default auth(async (req) => {
   } else if (
     req.auth &&
     !authorizedUsers.includes(req.auth.user.email as string) &&
-    req.nextUrl.pathname !== "/forbidden"
+    req.nextUrl.pathname !== "/forbidden" &&
+    req.nextUrl.pathname !== "/preview"
   ) {
     const newUrl = new URL("/forbidden", req.nextUrl.origin);
     return NextResponse.redirect(newUrl);
