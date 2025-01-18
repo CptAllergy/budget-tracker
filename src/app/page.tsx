@@ -30,11 +30,7 @@ import Totals from "@/components/elements/home/Totals";
 import TransactionList from "@/components/elements/home/TransactionList";
 import { LoadingRoundedText } from "@/components/loading/text/LoadingRoundedText";
 import { AlertContext } from "@/contexts/AlertContext";
-import {
-  toggleStatusErrorAlert,
-  toggleStatusInfoAlert,
-} from "@/utils/toggleAlerts";
-import Link from "next/link";
+import { toggleStatusErrorAlert } from "@/utils/toggleAlerts";
 
 // TODO make the application refresh automatically somehow, no need to refresh to see changes (web socket, temporary refresh...)
 const Home = () => {
@@ -109,7 +105,6 @@ const Home = () => {
   return (
     <div className="flex flex-col items-center">
       <Navbar />
-      <Link href={"/test"}>TEST</Link>
       <p className="mx-3 font-semibold text-red-600">
         Notice: This ui is still under development, to see changes from other
         users you must refresh the page{" "}
