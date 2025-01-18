@@ -1,8 +1,13 @@
 "use client";
 
-import { Dispatch, SetStateAction, createContext, useState } from "react";
+import React, {
+  Dispatch,
+  SetStateAction,
+  createContext,
+  useState,
+} from "react";
 
-type AlertType = "error" | "warning" | "info" | "alert";
+type AlertType = "error" | "warning" | "info";
 
 export type AlertContextType = {
   isAlertEnabled: boolean;

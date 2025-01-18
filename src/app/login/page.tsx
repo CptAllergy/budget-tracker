@@ -1,6 +1,24 @@
+"use client";
+
 import { Navbar } from "@/components/elements/navbar/Navbar";
+import { useContext, useEffect, useRef } from "react";
+import { AlertContext } from "@/contexts/AlertContext";
+import { toggleStatusInfoAlert } from "@/utils/toggleAlerts";
 
 const Login = () => {
+  const alertContext = useRef(useContext(AlertContext));
+
+  useEffect(() => {
+    const sessionError = sessionStorage.getItem("session_error");
+    if (sessionError) {
+      toggleStatusInfoAlert(
+        alertContext.current,
+        "Your session has expired. Please login again"
+      );
+      sessionStorage.removeItem("session_error");
+    }
+  }, []);
+
   return (
     <div className="flex flex-col items-center">
       <Navbar />

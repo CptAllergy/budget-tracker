@@ -1,20 +1,22 @@
+"use client";
+
 import {
   CreateTransactionDTO,
   TransactionDTO,
   UserDTO,
 } from "@/types/DTO/dataTypes";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useContext, useRef, useState } from "react";
 import {
-  addDoc,
   collection,
   doc,
   Firestore,
-  getDoc,
-  setDoc,
+  runTransaction,
   Timestamp,
 } from "firebase/firestore";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { isNumeric } from "@/utils/helpers/parsers";
+import { AlertContext } from "@/contexts/AlertContext";
+import { toggleStatusErrorAlert } from "@/utils/toggleAlerts";
 
 const NewTransaction = ({
   transactions,
@@ -29,6 +31,8 @@ const NewTransaction = ({
   setUser: Dispatch<SetStateAction<UserDTO>>;
   db: Firestore;
 }) => {
+  const alertContext = useRef(useContext(AlertContext));
+
   const {
     register,
     handleSubmit,
@@ -50,12 +54,13 @@ const NewTransaction = ({
     // Replace comma with period
     const amountString = newData.amount.toString().replace(",", ".");
 
-    // TODO do some proper validations and assertions
+    // TODO do some proper validations and assertions and return some error
     if (
       !isNumeric(amountString) ||
       Number(amountString) < 0 ||
       Number(amountString) > 5000
     ) {
+      // TODO toggle some ui elements or popups explaining the errors
       return;
     }
 
@@ -67,37 +72,47 @@ const NewTransaction = ({
       timestamp: Timestamp.fromDate(new Date()),
     };
 
-    // TODO What happens when this fails
-    const transactionRef = await addDoc(
-      collection(db, "transactions"),
-      newTransaction
-    );
-    setTransactions([
-      { id: transactionRef.id, ...newTransaction },
-      ...transactions,
-    ]);
+    try {
+      const userRef = doc(db, "users", user.id);
+      const transactionRef = doc(collection(db, "transactions"));
 
-    // Update the user total by adding the new transaction
-    // TODO What happens when this fails
-    const userRef = doc(db, "users", user.id);
-    const userDocument = (await getDoc(userRef)).data() as UserDTO;
+      // These Firestore operations must run inside an atomic transaction
+      const newUserTotal = await runTransaction(db, async (fbTransaction) => {
+        const userDocumentDoc = await fbTransaction.get(userRef);
+        if (!userDocumentDoc.exists()) {
+          throw "Document does not exist!";
+        }
+        const userDocument = userDocumentDoc.data() as UserDTO;
+        const newTotal = userDocument.total + newTransaction.amount;
 
-    setDoc(
-      userRef,
-      { total: userDocument.total + newTransaction.amount },
-      { merge: true }
-    ).then(() => {
-      // TODO get full new value from database
+        // Increase user total document
+        fbTransaction.update(userRef, {
+          total: newTotal,
+        });
+        // Add transaction document
+        fbTransaction.set(transactionRef, newTransaction);
+
+        return newTotal;
+      });
+
+      // Update the transaction list
+      setTransactions([
+        { id: transactionRef.id, ...newTransaction },
+        ...transactions,
+      ]);
+
+      // Update the total for the current user
       setUser((prevState) => {
         return {
           ...prevState,
-          total: userDocument.total + newTransaction.amount,
+          total: newUserTotal,
         };
       });
-    });
+      // TODO clear input after submitting
+    } catch (error) {
+      toggleStatusErrorAlert(alertContext.current, "ADD_FAILED");
+    }
   };
-
-  // TODO clear input after submitting
 
   return (
     <form className="flex flex-col" onSubmit={handleSubmit(onSubmit)}>
@@ -123,7 +138,7 @@ const NewTransaction = ({
       <div className="mt-2">
         <button
           type="submit"
-          className="rounded-md bg-slate-700 px-2 py-0.5 font-semibold text-white transition-colors hover:bg-slate-900"
+          className="rounded-md bg-theme-main px-2 py-0.5 font-semibold text-white transition-colors hover:bg-slate-900"
         >
           Submit
         </button>
@@ -131,5 +146,4 @@ const NewTransaction = ({
     </form>
   );
 };
-
 export default NewTransaction;

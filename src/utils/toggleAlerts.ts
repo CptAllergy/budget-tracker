@@ -1,10 +1,11 @@
 "use client";
 
 import { AlertContextType } from "@/contexts/AlertContext";
+import { CustomErrorCode } from "@/types/errorTypes";
 
 export const toggleStatusErrorAlert = (
   alertContext: AlertContextType,
-  errorCode: number
+  errorCode: CustomErrorCode
 ) => {
   const { setAlertEnabled, setRefreshEnabled, setAlertType, setAlertMessage } =
     alertContext;
@@ -13,14 +14,24 @@ export const toggleStatusErrorAlert = (
   setAlertType("error");
 
   switch (errorCode) {
-    case 401: {
-      setAlertMessage(" Your session has expired!");
+    case "SESSION_EXPIRED": {
+      setAlertMessage("Your session has expired");
+      setRefreshEnabled(false);
+      break;
+    }
+    case "DELETE_FAILED": {
+      setAlertMessage("Failed to remove transaction");
+      setRefreshEnabled(true);
+      break;
+    }
+    case "ADD_FAILED": {
+      setAlertMessage("Failed to add new transaction");
       setRefreshEnabled(true);
       break;
     }
     default: {
-      setAlertMessage(`An unexpected error has ocurred: ${errorCode}`);
-      setRefreshEnabled(false);
+      setAlertMessage("An unexpected error has occurred");
+      setRefreshEnabled(true);
       break;
     }
   }
@@ -33,7 +44,8 @@ export const toggleStatusInfoAlert = (
   const { setAlertEnabled, setRefreshEnabled, setAlertType, setAlertMessage } =
     alertContext;
 
+  setAlertMessage(alertMessage);
   setAlertEnabled(true);
   setAlertType("info");
-  setAlertMessage(alertMessage);
+  setRefreshEnabled(false);
 };

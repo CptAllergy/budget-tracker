@@ -16,7 +16,7 @@ export const Navbar = () => {
 
   return (
     <>
-      <div className="relative z-10 h-16 w-full bg-slate-700">
+      <div className="relative z-10 h-16 w-full bg-theme-main">
         <div className="absolute bottom-0 left-0 top-0 ml-2 flex items-center md:ml-6">
           <NavbarBudgetTrackerLogo />
         </div>

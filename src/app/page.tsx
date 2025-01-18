@@ -1,6 +1,13 @@
 "use client";
 
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import {
+  Dispatch,
+  SetStateAction,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { Navbar } from "@/components/elements/navbar/Navbar";
 import { TransactionDTO, UserDTO } from "@/types/DTO/dataTypes";
 import { FirebaseOptions, initializeApp } from "firebase/app";
@@ -22,9 +29,16 @@ import NewTransaction from "@/components/elements/home/NewTransaction";
 import Totals from "@/components/elements/home/Totals";
 import TransactionList from "@/components/elements/home/TransactionList";
 import { LoadingRoundedText } from "@/components/loading/text/LoadingRoundedText";
+import { AlertContext } from "@/contexts/AlertContext";
+import {
+  toggleStatusErrorAlert,
+  toggleStatusInfoAlert,
+} from "@/utils/toggleAlerts";
+import Link from "next/link";
 
 // TODO make the application refresh automatically somehow, no need to refresh to see changes (web socket, temporary refresh...)
 const Home = () => {
+  const alertContext = useRef(useContext(AlertContext));
   const { data: session } = useSession();
 
   const [loading, setLoading] = useState(true);
@@ -81,10 +95,11 @@ const Home = () => {
         })
         .catch((error) => {
           if (error.code === "auth/invalid-credential") {
-            // TODO show session expired message
+            // Update session storage with auth error
+            sessionStorage.setItem("session_error", "true");
             void signOut();
           } else {
-            // TODO other errors
+            toggleStatusErrorAlert(alertContext.current, "GENERIC");
           }
         });
     }
@@ -94,6 +109,7 @@ const Home = () => {
   return (
     <div className="flex flex-col items-center">
       <Navbar />
+      <Link href={"/test"}>TEST</Link>
       <p className="mx-3 font-semibold text-red-600">
         Notice: This ui is still under development, to see changes from other
         users you must refresh the page{" "}
