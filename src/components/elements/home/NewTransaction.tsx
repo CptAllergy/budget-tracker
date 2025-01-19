@@ -5,7 +5,14 @@ import {
   TransactionDTO,
   UserDTO,
 } from "@/types/DTO/dataTypes";
-import { Dispatch, SetStateAction, useContext, useRef, useState } from "react";
+import {
+  Dispatch,
+  PropsWithChildren,
+  SetStateAction,
+  useContext,
+  useEffect,
+  useRef,
+} from "react";
 import {
   collection,
   doc,
@@ -13,10 +20,26 @@ import {
   runTransaction,
   Timestamp,
 } from "firebase/firestore";
-import { SubmitHandler, useForm } from "react-hook-form";
+import {
+  FormState,
+  SubmitHandler,
+  useForm,
+  UseFormRegister,
+} from "react-hook-form";
 import { isNumeric } from "@/utils/helpers/parsers";
 import { AlertContext } from "@/contexts/AlertContext";
-import { toggleStatusErrorAlert } from "@/utils/toggleAlerts";
+import {
+  toggleStatusErrorAlert,
+  toggleStatusInfoAlert,
+} from "@/utils/toggleAlerts";
+import { MdErrorOutline } from "react-icons/md";
+
+type FormInputs = "label" | "amount";
+
+type FormInputType = {
+  fieldName: FormInputs;
+  formState: FormState<CreateTransactionDTO>;
+};
 
 const NewTransaction = ({
   transactions,
@@ -33,34 +56,26 @@ const NewTransaction = ({
 }) => {
   const alertContext = useRef(useContext(AlertContext));
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState: { errors },
-  } = useForm<CreateTransactionDTO>();
+  const { register, handleSubmit, reset, formState } =
+    useForm<CreateTransactionDTO>();
 
-  // TODO initial value for what? confirm this later
-  const [formData, setFormData] = useState<CreateTransactionDTO>({
-    label: "",
-    amount: 0,
-    userId: "",
-    username: "",
-    // TODO what is this even? might not make sense
-    timestamp: Timestamp.fromDate(new Date()),
-  });
+  useEffect(() => {
+    if (formState.isSubmitSuccessful) {
+      reset();
+    }
+  }, [formState, reset]);
 
   const onSubmit: SubmitHandler<CreateTransactionDTO> = async (newData) => {
     // Replace comma with period
     const amountString = newData.amount.toString().replace(",", ".");
 
-    // TODO do some proper validations and assertions and return some error
     if (
+      // Validate amount
       !isNumeric(amountString) ||
-      Number(amountString) < 0 ||
+      Number(amountString) <= 0 ||
       Number(amountString) > 5000
     ) {
-      // TODO toggle some ui elements or popups explaining the errors
+      toggleStatusErrorAlert(alertContext.current, "ADD_FAILED");
       return;
     }
 
@@ -108,7 +123,11 @@ const NewTransaction = ({
           total: newUserTotal,
         };
       });
-      // TODO clear input after submitting
+
+      toggleStatusInfoAlert(
+        alertContext.current,
+        "New transaction added successfully"
+      );
     } catch (error) {
       toggleStatusErrorAlert(alertContext.current, "ADD_FAILED");
     }
@@ -117,33 +136,90 @@ const NewTransaction = ({
   return (
     <form className="flex flex-col" onSubmit={handleSubmit(onSubmit)}>
       <h2 className="mb-3 text-xl font-bold">New {user.name} Transaction</h2>
-      <div>
-        <input
-          type="text"
-          placeholder="Description"
-          {...register("label", { required: true })}
-        />
-        {errors.label && <span>This field is required</span>}
-      </div>
-      <div>
-        <input
-          type="number"
-          step="0.01"
-          placeholder="Amount"
-          {...register("amount", { required: true })}
-        />
-        {errors.amount && <span>This field is required</span>}
-      </div>
-
-      <div className="mt-2">
-        <button
-          type="submit"
-          className="rounded-md bg-theme-main px-2 py-0.5 font-semibold text-white transition-colors hover:bg-slate-900"
-        >
-          Submit
-        </button>
-      </div>
+      <FormInputText register={register} formState={formState} />
+      <FormInputNumber register={register} formState={formState} />
+      <SubmitButton />
     </form>
   );
 };
+
+const FormInputText = ({
+  register,
+  formState,
+}: {
+  register: UseFormRegister<CreateTransactionDTO>;
+  formState: FormState<CreateTransactionDTO>;
+}) => {
+  return (
+    <FormInputError fieldName="label" formState={formState}>
+      <input
+        type="text"
+        placeholder="Description"
+        {...register("label", { required: "Description is required" })}
+      />
+    </FormInputError>
+  );
+};
+
+const FormInputNumber = ({
+  register,
+  formState,
+}: {
+  register: UseFormRegister<CreateTransactionDTO>;
+  formState: FormState<CreateTransactionDTO>;
+}) => {
+  return (
+    <FormInputError fieldName="amount" formState={formState}>
+      <input
+        type="number"
+        step="0.01"
+        placeholder="Amount"
+        onWheel={(e) => (e.target as HTMLElement).blur()}
+        {...register("amount", {
+          required: "Amount is required",
+          min: { value: 0.01, message: "Amount must be positive" },
+          max: { value: 5000, message: "Amount can't be higher than 5000" },
+        })}
+      />
+    </FormInputError>
+  );
+};
+
+const FormInputError = ({
+  fieldName,
+  formState,
+  children,
+}: PropsWithChildren<FormInputType>) => {
+  const { errors } = formState;
+
+  return (
+    <div className="flex">
+      <div className="relative">
+        {children}
+        <div className="absolute inset-y-0 right-0 flex items-center pr-1 text-red-700">
+          {errors[fieldName] && <MdErrorOutline size="18" />}
+        </div>
+      </div>
+      {errors[fieldName] && (
+        <span className="pl-2 font-semibold text-red-700">
+          {errors[fieldName]?.message}
+        </span>
+      )}
+    </div>
+  );
+};
+
+const SubmitButton = () => {
+  return (
+    <div className="mt-2">
+      <button
+        type="submit"
+        className="rounded-md bg-theme-main px-2 py-0.5 font-semibold text-white transition-colors hover:bg-slate-900"
+      >
+        Submit
+      </button>
+    </div>
+  );
+};
+
 export default NewTransaction;

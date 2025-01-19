@@ -17,7 +17,7 @@ export const AlertSnackbar = ({ duration = 3000 }) => {
     setAlertEnabled,
   } = useContext(AlertContext);
 
-  // TODO add timeout to hide
+  // TODO add timeout to hide, maybe with a new parameter on the context
 
   const getAlertProps = () => {
     switch (alertType) {
