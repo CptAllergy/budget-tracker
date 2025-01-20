@@ -136,8 +136,11 @@ const NewTransaction = ({
   return (
     <form className="flex flex-col" onSubmit={handleSubmit(onSubmit)}>
       <h2 className="mb-3 text-xl font-bold">New {user.name} Transaction</h2>
-      <FormInputText register={register} formState={formState} />
-      <FormInputNumber register={register} formState={formState} />
+      <div className="space-y-2">
+        <FormInputText register={register} formState={formState} />
+        <FormInputNumber register={register} formState={formState} />
+      </div>
+
       <SubmitButton />
     </form>
   );
@@ -193,15 +196,15 @@ const FormInputError = ({
   const { errors } = formState;
 
   return (
-    <div className="flex">
-      <div className="relative">
+    <div className="flex flex-col sm:flex-row">
+      <div className="relative w-fit">
         {children}
         <div className="absolute inset-y-0 right-0 flex items-center pr-1 text-red-700">
           {errors[fieldName] && <MdErrorOutline size="18" />}
         </div>
       </div>
       {errors[fieldName] && (
-        <span className="pl-2 font-semibold text-red-700">
+        <span className="font-semibold text-red-700 sm:pl-2">
           {errors[fieldName]?.message}
         </span>
       )}
