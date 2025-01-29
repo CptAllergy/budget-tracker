@@ -11,7 +11,14 @@ export const Navbar = () => {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    setLoading(false);
+    if (session?.user) {
+      // session loaded and user is logged in
+      setLoading(false);
+    }
+    if (session === null) {
+      // session loaded but no user
+      setLoading(false);
+    }
   }, [session]);
 
   return (
@@ -20,7 +27,6 @@ export const Navbar = () => {
         <div className="absolute bottom-0 left-0 top-0 ml-2 flex items-center md:ml-6">
           <NavbarBudgetTrackerLogo />
         </div>
-        {/*TODO theres a bit of a flicker here when the user is logged in, can check on aftersights how I did it there*/}
         <div className="absolute bottom-0 right-0 top-0 mr-2 mt-1 flex items-center md:mr-4">
           {loading ? (
             <NavbarLoadingSkeleton />

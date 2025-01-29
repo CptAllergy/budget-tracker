@@ -11,13 +11,7 @@ import {
 import { Navbar } from "@/components/elements/navbar/Navbar";
 import { TransactionDTO, UserDTO } from "@/types/DTO/dataTypes";
 import { FirebaseOptions, initializeApp } from "firebase/app";
-import {
-  collection,
-  getDocs,
-  getFirestore,
-  orderBy,
-  query,
-} from "firebase/firestore";
+import { getFirestore } from "firebase/firestore";
 import {
   getAuth,
   GoogleAuthProvider,
@@ -28,11 +22,16 @@ import { signOut, useSession } from "next-auth/react";
 import NewTransaction from "@/components/elements/home/NewTransaction";
 import Totals from "@/components/elements/home/Totals";
 import TransactionList from "@/components/elements/home/TransactionList";
-import { LoadingRoundedText } from "@/components/loading/text/LoadingRoundedText";
 import { AlertContext } from "@/contexts/AlertContext";
 import { toggleStatusErrorAlert } from "@/utils/toggleAlerts";
+import { fetchUsersFirebase } from "@/services/firebaseService";
+import {
+  NewTransactionLoading,
+  TotalsLoading,
+  TransactionListLoading,
+} from "@/components/loading/elements/home/LoadingHome";
 
-// TODO make the application refresh automatically somehow, no need to refresh to see changes (web socket, temporary refresh...)
+// TODO make the application refresh automatically somehow, good idea to use SWR maybe, refetch every 30 seconds
 const Home = () => {
   const alertContext = useRef(useContext(AlertContext));
   const { data: session } = useSession();
@@ -52,42 +51,17 @@ const Home = () => {
   useEffect(() => {
     if (session && session.user && loading) {
       const credential = GoogleAuthProvider.credential(session.user.id_token);
-      // TODO can probably handle loading state better
-      setLoading(false);
       signInWithCredential(auth, credential)
         .then(() => {
-          // Set the current and secondary user
-          // TODO can add some kind of user "pairs", so this doesn't break if there are more than 2 users
-          const q = query(collection(db, "users"));
-          getDocs(q).then((querySnapshot) => {
-            querySnapshot.forEach((doc) => {
-              const data = doc.data() as UserDTO;
-              if (data.email === session.user.email) {
-                setCurrentUser({ ...data, id: doc.id });
-              } else {
-                setSecondUser({ ...data, id: doc.id });
-              }
-            });
-          });
-
-          // Get All TransactionList
-          // TODO don't get all, use some kind of pagination for this
-          const q2 = query(
-            collection(db, "transactions"),
-            orderBy("timestamp", "desc")
+          // Set the current and second user
+          fetchUsersFirebase(
+            db,
+            session,
+            setCurrentUser as Dispatch<SetStateAction<UserDTO>>,
+            setSecondUser as Dispatch<SetStateAction<UserDTO>>
           );
-          getDocs(q2).then((querySnapshot) => {
-            const savedTransactions: TransactionDTO[] = [];
-            querySnapshot.forEach((doc) => {
-              const savedTransaction = {
-                id: doc.id,
-                ...doc.data(),
-              } as TransactionDTO;
-              savedTransactions.push(savedTransaction);
-            });
 
-            setTransactions(savedTransactions);
-          });
+          setLoading(false);
         })
         .catch((error) => {
           if (error.code === "auth/invalid-credential") {
@@ -143,37 +117,6 @@ const Home = () => {
           <TransactionListLoading />
         )}
       </div>
-    </div>
-  );
-};
-
-const TotalsLoading = () => {
-  return (
-    <div className="mt-2">
-      <LoadingRoundedText theme="dark" className="h-4 w-16" />
-      <LoadingRoundedText theme="dark" className="mt-6 h-3 w-60" />
-    </div>
-  );
-};
-
-const NewTransactionLoading = () => {
-  return (
-    <div className="mt-2">
-      <LoadingRoundedText theme="dark" className="h-4 w-64" />
-      <LoadingRoundedText theme="dark" className="mt-6 h-10 w-40" />
-      <LoadingRoundedText theme="dark" className="mt-3 h-5 w-20" />
-    </div>
-  );
-};
-
-const TransactionListLoading = () => {
-  return (
-    <div className="mt-10">
-      <LoadingRoundedText theme="dark" className="h-4 w-36" />
-      <LoadingRoundedText theme="dark" className="mt-6 h-3 w-60" />
-      <LoadingRoundedText theme="dark" className="mt-6 h-3 w-60" />
-      <LoadingRoundedText theme="dark" className="mt-6 h-3 w-60" />
-      <LoadingRoundedText theme="dark" className="mt-6 h-3 w-44" />
     </div>
   );
 };

@@ -13,13 +13,7 @@ import {
   useEffect,
   useRef,
 } from "react";
-import {
-  collection,
-  doc,
-  Firestore,
-  runTransaction,
-  Timestamp,
-} from "firebase/firestore";
+import { Firestore, Timestamp } from "firebase/firestore";
 import {
   FormState,
   SubmitHandler,
@@ -33,6 +27,7 @@ import {
   toggleStatusInfoAlert,
 } from "@/utils/toggleAlerts";
 import { MdErrorOutline } from "react-icons/md";
+import { addNewTransactionFirebase } from "@/services/firebaseService";
 
 type FormInputs = "label" | "amount";
 
@@ -88,41 +83,14 @@ const NewTransaction = ({
     };
 
     try {
-      const userRef = doc(db, "users", user.id);
-      const transactionRef = doc(collection(db, "transactions"));
-
-      // These Firestore operations must run inside an atomic transaction
-      const newUserTotal = await runTransaction(db, async (fbTransaction) => {
-        const userDocumentDoc = await fbTransaction.get(userRef);
-        if (!userDocumentDoc.exists()) {
-          throw "Document does not exist!";
-        }
-        const userDocument = userDocumentDoc.data() as UserDTO;
-        const newTotal = userDocument.total + newTransaction.amount;
-
-        // Increase user total document
-        fbTransaction.update(userRef, {
-          total: newTotal,
-        });
-        // Add transaction document
-        fbTransaction.set(transactionRef, newTransaction);
-
-        return newTotal;
-      });
-
-      // Update the transaction list
-      setTransactions([
-        { id: transactionRef.id, ...newTransaction },
-        ...transactions,
-      ]);
-
-      // Update the total for the current user
-      setUser((prevState) => {
-        return {
-          ...prevState,
-          total: newUserTotal,
-        };
-      });
+      await addNewTransactionFirebase(
+        db,
+        newTransaction,
+        user,
+        setUser,
+        transactions,
+        setTransactions
+      );
 
       toggleStatusInfoAlert(
         alertContext.current,
@@ -130,6 +98,7 @@ const NewTransaction = ({
       );
     } catch (error) {
       toggleStatusErrorAlert(alertContext.current, "ADD_FAILED");
+      throw "Error adding new transaction";
     }
   };
 
@@ -140,7 +109,6 @@ const NewTransaction = ({
         <FormInputText register={register} formState={formState} />
         <FormInputNumber register={register} formState={formState} />
       </div>
-
       <SubmitButton />
     </form>
   );

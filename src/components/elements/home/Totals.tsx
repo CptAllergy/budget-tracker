@@ -1,3 +1,5 @@
+"use client";
+
 import { UserDTO } from "@/types/DTO/dataTypes";
 import { useEffect, useState } from "react";
 
