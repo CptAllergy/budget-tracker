@@ -9,7 +9,11 @@ import {
   useRef,
   useState,
 } from "react";
-import { Firestore, QueryDocumentSnapshot } from "firebase/firestore";
+import {
+  Firestore,
+  QueryDocumentSnapshot,
+  Timestamp,
+} from "firebase/firestore";
 import { toggleStatusErrorAlert } from "@/utils/toggleAlerts";
 import { AlertContext } from "@/contexts/AlertContext";
 import {
@@ -63,6 +67,8 @@ const TransactionList = ({
           if (firstDoc !== undefined && lastDoc !== undefined) {
             setFirstDocument(firstDoc);
             setLastDocument(lastDoc);
+          } else {
+            setLastDocument(undefined);
           }
           setLoading(false);
         }
@@ -81,6 +87,8 @@ const TransactionList = ({
         if (firstDoc !== undefined && lastDoc !== undefined) {
           setFirstDocument(firstDoc);
           setLastDocument(lastDoc);
+        } else {
+          setFirstDocument(undefined);
         }
         setLoading(false);
       });
@@ -106,42 +114,84 @@ const TransactionList = ({
   };
 
   return (
-    <div className="mt-3">
-      <h2 className="mb-3 text-xl font-bold">Transactions</h2>
-      <div className="space-y-1 rounded-md border-2 border-black p-4 ring-2 ring-black">
-        {loading ? (
-          // TODO could probably improve this loading animation
-          <TransactionListNewPageLoading />
-        ) : (
-          transactions.map((transaction, index) => (
-            <div key={index}>
-              <span className="font-bold">{transaction.label} - </span>
-              <span>{Number(transaction.amount).toFixed(2)}€ - </span>
-              <span>{transaction.username}</span>
-              <button
-                className="ml-3 rounded-full bg-theme-main p-0.5 text-white transition-colors hover:bg-slate-900"
-                onClick={() => removeTransaction(transaction)}
-              >
-                <MdDelete size={20} />
-              </button>
-            </div>
-          ))
-        )}
-      </div>
+    <div className="mx-1 mt-5">
+      {loading ? (
+        // TODO could probably improve this loading animation
+        <TransactionListNewPageLoading />
+      ) : (
+        <DataTable
+          transactions={transactions}
+          removeTransaction={removeTransaction}
+          loading={loading}
+        />
+      )}
       <div className="mt-3 flex flex-row justify-between">
         <button
-          className="rounded-full bg-theme-main p-0.5 text-white transition-colors hover:bg-slate-900"
+          className="rounded-md border-2 border-black bg-theme-main p-0.5 text-white shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-colors hover:bg-theme-hover hover:shadow-[2px_2px_0px_rgba(0,0,0,1)]"
           onClick={fetchPreviousPage}
         >
           <MdOutlineKeyboardArrowLeft size={25} />
         </button>
         <button
-          className="rounded-full bg-theme-main p-0.5 text-white transition-colors hover:bg-slate-900"
+          className="rounded-md border-2 border-black bg-theme-main p-0.5 text-white shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-colors hover:bg-theme-hover hover:shadow-[2px_2px_0px_rgba(0,0,0,1)]"
           onClick={fetchNextPage}
         >
           <MdOutlineKeyboardArrowRight size={25} />
         </button>
       </div>
+    </div>
+  );
+};
+
+const DataTable = ({
+  transactions,
+  removeTransaction,
+  loading,
+}: {
+  transactions: TransactionDTO[];
+  removeTransaction: (transaction: TransactionDTO) => void;
+  loading: boolean;
+}) => {
+  const timestampToDate = (timestamp: Timestamp) => {
+    const date = timestamp.toDate();
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+
+    return `${day}/${month}/${year}`;
+  };
+
+  return (
+    <div className="rounded-md border-2 border-black px-2 py-2 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
+      <table className="table-auto">
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th>Amount</th>
+            <th>Date</th>
+            <th>User</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {transactions.map((transaction) => (
+            <tr key={transaction.id}>
+              <td>{transaction.label}</td>
+              <td>{Number(transaction.amount).toFixed(2)}€</td>
+              <td>{timestampToDate(transaction.timestamp)}</td>
+              <td>{transaction.username}</td>
+              <td>
+                <button
+                  className="ml-3 text-theme-main transition-colors hover:text-theme-hover"
+                  onClick={() => removeTransaction(transaction)}
+                >
+                  <MdDelete size={22} />
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };

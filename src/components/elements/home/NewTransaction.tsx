@@ -103,8 +103,8 @@ const NewTransaction = ({
   };
 
   return (
-    <form className="flex flex-col" onSubmit={handleSubmit(onSubmit)}>
-      <h2 className="mb-3 text-xl font-bold">New {user.name} Transaction</h2>
+    <form className="mx-1 flex flex-col" onSubmit={handleSubmit(onSubmit)}>
+      <h2 className="mb-3 text-xl font-bold">Add Transaction ({user.name})</h2>
       <div className="space-y-2">
         <FormInputText register={register} formState={formState} />
         <FormInputNumber register={register} formState={formState} />
@@ -165,7 +165,7 @@ const FormInputError = ({
 
   return (
     <div className="flex flex-col sm:flex-row">
-      <div className="relative w-fit">
+      <div className="relative w-fit rounded-sm border-2 border-black shadow-[3px_3px_0px_rgba(0,0,0,1)]">
         {children}
         <div className="absolute inset-y-0 right-0 flex items-center pr-1 text-red-700">
           {errors[fieldName] && <MdErrorOutline size="18" />}
@@ -185,7 +185,7 @@ const SubmitButton = () => {
     <div className="mt-2">
       <button
         type="submit"
-        className="rounded-md bg-theme-main px-2 py-0.5 font-semibold text-white transition-colors hover:bg-slate-900"
+        className="rounded-md border-2 border-black bg-theme-main px-2 py-0.5 font-semibold text-white shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-colors hover:bg-theme-hover hover:shadow-[3px_3px_0px_rgba(0,0,0,1)]"
       >
         Submit
       </button>

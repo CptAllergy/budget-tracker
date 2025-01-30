@@ -8,8 +8,10 @@ module.exports = {
   ],
   theme: {
     extend: {
+      // TODO maybe change these colors to some neo brutalism vibes
       colors: {
         "theme-main": "#178cc3",
+        "theme-hover": "#0369a1",
         "theme-light": "#f0ece4",
         "theme-loading-dark": "#cbd5e1",
         "theme-loading-light": "#ebebeb",

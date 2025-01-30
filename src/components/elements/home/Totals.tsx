@@ -20,7 +20,7 @@ const Totals = ({ user1, user2 }: { user1: UserDTO; user2: UserDTO }) => {
   }, [user1, user2]);
 
   return (
-    <div>
+    <div className="mx-1">
       <h2 className="mb-3 text-xl font-bold">Totals</h2>
       <div className="underline">
         <span>
