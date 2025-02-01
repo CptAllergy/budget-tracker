@@ -1,14 +1,10 @@
 "use client";
 
 import { AlertContext } from "@/contexts/AlertContext";
-import React, { useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { IoMdCloseCircle } from "react-icons/io";
 
-interface SnackbarProps {
-  duration?: number;
-}
-
-export const AlertSnackbar = ({ duration = 3000 }) => {
+export const AlertSnackbar = () => {
   const {
     isAlertEnabled, // toggle on or off
     isRefreshEnabled, // Toggle the refresh button on or off
@@ -17,7 +13,23 @@ export const AlertSnackbar = ({ duration = 3000 }) => {
     setAlertEnabled,
   } = useContext(AlertContext);
 
-  // TODO add timeout to hide, maybe with a new parameter on the context
+  const opacityIn = "opacity-100 duration-0";
+  const opacityOut = "opacity-0 duration-300";
+  const [opacity, setOpacity] = useState<string>(opacityIn);
+
+  const fadeOutAlert = () => {
+    setOpacity(opacityOut);
+    setTimeout(() => setAlertEnabled(false), 300);
+  };
+
+  // Hide info alerts automatically with a timeout
+  useEffect(() => {
+    setOpacity(opacityIn);
+    if (isAlertEnabled && alertType === "info") {
+      console.log("useEffect refresh");
+      setTimeout(fadeOutAlert, 4000);
+    }
+  }, [isAlertEnabled, alertType]);
 
   const getAlertProps = () => {
     switch (alertType) {
@@ -44,7 +56,9 @@ export const AlertSnackbar = ({ duration = 3000 }) => {
   return (
     <>
       {isAlertEnabled && (
-        <div className="fixed bottom-0 left-0 z-10 m-5 rounded-lg bg-slate-800">
+        <div
+          className={`${opacity} fixed bottom-0 left-0 z-10 m-5 rounded-lg bg-slate-800 transition-opacity`}
+        >
           <div className="flex items-center p-4 text-white">
             <span className={`pr-2 font-semibold ${color}`}>
               {headerMessage}

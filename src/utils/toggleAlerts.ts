@@ -21,12 +21,10 @@ export const toggleStatusErrorAlert = (
     }
     case "DELETE_FAILED": {
       setAlertMessage("Failed to remove transaction");
-      setRefreshEnabled(true);
       break;
     }
     case "ADD_FAILED": {
       setAlertMessage("Failed to add new transaction");
-      setRefreshEnabled(true);
       break;
     }
     default: {
