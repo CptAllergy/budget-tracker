@@ -7,7 +7,7 @@ import React, {
   useState,
 } from "react";
 
-type AlertType = "error" | "warning" | "info";
+export type AlertType = "error" | "warning" | "info";
 
 export type AlertContextType = {
   isAlertEnabled: boolean;

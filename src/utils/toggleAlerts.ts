@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertContextType } from "@/contexts/AlertContext";
+import { AlertContextType, AlertType } from "@/contexts/AlertContext";
 import { CustomErrorCode } from "@/types/errorTypes";
 
 export const toggleStatusErrorAlert = (
@@ -35,15 +35,16 @@ export const toggleStatusErrorAlert = (
   }
 };
 
-export const toggleStatusInfoAlert = (
+export const toggleStatusAlert = (
   alertContext: AlertContextType,
-  alertMessage: string
+  alertMessage: string,
+  alertType: AlertType = "info"
 ) => {
   const { setAlertEnabled, setRefreshEnabled, setAlertType, setAlertMessage } =
     alertContext;
 
   setAlertMessage(alertMessage);
   setAlertEnabled(true);
-  setAlertType("info");
+  setAlertType(alertType);
   setRefreshEnabled(false);
 };

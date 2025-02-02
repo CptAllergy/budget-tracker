@@ -3,6 +3,7 @@ import {
   doc,
   endBefore,
   Firestore,
+  getDoc,
   getDocs,
   limit,
   limitToLast,
@@ -39,6 +40,20 @@ export function fetchUsersFirebase(
       }
     });
   });
+}
+
+export async function getUserByIdFirebase(db: Firestore, userId: string) {
+  const docRef = doc(db, "users", userId);
+  const docSnap = await getDoc(docRef);
+
+  if (docSnap.exists()) {
+    return {
+      id: docSnap.id,
+      ...docSnap.data(),
+    } as UserDTO;
+  } else {
+    return null;
+  }
 }
 
 function setTransactionPage(

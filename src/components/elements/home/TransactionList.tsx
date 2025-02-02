@@ -31,18 +31,18 @@ import { TransactionListNewPageLoading } from "@/components/loading/elements/hom
 const TransactionList = ({
   transactions,
   setTransactions,
-  user1,
-  setUser1,
-  user2,
-  setUser2,
+  currentUser,
+  setCurrentUser,
+  secondUser,
+  setSecondUser,
   db,
 }: {
   transactions: TransactionDTO[];
   setTransactions: Dispatch<SetStateAction<TransactionDTO[]>>;
-  user1: UserDTO;
-  setUser1: Dispatch<SetStateAction<UserDTO>>;
-  user2: UserDTO;
-  setUser2: Dispatch<SetStateAction<UserDTO>>;
+  currentUser: UserDTO;
+  setCurrentUser: Dispatch<SetStateAction<UserDTO>>;
+  secondUser: UserDTO;
+  setSecondUser: Dispatch<SetStateAction<UserDTO>>;
   db: Firestore;
 }) => {
   const alertContext = useRef(useContext(AlertContext));
@@ -100,10 +100,10 @@ const TransactionList = ({
       await deleteTransactionFirebase(
         db,
         transaction,
-        user1,
-        setUser1,
-        user2,
-        setUser2,
+        currentUser,
+        setCurrentUser,
+        secondUser,
+        setSecondUser,
         transactions,
         setTransactions
       );
@@ -114,7 +114,7 @@ const TransactionList = ({
   };
 
   return (
-    <div className="mx-1 mt-5">
+    <div className="mx-1 mb-5 mt-5">
       {loading ? (
         // TODO could probably improve this loading animation
         <TransactionListNewPageLoading />
@@ -122,6 +122,7 @@ const TransactionList = ({
         <DataTable
           transactions={transactions}
           removeTransaction={removeTransaction}
+          currentUser={currentUser}
           loading={loading}
         />
       )}
@@ -143,13 +144,16 @@ const TransactionList = ({
   );
 };
 
+// TODO add alternative mobile stacked ui
 const DataTable = ({
   transactions,
   removeTransaction,
+  currentUser,
   loading,
 }: {
   transactions: TransactionDTO[];
   removeTransaction: (transaction: TransactionDTO) => void;
+  currentUser: UserDTO;
   loading: boolean;
 }) => {
   const timestampToDate = (timestamp: Timestamp) => {
@@ -181,12 +185,15 @@ const DataTable = ({
               <td>{timestampToDate(transaction.timestamp)}</td>
               <td>{transaction.username}</td>
               <td>
-                <button
-                  className="ml-3 text-theme-main transition-colors hover:text-theme-hover"
-                  onClick={() => removeTransaction(transaction)}
-                >
-                  <MdDelete size={22} />
-                </button>
+                {/*TODO add confirmation dialog to delete*/}
+                {currentUser.id === transaction.userId && (
+                  <button
+                    className="ml-2 text-theme-main transition-colors hover:text-theme-hover"
+                    onClick={() => removeTransaction(transaction)}
+                  >
+                    <MdDelete size={22} />
+                  </button>
+                )}
               </td>
             </tr>
           ))}

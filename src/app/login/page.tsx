@@ -3,7 +3,7 @@
 import { Navbar } from "@/components/elements/navbar/Navbar";
 import { useContext, useEffect, useRef } from "react";
 import { AlertContext } from "@/contexts/AlertContext";
-import { toggleStatusInfoAlert } from "@/utils/toggleAlerts";
+import { toggleStatusAlert } from "@/utils/toggleAlerts";
 
 const Login = () => {
   const alertContext = useRef(useContext(AlertContext));
@@ -11,9 +11,10 @@ const Login = () => {
   useEffect(() => {
     const sessionError = sessionStorage.getItem("session_error");
     if (sessionError) {
-      toggleStatusInfoAlert(
+      toggleStatusAlert(
         alertContext.current,
-        "Your session has expired. Please login again"
+        "Your session has expired. Please login again",
+        "warning"
       );
       sessionStorage.removeItem("session_error");
     }

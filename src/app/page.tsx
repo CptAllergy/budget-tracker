@@ -30,8 +30,8 @@ import {
   TotalsLoading,
   TransactionListLoading,
 } from "@/components/loading/elements/home/LoadingHome";
+import NewChanges from "@/components/elements/home/NewChanges";
 
-// TODO make the application refresh automatically somehow, good idea to use SWR maybe, refetch every 30 seconds
 const Home = () => {
   const alertContext = useRef(useContext(AlertContext));
   const { data: session } = useSession();
@@ -40,6 +40,8 @@ const Home = () => {
   const [currentUser, setCurrentUser] = useState<UserDTO>();
   const [secondUser, setSecondUser] = useState<UserDTO>();
   const [transactions, setTransactions] = useState<TransactionDTO[]>([]);
+  // Used to detect new changes
+  const [isChangeFound, setIsChangeFound] = useState<boolean>(false);
 
   const firebaseConfig: FirebaseOptions = JSON.parse(
     process.env.NEXT_PUBLIC_FIREBASE_CONFIG!!
@@ -79,12 +81,18 @@ const Home = () => {
   return (
     <div className="flex flex-col items-center">
       <Navbar />
-      <p className="mx-3 font-semibold text-red-600">
-        Notice: This ui is still under development, to see changes from other
-        users you must refresh the page{" "}
-      </p>
       {/*TODO configure some proper width*/}
-      <div className="mx-3 mt-10">
+      <div className="sticky top-0 z-10 flex w-full justify-end">
+        {secondUser && (
+          <NewChanges
+            isChangeFound={isChangeFound}
+            setIsChangeFound={setIsChangeFound}
+            secondUser={secondUser}
+            db={db}
+          />
+        )}
+      </div>
+      <div className="mx-3 -mt-12">
         {currentUser && secondUser ? (
           <Totals user1={currentUser} user2={secondUser} />
         ) : (
@@ -107,10 +115,10 @@ const Home = () => {
           <TransactionList
             transactions={transactions}
             setTransactions={setTransactions}
-            user1={currentUser}
-            setUser1={setCurrentUser as Dispatch<SetStateAction<UserDTO>>}
-            user2={secondUser}
-            setUser2={setSecondUser as Dispatch<SetStateAction<UserDTO>>}
+            currentUser={currentUser}
+            setCurrentUser={setCurrentUser as Dispatch<SetStateAction<UserDTO>>}
+            secondUser={secondUser}
+            setSecondUser={setSecondUser as Dispatch<SetStateAction<UserDTO>>}
             db={db}
           />
         ) : (

@@ -24,7 +24,7 @@ import { isNumeric } from "@/utils/helpers/parsers";
 import { AlertContext } from "@/contexts/AlertContext";
 import {
   toggleStatusErrorAlert,
-  toggleStatusInfoAlert,
+  toggleStatusAlert,
 } from "@/utils/toggleAlerts";
 import { MdErrorOutline } from "react-icons/md";
 import { addNewTransactionFirebase } from "@/services/firebaseService";
@@ -92,7 +92,7 @@ const NewTransaction = ({
         setTransactions
       );
 
-      toggleStatusInfoAlert(
+      toggleStatusAlert(
         alertContext.current,
         "New transaction added successfully"
       );

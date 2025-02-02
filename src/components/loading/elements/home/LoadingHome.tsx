@@ -2,7 +2,7 @@ import { LoadingRoundedText } from "@/components/loading/text/LoadingRoundedText
 
 export const TotalsLoading = () => {
   return (
-    <div className="mt-2">
+    <div className="mt-20">
       <LoadingRoundedText theme="dark" className="h-4 w-16" />
       <LoadingRoundedText theme="dark" className="mt-6 h-3 w-60" />
     </div>
