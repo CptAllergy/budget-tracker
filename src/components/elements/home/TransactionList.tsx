@@ -179,7 +179,7 @@ const DataTable = ({
         isDialogOpen={isDeleteDialogOpen}
         setIsDialogOpen={setIsDeleteDialogOpen}
         removeTransaction={removeTransaction}
-        transaction={deletedTransaction!!}
+        transaction={deletedTransaction}
       />
       <table className="table-auto">
         <thead>
@@ -225,11 +225,13 @@ const DeleteDialog = ({
   isDialogOpen: boolean;
   setIsDialogOpen: Dispatch<SetStateAction<boolean>>;
   removeTransaction: (transaction: TransactionDTO) => void;
-  transaction: TransactionDTO;
+  transaction: TransactionDTO | undefined;
 }) => {
   const deleteTransaction = () => {
-    removeTransaction(transaction);
-    setIsDialogOpen(false);
+    if (transaction) {
+      removeTransaction(transaction);
+      setIsDialogOpen(false);
+    }
   };
 
   return (
@@ -252,10 +254,12 @@ const DeleteDialog = ({
             <DialogTitle as="h3" className="text-lg font-bold">
               Delete Transaction
             </DialogTitle>
-            <p className="mt-4 text-sm font-medium">
-              {transaction.label} | {Number(transaction.amount).toFixed(2)}€ |{" "}
-              {timestampToDate(transaction.timestamp)}
-            </p>
+            {transaction && (
+              <p className="mt-4 text-sm font-medium">
+                {transaction.label} | {Number(transaction.amount).toFixed(2)}€ |{" "}
+                {timestampToDate(transaction.timestamp)}
+              </p>
+            )}
             <p className="mt-2 text-sm font-medium">
               Are you sure you want to delete this transaction?
             </p>
