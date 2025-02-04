@@ -20,7 +20,6 @@ const NewChanges = ({
   useEffect(() => {
     const checkLatestTransaction = async () => {
       const latestSecondUser = await getUserByIdFirebase(db, secondUser.id);
-      console.log("Fetching data", latestSecondUser);
 
       // Compare the most recent data to check for any changes
       if (latestSecondUser && secondUser.total !== latestSecondUser.total) {

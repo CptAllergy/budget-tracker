@@ -4,10 +4,11 @@ import { AlertContextProvider } from "@/contexts/AlertContext";
 import { Metadata } from "next";
 import { ReactNode } from "react";
 import { SessionProvider } from "next-auth/react";
+import { dmSans } from "@/styles/fonts";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={dmSans.className}>
       <body className="bg-theme-background-light">
         <SessionProvider>
           <AlertContextProvider>
@@ -20,6 +21,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   );
 }
 
+// TODO add some icon
 export const metadata: Metadata = {
   title: "Budget Tracker",
   description: "Helping you keep track of your money",

@@ -26,8 +26,7 @@ export const AlertSnackbar = () => {
   useEffect(() => {
     setOpacity(opacityIn);
     if (isAlertEnabled && alertType === "info") {
-      console.log("useEffect refresh");
-      setTimeout(fadeOutAlert, 4000);
+      setTimeout(fadeOutAlert, 3000);
     }
   }, [isAlertEnabled, alertType]);
 
@@ -57,9 +56,9 @@ export const AlertSnackbar = () => {
     <>
       {isAlertEnabled && (
         <div
-          className={`${opacity} fixed bottom-0 left-0 z-10 m-5 rounded-lg bg-slate-800 transition-opacity`}
+          className={`${opacity} fixed bottom-0 left-0 z-10 m-5 rounded-md border-2 border-black bg-theme-secondary shadow-[4px_4px_0px_rgba(0,0,0,1)] transition-opacity`}
         >
-          <div className="flex items-center p-4 text-white">
+          <div className="flex items-center p-4 font-medium">
             <span className={`pr-2 font-semibold ${color}`}>
               {headerMessage}
             </span>
@@ -78,7 +77,7 @@ export const AlertSnackbar = () => {
             ) : (
               <span
                 onClick={() => setAlertEnabled(false)}
-                className="ml-1 cursor-pointer rounded-xl p-1 text-2xl text-blue-400 hover:bg-blue-200 hover:bg-opacity-50 hover:text-blue-600"
+                className="ml-1 cursor-pointer rounded-xl p-1 text-2xl text-black hover:bg-gray-600 hover:bg-opacity-50 hover:text-gray-800"
               >
                 <IoMdCloseCircle />
               </span>

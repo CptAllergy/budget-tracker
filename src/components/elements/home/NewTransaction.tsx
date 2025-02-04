@@ -92,10 +92,7 @@ const NewTransaction = ({
         setTransactions
       );
 
-      toggleStatusAlert(
-        alertContext.current,
-        "New transaction added successfully"
-      );
+      toggleStatusAlert(alertContext.current, "New transaction created");
     } catch (error) {
       toggleStatusErrorAlert(alertContext.current, "ADD_FAILED");
       throw "Error adding new transaction";
@@ -185,7 +182,7 @@ const SubmitButton = () => {
     <div className="mt-2">
       <button
         type="submit"
-        className="rounded-md border-2 border-black bg-theme-main px-2 py-0.5 font-semibold text-white shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-colors hover:bg-theme-hover hover:shadow-[3px_3px_0px_rgba(0,0,0,1)]"
+        className="rounded-md border-2 border-black bg-theme-main px-2 py-0.5 font-semibold text-white shadow-[2px_2px_0px_rgba(0,0,0,1)] transition hover:bg-theme-hover hover:shadow-[3px_3px_0px_rgba(0,0,0,1)]"
       >
         Submit
       </button>

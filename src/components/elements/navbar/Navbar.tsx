@@ -5,6 +5,7 @@ import Link from "next/link";
 import { LoadingRoundedButton } from "@/components/loading/buttons/LoadingRoundedButton";
 import { signOut, useSession } from "next-auth/react";
 import SignIn from "@/components/elements/login/SignIn";
+import { spaceGrotesk } from "@/styles/fonts";
 
 export const Navbar = () => {
   const { data: session } = useSession();
@@ -50,7 +51,9 @@ const NavbarBudgetTrackerLogo = () => {
       {/*  src={}*/}
       {/*  alt="Budget Tracker Logo"*/}
       {/*/>*/}
-      <h1 className="mt-1 text-base font-extrabold tracking-widest text-white">
+      <h1
+        className={`${spaceGrotesk.className} mt-1 text-lg font-extrabold tracking-wide text-white`}
+      >
         Budget Tracker
       </h1>
     </Link>

@@ -129,6 +129,7 @@ const NewTransaction = ({
   const {
     register,
     handleSubmit,
+    // TODO what is watch for? can it be deleted?
     watch,
     formState: { errors },
   } = useForm<TransactionDTO>();
@@ -147,7 +148,6 @@ const NewTransaction = ({
 
     // Update the user total by adding the new transaction
     setUserTotal((prevState) => {
-      console.log(prevState);
       return {
         ...prevState,
         total: Number(prevState.total) + Number(data.amount),

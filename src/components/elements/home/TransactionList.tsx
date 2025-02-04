@@ -9,12 +9,11 @@ import {
   useRef,
   useState,
 } from "react";
+import { Firestore, QueryDocumentSnapshot } from "firebase/firestore";
 import {
-  Firestore,
-  QueryDocumentSnapshot,
-  Timestamp,
-} from "firebase/firestore";
-import { toggleStatusErrorAlert } from "@/utils/toggleAlerts";
+  toggleStatusAlert,
+  toggleStatusErrorAlert,
+} from "@/utils/toggleAlerts";
 import { AlertContext } from "@/contexts/AlertContext";
 import {
   deleteTransactionFirebase,
@@ -27,6 +26,13 @@ import {
   MdOutlineKeyboardArrowRight,
 } from "react-icons/md";
 import { TransactionListNewPageLoading } from "@/components/loading/elements/home/LoadingHome";
+import {
+  Dialog,
+  DialogBackdrop,
+  DialogPanel,
+  DialogTitle,
+} from "@headlessui/react";
+import { timestampToDate } from "@/utils/helpers/parsers";
 
 const TransactionList = ({
   transactions,
@@ -107,6 +113,8 @@ const TransactionList = ({
         transactions,
         setTransactions
       );
+
+      toggleStatusAlert(alertContext.current, "Transaction deleted");
     } catch (error) {
       toggleStatusErrorAlert(alertContext.current, "DELETE_FAILED");
       throw "Error deleting transaction";
@@ -156,17 +164,23 @@ const DataTable = ({
   currentUser: UserDTO;
   loading: boolean;
 }) => {
-  const timestampToDate = (timestamp: Timestamp) => {
-    const date = timestamp.toDate();
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deletedTransaction, setDeletedTransaction] =
+    useState<TransactionDTO>();
 
-    return `${day}/${month}/${year}`;
+  const showDeleteDialog = (transaction: TransactionDTO) => {
+    setDeletedTransaction(transaction);
+    setIsDeleteDialogOpen(true);
   };
 
   return (
     <div className="rounded-md border-2 border-black px-2 py-2 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
+      <DeleteDialog
+        isDialogOpen={isDeleteDialogOpen}
+        setIsDialogOpen={setIsDeleteDialogOpen}
+        removeTransaction={removeTransaction}
+        transaction={deletedTransaction!!}
+      />
       <table className="table-auto">
         <thead>
           <tr>
@@ -185,11 +199,10 @@ const DataTable = ({
               <td>{timestampToDate(transaction.timestamp)}</td>
               <td>{transaction.username}</td>
               <td>
-                {/*TODO add confirmation dialog to delete*/}
                 {currentUser.id === transaction.userId && (
                   <button
                     className="ml-2 text-theme-main transition-colors hover:text-theme-hover"
-                    onClick={() => removeTransaction(transaction)}
+                    onClick={() => showDeleteDialog(transaction)}
                   >
                     <MdDelete size={22} />
                   </button>
@@ -200,6 +213,70 @@ const DataTable = ({
         </tbody>
       </table>
     </div>
+  );
+};
+
+const DeleteDialog = ({
+  isDialogOpen,
+  setIsDialogOpen,
+  removeTransaction,
+  transaction,
+}: {
+  isDialogOpen: boolean;
+  setIsDialogOpen: Dispatch<SetStateAction<boolean>>;
+  removeTransaction: (transaction: TransactionDTO) => void;
+  transaction: TransactionDTO;
+}) => {
+  const deleteTransaction = () => {
+    removeTransaction(transaction);
+    setIsDialogOpen(false);
+  };
+
+  return (
+    <Dialog
+      open={isDialogOpen}
+      as="div"
+      className="z-30 focus:outline-none"
+      onClose={() => setIsDialogOpen(false)}
+    >
+      <DialogBackdrop
+        transition
+        className="fixed inset-0 z-10 bg-black/80 duration-300 data-[closed]:opacity-0"
+      />
+      <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
+        <div className="flex min-h-full items-center justify-center p-4">
+          <DialogPanel
+            transition
+            className="w-full max-w-md rounded-md border-2 border-black bg-theme-secondary p-6 shadow-[4px_4px_0px_rgba(0,0,0,1)] duration-200 data-[closed]:opacity-0"
+          >
+            <DialogTitle as="h3" className="text-lg font-bold">
+              Delete Transaction
+            </DialogTitle>
+            <p className="mt-4 text-sm font-medium">
+              {transaction.label} | {Number(transaction.amount).toFixed(2)}€ |{" "}
+              {timestampToDate(transaction.timestamp)}
+            </p>
+            <p className="mt-2 text-sm font-medium">
+              Are you sure you want to delete this transaction?
+            </p>
+            <div className="mt-4 flex flex-col-reverse justify-end gap-2 sm:flex-row">
+              <button
+                className="rounded-md border-2 border-black bg-white px-4 py-2 text-sm font-semibold shadow-[4px_4px_0px_rgba(0,0,0,1)] transition hover:shadow-[5px_5px_0px_rgba(0,0,0,1)] focus:outline-none"
+                onClick={() => setIsDialogOpen(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="rounded-md border-2 border-black bg-theme-main px-4 py-2 text-sm font-semibold text-white shadow-[4px_4px_0px_rgba(0,0,0,1)] transition hover:bg-theme-hover hover:shadow-[5px_5px_0px_rgba(0,0,0,1)] focus:outline-none"
+                onClick={deleteTransaction}
+              >
+                Delete
+              </button>
+            </div>
+          </DialogPanel>
+        </div>
+      </div>
+    </Dialog>
   );
 };
 
