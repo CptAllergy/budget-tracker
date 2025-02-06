@@ -127,22 +127,22 @@ const TransactionList = ({
         // TODO could probably improve this loading animation
         <TransactionListNewPageLoading />
       ) : (
-        <DataTable
+        <TransactionTable
           transactions={transactions}
           removeTransaction={removeTransaction}
           currentUser={currentUser}
           loading={loading}
         />
       )}
-      <div className="mt-3 flex flex-row justify-between">
+      <div className="mx-auto mt-2 flex max-w-6xl flex-row justify-between">
         <button
-          className="rounded-md border-2 border-black bg-theme-main p-0.5 text-white shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-colors hover:bg-theme-hover hover:shadow-[2px_2px_0px_rgba(0,0,0,1)]"
+          className="mx-2 rounded-md border-2 border-black bg-theme-main px-2 py-0.5 text-white shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-colors hover:bg-theme-hover hover:shadow-[2px_2px_0px_rgba(0,0,0,1)]"
           onClick={fetchPreviousPage}
         >
           <MdOutlineKeyboardArrowLeft size={25} />
         </button>
         <button
-          className="rounded-md border-2 border-black bg-theme-main p-0.5 text-white shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-colors hover:bg-theme-hover hover:shadow-[2px_2px_0px_rgba(0,0,0,1)]"
+          className="mx-2 rounded-md border-2 border-black bg-theme-main px-2 py-0.5 text-white shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-colors hover:bg-theme-hover hover:shadow-[2px_2px_0px_rgba(0,0,0,1)]"
           onClick={fetchNextPage}
         >
           <MdOutlineKeyboardArrowRight size={25} />
@@ -152,8 +152,7 @@ const TransactionList = ({
   );
 };
 
-// TODO add alternative mobile stacked ui
-const DataTable = ({
+const TransactionTable = ({
   transactions,
   removeTransaction,
   currentUser,
@@ -174,44 +173,91 @@ const DataTable = ({
   };
 
   return (
-    <div className="rounded-md border-2 border-black px-2 py-2 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
+    <div className="">
       <DeleteDialog
         isDialogOpen={isDeleteDialogOpen}
         setIsDialogOpen={setIsDeleteDialogOpen}
         removeTransaction={removeTransaction}
         transaction={deletedTransaction}
       />
-      <table className="table-auto">
-        <thead>
-          <tr>
-            <th>Description</th>
-            <th>Amount</th>
-            <th>Date</th>
-            <th>User</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {transactions.map((transaction) => (
-            <tr key={transaction.id}>
-              <td>{transaction.label}</td>
-              <td>{Number(transaction.amount).toFixed(2)}€</td>
-              <td>{timestampToDate(transaction.timestamp)}</td>
-              <td>{transaction.username}</td>
-              <td>
-                {currentUser.id === transaction.userId && (
-                  <button
-                    className="ml-2 text-theme-main transition-colors hover:text-theme-hover"
-                    onClick={() => showDeleteDialog(transaction)}
-                  >
-                    <MdDelete size={22} />
-                  </button>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="mx-auto flex max-w-6xl flex-col">
+        <div className="overflow-x-auto">
+          <div className="inline-block min-w-full px-3 py-2 align-middle">
+            <div className="overflow-hidden shadow-[7px_7px_0px_rgba(0,0,0,1)] ring-4 ring-black">
+              <table className="w-full divide-y-4 divide-black">
+                <thead className="bg-theme-secondary">
+                  <tr>
+                    <th
+                      scope="col"
+                      className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                    >
+                      Description
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                    >
+                      Amount
+                    </th>
+                    <th
+                      scope="col"
+                      className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell"
+                    >
+                      Date
+                    </th>
+                    <th
+                      scope="col"
+                      className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell"
+                    >
+                      User
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                    ></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y-2 divide-black bg-theme-highlight">
+                  {transactions.map((transaction) => (
+                    <tr key={transaction.id}>
+                      <td className="w-full max-w-0 truncate whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
+                        {transaction.label}
+                        <dl className="font-normal lg:hidden">
+                          <dt className="mt-1 truncate text-gray-700 sm:hidden">
+                            {timestampToDate(transaction.timestamp)}
+                          </dt>
+                          <dt className="mt-1 truncate text-gray-500 sm:text-gray-700">
+                            {transaction.username}
+                          </dt>
+                        </dl>
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        {Number(transaction.amount).toFixed(2)}€
+                      </td>
+                      <td className="hidden whitespace-nowrap px-3 py-4 text-sm text-gray-500 sm:table-cell">
+                        {timestampToDate(transaction.timestamp)}
+                      </td>
+                      <td className="hidden whitespace-nowrap px-3 py-4 text-sm text-gray-500 lg:table-cell">
+                        {transaction.username}
+                      </td>
+                      <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                        {currentUser.id === transaction.userId && (
+                          <button
+                            className="text-theme-main transition-colors hover:text-theme-hover"
+                            onClick={() => showDeleteDialog(transaction)}
+                          >
+                            <MdDelete size={22} />
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

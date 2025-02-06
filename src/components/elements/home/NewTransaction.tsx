@@ -100,13 +100,20 @@ const NewTransaction = ({
   };
 
   return (
-    <form className="mx-1 flex flex-col" onSubmit={handleSubmit(onSubmit)}>
-      <h2 className="mb-3 text-xl font-bold">Add Transaction ({user.name})</h2>
-      <div className="space-y-2">
-        <FormInputText register={register} formState={formState} />
-        <FormInputNumber register={register} formState={formState} />
+    <form
+      className="mx-1 mt-5 w-full max-w-4xl bg-theme-highlight shadow-[5px_5px_0px_rgba(0,0,0,1)] ring-4 ring-black md:mt-10"
+      onSubmit={handleSubmit(onSubmit)}
+    >
+      <h2 className="border-b-4 border-black bg-theme-secondary py-1 text-center text-xl font-bold">
+        Add Transaction ({user.name})
+      </h2>
+      <div className="p-4">
+        <div className="space-y-2">
+          <FormInputText register={register} formState={formState} />
+          <FormInputNumber register={register} formState={formState} />
+        </div>
+        <SubmitButton />
       </div>
-      <SubmitButton />
     </form>
   );
 };

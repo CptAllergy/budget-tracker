@@ -2,6 +2,7 @@
 
 import { UserDTO } from "@/types/DTO/dataTypes";
 import { useEffect, useState } from "react";
+import { rancho } from "@/styles/fonts";
 
 const Totals = ({ user1, user2 }: { user1: UserDTO; user2: UserDTO }) => {
   const [sender, setSender] = useState("");
@@ -20,10 +21,9 @@ const Totals = ({ user1, user2 }: { user1: UserDTO; user2: UserDTO }) => {
   }, [user1, user2]);
 
   return (
-    <div className="mx-1">
-      <h2 className="mb-3 text-xl font-bold">Totals</h2>
-      <div className="underline">
-        <span>
+    <div className="w-full max-w-4xl bg-theme-secondary py-1 text-center shadow-[5px_5px_0px_rgba(0,0,0,1)] ring-4 ring-black">
+      <div className={`${rancho.className} text-2xl md:text-3xl`}>
+        <span className="">
           {sender} owes {receiver}{" "}
         </span>
         <span className="font-bold">{Number(balance).toFixed(2)}€</span>
