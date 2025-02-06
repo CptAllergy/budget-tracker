@@ -32,6 +32,7 @@ import {
 } from "@/components/loading/elements/home/LoadingHome";
 import NewChanges from "@/components/elements/home/NewChanges";
 
+// TODO fix all hook warnings properly
 const Home = () => {
   const alertContext = useRef(useContext(AlertContext));
   const { data: session } = useSession();
@@ -77,12 +78,10 @@ const Home = () => {
     }
   }, [session]);
 
-  // TODO clean up the styling and make it prettier
   return (
-    <div className="flex flex-col items-center">
+    <div className="">
       <Navbar />
-      {/*TODO configure some proper width*/}
-      <div className="sticky top-0 z-10 flex w-full justify-end">
+      <div className="right sticky top-0 z-10 ml-auto flex w-max justify-end">
         {secondUser && (
           <NewChanges
             isChangeFound={isChangeFound}
@@ -92,13 +91,13 @@ const Home = () => {
           />
         )}
       </div>
-      <div className="mx-3 -mt-12">
-        {currentUser && secondUser ? (
-          <Totals user1={currentUser} user2={secondUser} />
-        ) : (
-          <TotalsLoading />
-        )}
-        <section className="mt-5 flex flex-col md:flex-row md:space-x-10">
+      <div className="mx-3 -mt-8">
+        <section className="mx-4 flex flex-col items-center">
+          {currentUser && secondUser ? (
+            <Totals user1={currentUser} user2={secondUser} />
+          ) : (
+            <TotalsLoading />
+          )}
           {currentUser ? (
             <NewTransaction
               transactions={transactions}
@@ -111,19 +110,23 @@ const Home = () => {
             <NewTransactionLoading />
           )}
         </section>
-        {currentUser && secondUser ? (
-          <TransactionList
-            transactions={transactions}
-            setTransactions={setTransactions}
-            currentUser={currentUser}
-            setCurrentUser={setCurrentUser as Dispatch<SetStateAction<UserDTO>>}
-            secondUser={secondUser}
-            setSecondUser={setSecondUser as Dispatch<SetStateAction<UserDTO>>}
-            db={db}
-          />
-        ) : (
-          <TransactionListLoading />
-        )}
+        <section className="mt-4 md:mt-10">
+          {currentUser && secondUser ? (
+            <TransactionList
+              transactions={transactions}
+              setTransactions={setTransactions}
+              currentUser={currentUser}
+              setCurrentUser={
+                setCurrentUser as Dispatch<SetStateAction<UserDTO>>
+              }
+              secondUser={secondUser}
+              setSecondUser={setSecondUser as Dispatch<SetStateAction<UserDTO>>}
+              db={db}
+            />
+          ) : (
+            <TransactionListLoading />
+          )}
+        </section>
       </div>
     </div>
   );

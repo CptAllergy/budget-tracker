@@ -129,8 +129,6 @@ const NewTransaction = ({
   const {
     register,
     handleSubmit,
-    // TODO what is watch for? can it be deleted?
-    watch,
     formState: { errors },
   } = useForm<TransactionDTO>();
 

@@ -8,11 +8,10 @@ module.exports = {
   ],
   theme: {
     extend: {
-      // TODO maybe change these colors to some neo brutalism vibes
       colors: {
         "theme-main": "#178cc3",
         "theme-secondary": "#cfb0e4",
-        "theme-highlight": "#aae493",
+        "theme-highlight": "#FFF4D9",
         "theme-hover": "#0369a1",
         "theme-light": "#f0ece4",
         "theme-loading-dark": "#cbd5e1",
@@ -21,11 +20,7 @@ module.exports = {
         "theme-background-dark": "#D9D9D9",
       },
     },
-    fontFamily: {
-      nunito: ["nunito", "sans-serif"],
-      MyFont: ['"My Font"', "serif"], // Ensure fonts with spaces have " " surrounding it.
-      Montserrat: ["Montserrat", "sans-serif"],
-    },
+    fontFamily: {},
   },
   plugins: [],
 };

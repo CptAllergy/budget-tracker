@@ -3,6 +3,7 @@
 import { AlertContext } from "@/contexts/AlertContext";
 import React, { useContext, useEffect, useState } from "react";
 import { IoMdCloseCircle } from "react-icons/io";
+import { FaTerminal } from "react-icons/fa6";
 
 export const AlertSnackbar = () => {
   const {
@@ -30,39 +31,17 @@ export const AlertSnackbar = () => {
     }
   }, [isAlertEnabled, alertType]);
 
-  const getAlertProps = () => {
-    switch (alertType) {
-      case "error":
-        return {
-          headerMessage: "Error:",
-          color: "text-red-500",
-        };
-      case "warning":
-        return {
-          headerMessage: "Warning: ",
-          color: "text-yellow-500",
-        };
-      case "info":
-        return {
-          headerMessage: "",
-          color: "text-blue-500",
-        };
-    }
-  };
-
-  const { headerMessage, color } = getAlertProps();
-
   return (
     <>
       {isAlertEnabled && (
         <div
-          className={`${opacity} fixed bottom-0 left-0 z-10 m-5 rounded-md border-2 border-black bg-theme-secondary shadow-[4px_4px_0px_rgba(0,0,0,1)] transition-opacity`}
+          className={`${opacity} fixed bottom-5 left-5 right-5 z-10 rounded-md border-2 border-black bg-theme-secondary shadow-[4px_4px_0px_rgba(0,0,0,1)] transition-opacity md:right-auto md:mr-5`}
         >
-          <div className="flex items-center p-4 font-medium">
-            <span className={`pr-2 font-semibold ${color}`}>
-              {headerMessage}
+          <div className="flex w-full items-center p-4 font-medium">
+            <span className="pr-3">
+              <FaTerminal size={13} />
             </span>
-            <span>{alertMessage}</span>
+            <span className="w-full">{alertMessage}</span>
             {isRefreshEnabled ? (
               <>
                 <span className="ml-1">. Please</span>
@@ -77,9 +56,9 @@ export const AlertSnackbar = () => {
             ) : (
               <span
                 onClick={() => setAlertEnabled(false)}
-                className="ml-1 cursor-pointer rounded-xl p-1 text-2xl text-black hover:bg-gray-600 hover:bg-opacity-50 hover:text-gray-800"
+                className="ml-2 cursor-pointer rounded-xl p-0.5 text-black hover:bg-gray-600 hover:bg-opacity-50 hover:text-gray-800"
               >
-                <IoMdCloseCircle />
+                <IoMdCloseCircle size={25} />
               </span>
             )}
           </div>

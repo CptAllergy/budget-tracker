@@ -9,7 +9,7 @@ import { dmSans } from "@/styles/fonts";
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={dmSans.className}>
-      <body className="bg-theme-background-light">
+      <body className="absolute inset-0 -z-10 h-full w-full bg-orange-400 bg-[radial-gradient(#000000_1px,transparent_1px)] [background-size:20px_20px]">
         <SessionProvider>
           <AlertContextProvider>
             <AlertSnackbar />
