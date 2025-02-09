@@ -19,11 +19,8 @@ export type CreateTransactionDTO = {
 
 export type UserDTO = {
   id: string;
+  groupId: string;
   name: string;
   email: string;
   total: number;
-};
-
-export type AuthorizedDTO = {
-  email: string;
 };

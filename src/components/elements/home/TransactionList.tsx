@@ -39,16 +39,12 @@ const TransactionList = ({
   setTransactions,
   currentUser,
   setCurrentUser,
-  secondUser,
-  setSecondUser,
   db,
 }: {
   transactions: TransactionDTO[];
   setTransactions: Dispatch<SetStateAction<TransactionDTO[]>>;
   currentUser: UserDTO;
   setCurrentUser: Dispatch<SetStateAction<UserDTO>>;
-  secondUser: UserDTO;
-  setSecondUser: Dispatch<SetStateAction<UserDTO>>;
   db: Firestore;
 }) => {
   const alertContext = useRef(useContext(AlertContext));
@@ -63,7 +59,7 @@ const TransactionList = ({
       setLastDocument(lastDoc);
     });
     setLoading(false);
-  }, []);
+  }, [db, setTransactions]);
 
   const fetchNextPage = async () => {
     if (lastDocument) {
@@ -108,8 +104,6 @@ const TransactionList = ({
         transaction,
         currentUser,
         setCurrentUser,
-        secondUser,
-        setSecondUser,
         transactions,
         setTransactions
       );

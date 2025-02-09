@@ -31,6 +31,7 @@ const Home = () => {
 
   const user1Init: UserDTO = {
     id: "idUser1",
+    groupId: "idGroup",
     name: "User 1",
     email: "user1@email.com",
     total: 23.4,
@@ -38,6 +39,7 @@ const Home = () => {
 
   const user2Init: UserDTO = {
     id: "idUser2",
+    groupId: "idGroup",
     name: "User 2",
     email: "user2@email.com",
     total: 80,

@@ -6,6 +6,7 @@ declare module "next-auth" {
     user: {
       /** Google ID token, can use to authenticate into Firebase with credentials. */
       id_token: string;
+      email: string;
     } & DefaultSession["user"];
   }
 }

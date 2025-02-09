@@ -18,18 +18,18 @@ export const AlertSnackbar = () => {
   const opacityOut = "opacity-0 duration-300";
   const [opacity, setOpacity] = useState<string>(opacityIn);
 
-  const fadeOutAlert = () => {
-    setOpacity(opacityOut);
-    setTimeout(() => setAlertEnabled(false), 300);
-  };
-
   // Hide info alerts automatically with a timeout
   useEffect(() => {
+    const fadeOutAlert = () => {
+      setOpacity(opacityOut);
+      setTimeout(() => setAlertEnabled(false), 300);
+    };
+
     setOpacity(opacityIn);
     if (isAlertEnabled && alertType === "info") {
       setTimeout(fadeOutAlert, 3000);
     }
-  }, [isAlertEnabled, alertType]);
+  }, [isAlertEnabled, setAlertEnabled, alertType]);
 
   return (
     <>

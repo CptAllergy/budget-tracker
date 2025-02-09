@@ -13,6 +13,7 @@ import {
   QuerySnapshot,
   runTransaction,
   startAfter,
+  where,
 } from "firebase/firestore";
 import {
   CreateTransactionDTO,
@@ -20,25 +21,41 @@ import {
   UserDTO,
 } from "@/types/DTO/dataTypes";
 import { Dispatch, SetStateAction } from "react";
-import { Session } from "next-auth";
 
-export function fetchUsersFirebase(
+export async function fetchUsersFirebase(
   db: Firestore,
-  session: Session,
+  userEmail: string,
   setCurrentUser: Dispatch<SetStateAction<UserDTO>>,
   setSecondUser: Dispatch<SetStateAction<UserDTO>>
 ) {
-  // TODO can add some kind of user "pairs", so this doesn't break if there are more than 2 users
-  const q = query(collection(db, "users"));
-  getDocs(q).then((querySnapshot) => {
-    querySnapshot.forEach((doc) => {
-      const data = doc.data() as UserDTO;
-      if (data.email === session.user.email) {
-        setCurrentUser({ ...data, id: doc.id });
-      } else {
-        setSecondUser({ ...data, id: doc.id });
-      }
-    });
+  // Find the current logged-in user
+  const currentUserQuery = query(
+    collection(db, "users"),
+    where("email", "==", userEmail)
+  );
+  const currentUserSnapshot = await getDocs(currentUserQuery);
+  if (currentUserSnapshot.size !== 1) {
+    throw "Failed to find current user";
+  }
+  const currentUser = currentUserSnapshot.docs[0].data() as UserDTO;
+
+  // Find the users in the same group as the current user
+  const groupUsersQuery = query(
+    collection(db, "users"),
+    where("groupId", "==", currentUser.groupId)
+  );
+  const groupUsersSnapshot = await getDocs(groupUsersQuery);
+  if (groupUsersSnapshot.size !== 2) {
+    throw "Group must have exactly 2 users";
+  }
+  // Set the current and second user
+  groupUsersSnapshot.forEach((doc) => {
+    const userDTO = doc.data() as UserDTO;
+    if (userDTO.email === currentUser.email) {
+      setCurrentUser({ ...userDTO, id: doc.id });
+    } else {
+      setSecondUser({ ...userDTO, id: doc.id });
+    }
   });
 }
 
@@ -178,8 +195,6 @@ export async function deleteTransactionFirebase(
   transaction: TransactionDTO,
   user1: UserDTO,
   setUser1: Dispatch<SetStateAction<UserDTO>>,
-  user2: UserDTO,
-  setUser2: Dispatch<SetStateAction<UserDTO>>,
   transactions: TransactionDTO[],
   setTransactions: Dispatch<SetStateAction<TransactionDTO[]>>
 ) {
@@ -211,7 +226,7 @@ export async function deleteTransactionFirebase(
   );
   setTransactions(filteredTransactions);
 
-  // Update the total for the correct user
+  // Update the total for the current user
   if (transaction.userId === user1.id) {
     setUser1((prevState) => {
       return {
@@ -219,12 +234,7 @@ export async function deleteTransactionFirebase(
         total: newUserTotal,
       };
     });
-  } else if (transaction.userId === user2.id) {
-    setUser2((prevState) => {
-      return {
-        ...prevState,
-        total: newUserTotal,
-      };
-    });
+  } else {
+    throw "Current user does not match transaction user";
   }
 }

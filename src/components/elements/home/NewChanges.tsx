@@ -30,8 +30,12 @@ const NewChanges = ({
       }
     };
 
-    setTimeout(checkLatestTransaction, 10000);
-  }, []);
+    const timer = setTimeout(checkLatestTransaction, 10000);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [db, secondUser, setIsChangeFound]);
 
   const refreshButtonStyle = isChangeFound
     ? "bg-theme-main animate-pulse"

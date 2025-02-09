@@ -5,6 +5,7 @@ import {
   SetStateAction,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -32,7 +33,7 @@ import {
 } from "@/components/loading/elements/home/LoadingHome";
 import NewChanges from "@/components/elements/home/NewChanges";
 
-// TODO fix all hook warnings properly
+// TODO fix loading animations
 const Home = () => {
   const alertContext = useRef(useContext(AlertContext));
   const { data: session } = useSession();
@@ -44,26 +45,27 @@ const Home = () => {
   // Used to detect new changes
   const [isChangeFound, setIsChangeFound] = useState<boolean>(false);
 
-  const firebaseConfig: FirebaseOptions = JSON.parse(
-    process.env.NEXT_PUBLIC_FIREBASE_CONFIG!!
-  );
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const auth = getAuth();
+  const db = useMemo(() => {
+    const firebaseConfig: FirebaseOptions = JSON.parse(
+      process.env.NEXT_PUBLIC_FIREBASE_CONFIG!!
+    );
+    const app = initializeApp(firebaseConfig);
+    return getFirestore(app);
+  }, []);
 
   useEffect(() => {
-    if (session && session.user && loading) {
+    const auth = getAuth();
+    if (session?.user?.email && session.user.id_token) {
       const credential = GoogleAuthProvider.credential(session.user.id_token);
       signInWithCredential(auth, credential)
-        .then(() => {
+        .then(async () => {
           // Set the current and second user
-          fetchUsersFirebase(
+          await fetchUsersFirebase(
             db,
-            session,
+            session.user.email,
             setCurrentUser as Dispatch<SetStateAction<UserDTO>>,
             setSecondUser as Dispatch<SetStateAction<UserDTO>>
           );
-
           setLoading(false);
         })
         .catch((error) => {
@@ -76,13 +78,13 @@ const Home = () => {
           }
         });
     }
-  }, [session]);
+  }, [session?.user?.email, session?.user?.id_token, db]);
 
   return (
     <div className="">
       <Navbar />
       <div className="right sticky top-0 z-10 ml-auto flex w-max justify-end">
-        {secondUser && (
+        {!loading && secondUser && (
           <NewChanges
             isChangeFound={isChangeFound}
             setIsChangeFound={setIsChangeFound}
@@ -93,12 +95,12 @@ const Home = () => {
       </div>
       <div className="mx-3 -mt-8">
         <section className="mx-4 flex flex-col items-center">
-          {currentUser && secondUser ? (
+          {!loading && currentUser && secondUser ? (
             <Totals user1={currentUser} user2={secondUser} />
           ) : (
             <TotalsLoading />
           )}
-          {currentUser ? (
+          {!loading && currentUser ? (
             <NewTransaction
               transactions={transactions}
               setTransactions={setTransactions}
@@ -111,7 +113,7 @@ const Home = () => {
           )}
         </section>
         <section className="mt-4 md:mt-10">
-          {currentUser && secondUser ? (
+          {!loading && currentUser && secondUser ? (
             <TransactionList
               transactions={transactions}
               setTransactions={setTransactions}
@@ -119,8 +121,6 @@ const Home = () => {
               setCurrentUser={
                 setCurrentUser as Dispatch<SetStateAction<UserDTO>>
               }
-              secondUser={secondUser}
-              setSecondUser={setSecondUser as Dispatch<SetStateAction<UserDTO>>}
               db={db}
             />
           ) : (
