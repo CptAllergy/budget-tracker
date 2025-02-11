@@ -21,11 +21,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   );
 }
 
-// TODO add some icon
 export const metadata: Metadata = {
   title: "Budget Tracker",
-  description: "Helping you keep track of your money",
-  // icons: {
-  //   icon: "/favicon2.ico",
-  // },
+  description: "Helping keep track of your money",
+  icons: {
+    icon: "/assets/budget_tracker.ico",
+  },
 };
