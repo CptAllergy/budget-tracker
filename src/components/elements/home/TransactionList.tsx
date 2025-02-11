@@ -25,7 +25,7 @@ import {
   MdOutlineKeyboardArrowLeft,
   MdOutlineKeyboardArrowRight,
 } from "react-icons/md";
-import { TransactionListNewPageLoading } from "@/components/loading/elements/home/LoadingHome";
+import { TransactionListLoading } from "@/components/loading/elements/home/LoadingHome";
 import {
   Dialog,
   DialogBackdrop,
@@ -119,7 +119,7 @@ const TransactionList = ({
     <div className="mx-1 mb-5 mt-5">
       {loading ? (
         // TODO could probably improve this loading animation
-        <TransactionListNewPageLoading />
+        <TransactionListLoading />
       ) : (
         <TransactionTable
           transactions={transactions}
@@ -177,9 +177,9 @@ const TransactionTable = ({
       <div className="mx-auto flex max-w-6xl flex-col">
         <div className="overflow-x-auto">
           <div className="inline-block min-w-full px-3 py-2 align-middle">
-            <div className="overflow-hidden shadow-[7px_7px_0px_rgba(0,0,0,1)] ring-4 ring-black">
-              <table className="w-full divide-y-4 divide-black">
-                <thead className="bg-theme-secondary">
+            <div className="overflow-hidden rounded-md border-2 border-black shadow-[5px_5px_0px_rgba(0,0,0,1)]">
+              <table className="w-full">
+                <thead className="border-b-2 border-black bg-theme-secondary">
                   <tr>
                     <th
                       scope="col"
@@ -207,7 +207,7 @@ const TransactionTable = ({
                     </th>
                     <th
                       scope="col"
-                      className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                      className="py-3.5 text-left text-sm font-semibold text-gray-900"
                     ></th>
                   </tr>
                 </thead>
@@ -234,7 +234,7 @@ const TransactionTable = ({
                       <td className="hidden whitespace-nowrap px-3 py-4 text-sm text-gray-500 lg:table-cell">
                         {transaction.username}
                       </td>
-                      <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                      <td className="relative whitespace-nowrap py-4 pr-4 text-right text-sm font-medium sm:pr-6">
                         {currentUser.id === transaction.userId && (
                           <button
                             className="text-theme-main transition-colors hover:text-theme-hover"

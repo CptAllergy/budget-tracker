@@ -33,7 +33,6 @@ import {
 } from "@/components/loading/elements/home/LoadingHome";
 import NewChanges from "@/components/elements/home/NewChanges";
 
-// TODO fix loading animations
 const Home = () => {
   const alertContext = useRef(useContext(AlertContext));
   const { data: session } = useSession();

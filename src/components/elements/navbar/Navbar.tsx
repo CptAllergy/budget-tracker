@@ -47,13 +47,13 @@ export const Navbar = () => {
 const NavbarBudgetTrackerLogo = () => {
   return (
     <Link href="/" className="flex items-center space-x-1 sm:space-x-2">
-      <Image
-        height={50}
-        width={0}
-        quality={100}
-        src={budgetTrackerLogo}
-        alt="Budget Tracker Logo"
-      />
+      <div className="h-12 w-12">
+        <Image
+          quality={100}
+          src={budgetTrackerLogo}
+          alt="Budget Tracker Logo"
+        />
+      </div>
       <h1
         className={`${spaceGrotesk.className} mt-1 text-base font-extrabold tracking-wide text-white sm:text-lg`}
       >

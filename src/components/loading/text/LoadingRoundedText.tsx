@@ -13,5 +13,5 @@ export const LoadingRoundedText = ({ theme, className }: Props) => {
   const color =
     theme === "light" ? "bg-theme-loading-light" : "bg-theme-loading-dark";
 
-  return <div className={`animate-pulse ${color} rounded-full ${className}`} />;
+  return <div className={`animate-pulse ${color} rounded-md ${className}`} />;
 };

@@ -2,41 +2,24 @@ import { LoadingRoundedText } from "@/components/loading/text/LoadingRoundedText
 
 export const TotalsLoading = () => {
   return (
-    <div className="mt-20">
-      <LoadingRoundedText theme="dark" className="h-4 w-16" />
-      <LoadingRoundedText theme="dark" className="mt-6 h-3 w-60" />
+    <div className="mt-20 flex w-full justify-center">
+      <LoadingRoundedText theme="dark" className="h-12 w-full max-w-4xl" />
     </div>
   );
 };
 
 export const NewTransactionLoading = () => {
   return (
-    <div className="mt-2">
-      <LoadingRoundedText theme="dark" className="h-4 w-64" />
-      <LoadingRoundedText theme="dark" className="mt-6 h-10 w-40" />
-      <LoadingRoundedText theme="dark" className="mt-3 h-5 w-20" />
+    <div className="mx-1 mt-5 flex w-full flex-col items-center md:mt-10">
+      <LoadingRoundedText theme="dark" className="h-44 w-full max-w-4xl" />
     </div>
   );
 };
 
 export const TransactionListLoading = () => {
   return (
-    <div className="mt-10">
-      <LoadingRoundedText theme="dark" className="h-4 w-36" />
-      <LoadingRoundedText theme="dark" className="mt-6 h-3 w-60" />
-      <LoadingRoundedText theme="dark" className="mt-6 h-3 w-60" />
-      <LoadingRoundedText theme="dark" className="mt-6 h-3 w-60" />
-      <LoadingRoundedText theme="dark" className="mt-6 h-3 w-44" />
+    <div className="my-5 flex w-full flex-col items-center md:my-10">
+      <LoadingRoundedText theme="dark" className="h-[35rem] w-full max-w-6xl" />
     </div>
-  );
-};
-
-export const TransactionListNewPageLoading = () => {
-  return (
-    <>
-      {[...Array(Number(process.env.NEXT_PUBLIC_PAGE_SIZE))].map((_, index) => (
-        <LoadingRoundedText key={index} theme="dark" className="h-4 w-full" />
-      ))}
-    </>
   );
 };

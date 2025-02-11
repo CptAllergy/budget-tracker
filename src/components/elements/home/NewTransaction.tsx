@@ -101,13 +101,13 @@ const NewTransaction = ({
 
   return (
     <form
-      className="mx-1 mt-5 w-full max-w-4xl bg-theme-highlight shadow-[5px_5px_0px_rgba(0,0,0,1)] ring-4 ring-black md:mt-10"
+      className="mx-1 mt-5 w-full max-w-4xl rounded-md border-2 border-black shadow-[5px_5px_0px_rgba(0,0,0,1)] md:mt-10"
       onSubmit={handleSubmit(onSubmit)}
     >
-      <h2 className="border-b-4 border-black bg-theme-secondary py-1 text-center text-xl font-bold">
+      <h2 className="rounded-t-md border-b-2 border-black bg-theme-secondary py-1 text-center text-base font-bold md:text-xl">
         Add Transaction ({user.name})
       </h2>
-      <div className="p-4">
+      <div className="flex flex-col items-center rounded-b-md bg-theme-highlight p-4">
         <div className="space-y-2">
           <FormInputText register={register} formState={formState} />
           <FormInputNumber register={register} formState={formState} />
