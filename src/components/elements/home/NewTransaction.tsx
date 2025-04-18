@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  CreateTransactionDTO,
-  TransactionDTO,
-  UserDTO,
-} from "@/types/DTO/dataTypes";
+import { CreateTransactionDTO, UserDTO } from "@/types/DTO/dataTypes";
 import {
   Dispatch,
   PropsWithChildren,
@@ -23,11 +19,12 @@ import {
 import { isNumeric } from "@/utils/helpers/parsers";
 import { AlertContext } from "@/contexts/AlertContext";
 import {
-  toggleStatusErrorAlert,
   toggleStatusAlert,
+  toggleStatusErrorAlert,
 } from "@/utils/toggleAlerts";
 import { MdErrorOutline } from "react-icons/md";
 import { addNewTransactionFirebase } from "@/services/firebaseService";
+import { TransactionContext } from "@/contexts/TransactionsContext";
 
 type FormInputs = "label" | "amount";
 
@@ -37,19 +34,17 @@ type FormInputType = {
 };
 
 const NewTransaction = ({
-  transactions,
-  setTransactions,
   user,
   setUser,
   db,
 }: {
-  transactions: TransactionDTO[];
-  setTransactions: Dispatch<SetStateAction<TransactionDTO[]>>;
   user: UserDTO;
   setUser: Dispatch<SetStateAction<UserDTO>>;
   db: Firestore;
 }) => {
   const alertContext = useRef(useContext(AlertContext));
+  const transactionContext = useContext(TransactionContext);
+  const setTransactionDocs = useRef(transactionContext.setTransactionDocs);
 
   const { register, handleSubmit, reset, formState } =
     useForm<CreateTransactionDTO>();
@@ -88,8 +83,7 @@ const NewTransaction = ({
         newTransaction,
         user,
         setUser,
-        transactions,
-        setTransactions
+        setTransactionDocs.current
       );
 
       toggleStatusAlert(alertContext.current, "New transaction created");

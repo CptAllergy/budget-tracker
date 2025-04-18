@@ -10,7 +10,7 @@ import {
   useState,
 } from "react";
 import { Navbar } from "@/components/elements/navbar/Navbar";
-import { TransactionDTO, UserDTO } from "@/types/DTO/dataTypes";
+import { UserDTO } from "@/types/DTO/dataTypes";
 import { FirebaseOptions, initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import {
@@ -40,7 +40,6 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<UserDTO>();
   const [secondUser, setSecondUser] = useState<UserDTO>();
-  const [transactions, setTransactions] = useState<TransactionDTO[]>([]);
   // Used to detect new changes
   const [isChangeFound, setIsChangeFound] = useState<boolean>(false);
 
@@ -101,8 +100,6 @@ const Home = () => {
           )}
           {!loading && currentUser ? (
             <NewTransaction
-              transactions={transactions}
-              setTransactions={setTransactions}
               user={currentUser}
               setUser={setCurrentUser as Dispatch<SetStateAction<UserDTO>>}
               db={db}
@@ -114,8 +111,6 @@ const Home = () => {
         <section className="mt-4 md:mt-10">
           {!loading && currentUser && secondUser ? (
             <TransactionList
-              transactions={transactions}
-              setTransactions={setTransactions}
               currentUser={currentUser}
               setCurrentUser={
                 setCurrentUser as Dispatch<SetStateAction<UserDTO>>

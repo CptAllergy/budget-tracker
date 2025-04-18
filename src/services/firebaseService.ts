@@ -1,18 +1,13 @@
 import {
   collection,
   doc,
-  endBefore,
+  DocumentSnapshot,
   Firestore,
   getDoc,
   getDocs,
-  limit,
-  limitToLast,
   orderBy,
   query,
-  QueryDocumentSnapshot,
-  QuerySnapshot,
   runTransaction,
-  startAfter,
   where,
 } from "firebase/firestore";
 import {
@@ -21,6 +16,8 @@ import {
   UserDTO,
 } from "@/types/DTO/dataTypes";
 import { Dispatch, SetStateAction } from "react";
+
+const MAX_PAGE_SIZE = Number(process.env.NEXT_PUBLIC_PAGE_SIZE);
 
 export async function fetchUsersFirebase(
   db: Firestore,
@@ -73,76 +70,34 @@ export async function getUserByIdFirebase(db: Firestore, userId: string) {
   }
 }
 
-function setTransactionPage(
-  querySnapshot: QuerySnapshot,
-  setTransactions: Dispatch<SetStateAction<TransactionDTO[]>>
-) {
-  const savedTransactions: TransactionDTO[] = [];
-  if (!querySnapshot.empty) {
-    querySnapshot.forEach((doc) => {
-      const savedTransaction = {
-        id: doc.id,
-        ...doc.data(),
-      } as TransactionDTO;
-      savedTransactions.push(savedTransaction);
-    });
-
-    setTransactions(savedTransactions);
-  }
-}
-
 export async function fetchTransactionsFirebase(
   db: Firestore,
-  setTransactions: Dispatch<SetStateAction<TransactionDTO[]>>,
-  start?: QueryDocumentSnapshot
+  setTransactionDocs: (
+    updater: (prevDocs: DocumentSnapshot[]) => DocumentSnapshot[]
+  ) => void,
+  monthYear?: { month: number; year: number }
 ) {
-  // If start is not defined, get the latest page of transactions
-  const queryTransactions = start
-    ? query(
-        collection(db, "transactions"),
-        orderBy("timestamp", "desc"),
-        startAfter(start),
-        limit(Number(process.env.NEXT_PUBLIC_PAGE_SIZE))
-      )
-    : query(
-        collection(db, "transactions"),
-        orderBy("timestamp", "desc"),
-        limit(Number(process.env.NEXT_PUBLIC_PAGE_SIZE))
-      );
+  const date = new Date();
 
-  return getDocs(queryTransactions).then((querySnapshot) => {
-    setTransactionPage(querySnapshot, setTransactions);
+  // Only set the month and year if they are provided, otherwise use the current date
+  if (monthYear) {
+    date.setMonth(monthYear.month);
+    date.setFullYear(monthYear.year);
+  }
 
-    // Return the first and last document to be used for pagination
-    return [
-      querySnapshot.docs[0],
-      querySnapshot.docs[querySnapshot.docs.length - 1],
-    ];
-  });
-}
+  const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+  const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+  lastDay.setHours(23, 59, 59, 999);
 
-export async function fetchPreviousTransactionsFirebase(
-  db: Firestore,
-  setTransactions: Dispatch<SetStateAction<TransactionDTO[]>>,
-  end: QueryDocumentSnapshot
-) {
-  // Get the page of transactions before the "end" document
   const queryTransactions = query(
     collection(db, "transactions"),
-    orderBy("timestamp", "desc"),
-    endBefore(end),
-    limitToLast(Number(process.env.NEXT_PUBLIC_PAGE_SIZE))
+    where("timestamp", ">=", firstDay),
+    where("timestamp", "<=", lastDay),
+    orderBy("timestamp", "desc")
   );
 
-  return getDocs(queryTransactions).then((querySnapshot) => {
-    setTransactionPage(querySnapshot, setTransactions);
-
-    // Return the first and last document to be used for pagination
-    return [
-      querySnapshot.docs[0],
-      querySnapshot.docs[querySnapshot.docs.length - 1],
-    ];
-  });
+  const querySnapshot = await getDocs(queryTransactions);
+  setTransactionDocs(() => querySnapshot.docs);
 }
 
 export async function addNewTransactionFirebase(
@@ -150,9 +105,13 @@ export async function addNewTransactionFirebase(
   newTransaction: CreateTransactionDTO,
   user: UserDTO,
   setUser: Dispatch<SetStateAction<UserDTO>>,
-  transactions: TransactionDTO[],
-  setTransactions: Dispatch<SetStateAction<TransactionDTO[]>>
+  setTransactionDocs: (
+    updater: (prevDocs: DocumentSnapshot[]) => DocumentSnapshot[]
+  ) => void
 ) {
+  // Load the first page
+  await fetchTransactionsFirebase(db, setTransactionDocs);
+
   const userRef = doc(db, "users", user.id);
   const transactionRef = doc(collection(db, "transactions"));
 
@@ -163,23 +122,17 @@ export async function addNewTransactionFirebase(
       throw "Document does not exist!";
     }
     const userDocument = userDocumentDoc.data() as UserDTO;
-    const newTotal = userDocument.total + newTransaction.amount;
+    const newUserTotal = userDocument.total + newTransaction.amount;
 
     // Increase user total document
     fbTransaction.update(userRef, {
-      total: newTotal,
+      total: newUserTotal,
     });
     // Add transaction document
     fbTransaction.set(transactionRef, newTransaction);
 
-    return newTotal;
+    return newUserTotal;
   });
-
-  // Update the transaction list
-  setTransactions([
-    { id: transactionRef.id, ...newTransaction },
-    ...transactions,
-  ]);
 
   // Update the total for the current user
   setUser((prevState) => {
@@ -188,6 +141,12 @@ export async function addNewTransactionFirebase(
       total: newUserTotal,
     };
   });
+
+  // Update the reference list
+  const transactionDoc = await getDoc(transactionRef);
+  setTransactionDocs((prevDocs) => {
+    return [transactionDoc, ...prevDocs];
+  });
 }
 
 export async function deleteTransactionFirebase(
@@ -195,8 +154,9 @@ export async function deleteTransactionFirebase(
   transaction: TransactionDTO,
   user1: UserDTO,
   setUser1: Dispatch<SetStateAction<UserDTO>>,
-  transactions: TransactionDTO[],
-  setTransactions: Dispatch<SetStateAction<TransactionDTO[]>>
+  setTransactionDocs: (
+    updater: (prevDocs: DocumentSnapshot[]) => DocumentSnapshot[]
+  ) => void
 ) {
   const userRef = doc(db, "users", transaction.userId);
   const transactionRef = doc(db, "transactions", transaction.id);
@@ -220,11 +180,10 @@ export async function deleteTransactionFirebase(
     return newTotal;
   });
 
-  // Delete transaction and update list
-  const filteredTransactions = transactions.filter(
-    (value) => value.id != transaction.id
-  );
-  setTransactions(filteredTransactions);
+  // Delete reference Update the reference list
+  setTransactionDocs((prevRefs) => {
+    return prevRefs.filter((value) => value.id != transaction.id);
+  });
 
   // Update the total for the current user
   if (transaction.userId === user1.id) {
@@ -235,6 +194,7 @@ export async function deleteTransactionFirebase(
       };
     });
   } else {
+    // TODO shouldn't this check be done before the transaction? Evaluate
     throw "Current user does not match transaction user";
   }
 }

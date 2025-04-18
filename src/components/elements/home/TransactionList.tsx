@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { Firestore, QueryDocumentSnapshot } from "firebase/firestore";
+import { Firestore } from "firebase/firestore";
 import {
   toggleStatusAlert,
   toggleStatusErrorAlert,
@@ -17,7 +17,6 @@ import {
 import { AlertContext } from "@/contexts/AlertContext";
 import {
   deleteTransactionFirebase,
-  fetchPreviousTransactionsFirebase,
   fetchTransactionsFirebase,
 } from "@/services/firebaseService";
 import {
@@ -33,69 +32,46 @@ import {
   DialogTitle,
 } from "@headlessui/react";
 import { timestampToDate } from "@/utils/helpers/parsers";
+import { TransactionContext } from "@/contexts/TransactionsContext";
 
 const TransactionList = ({
-  transactions,
-  setTransactions,
   currentUser,
   setCurrentUser,
   db,
 }: {
-  transactions: TransactionDTO[];
-  setTransactions: Dispatch<SetStateAction<TransactionDTO[]>>;
   currentUser: UserDTO;
   setCurrentUser: Dispatch<SetStateAction<UserDTO>>;
   db: Firestore;
 }) => {
   const alertContext = useRef(useContext(AlertContext));
+  const transactionContext = useContext(TransactionContext);
+  const setTransactionDocs = useRef(transactionContext.setTransactionDocs);
 
+  const [monthYear, setMonthYear] = useState<{ month: number; year: number }>(
+    () => {
+      const currentDate = new Date();
+      return { month: currentDate.getMonth(), year: currentDate.getFullYear() };
+    }
+  );
   const [loading, setLoading] = useState(true);
-  const [lastDocument, setLastDocument] = useState<QueryDocumentSnapshot>();
-  const [firstDocument, setFirstDocument] = useState<QueryDocumentSnapshot>();
 
   useEffect(() => {
     // Set transaction list
-    fetchTransactionsFirebase(db, setTransactions).then(([_, lastDoc]) => {
-      setLastDocument(lastDoc);
-    });
-    setLoading(false);
-  }, [db, setTransactions]);
+    fetchTransactionsFirebase(db, setTransactionDocs.current, monthYear).then(
+      () => setLoading(false)
+    );
+  }, [db, monthYear]);
 
-  const fetchNextPage = async () => {
-    if (lastDocument) {
-      setLoading(true);
-      fetchTransactionsFirebase(db, setTransactions, lastDocument).then(
-        ([firstDoc, lastDoc]) => {
-          if (firstDoc !== undefined && lastDoc !== undefined) {
-            setFirstDocument(firstDoc);
-            setLastDocument(lastDoc);
-          } else {
-            setLastDocument(undefined);
-          }
-          setLoading(false);
-        }
-      );
-    }
-  };
-
-  const fetchPreviousPage = async () => {
-    if (firstDocument) {
-      setLoading(true);
-      fetchPreviousTransactionsFirebase(
-        db,
-        setTransactions,
-        firstDocument
-      ).then(([firstDoc, lastDoc]) => {
-        if (firstDoc !== undefined && lastDoc !== undefined) {
-          setFirstDocument(firstDoc);
-          setLastDocument(lastDoc);
-        } else {
-          setFirstDocument(undefined);
-        }
-        setLoading(false);
-      });
-    }
-  };
+  // const fetchNextPage = async (monthYear: { month: number; year: number }) => {
+  //   if (transactionContext.transactions.length > 0) {
+  //     setLoading(true);
+  //     fetchTransactionsFirebase(db, setTransactionDocs.current, monthYear).then(
+  //       () => {
+  //         setLoading(false);
+  //       }
+  //     );
+  //   }
+  // };
 
   const removeTransaction = async (transaction: TransactionDTO) => {
     try {
@@ -104,8 +80,7 @@ const TransactionList = ({
         transaction,
         currentUser,
         setCurrentUser,
-        transactions,
-        setTransactions
+        setTransactionDocs.current
       );
 
       toggleStatusAlert(alertContext.current, "Transaction deleted");
@@ -115,33 +90,39 @@ const TransactionList = ({
     }
   };
 
+  const handleMonthYearChange = (isPrevious: boolean) => {
+    if (isPrevious) {
+      setMonthYear((prev) => ({
+        month: prev.month === 0 ? 11 : prev.month - 1,
+        year: prev.month === 0 ? prev.year - 1 : prev.year,
+      }));
+    } else {
+      setMonthYear((prev) => ({
+        month: prev.month === 11 ? 0 : prev.month + 1,
+        year: prev.month === 11 ? prev.year + 1 : prev.year,
+      }));
+    }
+  };
+
   return (
     <div className="mx-1 mb-5 mt-5">
       {loading ? (
         // TODO could probably improve this loading animation
         <TransactionListLoading />
       ) : (
-        <TransactionTable
-          transactions={transactions}
-          removeTransaction={removeTransaction}
-          currentUser={currentUser}
-          loading={loading}
-        />
+        <>
+          <NavigationOptions
+            monthYear={monthYear}
+            handleMonthYearChange={handleMonthYearChange}
+          />
+          <TransactionTable
+            transactions={transactionContext.transactions}
+            removeTransaction={removeTransaction}
+            currentUser={currentUser}
+            loading={loading}
+          />
+        </>
       )}
-      <div className="mx-auto mt-2 flex max-w-6xl flex-row justify-between">
-        <button
-          className="mx-2 rounded-md border-2 border-black bg-theme-main px-2 py-0.5 text-white shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-colors hover:bg-theme-hover hover:shadow-[2px_2px_0px_rgba(0,0,0,1)]"
-          onClick={fetchPreviousPage}
-        >
-          <MdOutlineKeyboardArrowLeft size={25} />
-        </button>
-        <button
-          className="mx-2 rounded-md border-2 border-black bg-theme-main px-2 py-0.5 text-white shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-colors hover:bg-theme-hover hover:shadow-[2px_2px_0px_rgba(0,0,0,1)]"
-          onClick={fetchNextPage}
-        >
-          <MdOutlineKeyboardArrowRight size={25} />
-        </button>
-      </div>
     </div>
   );
 };
@@ -166,6 +147,7 @@ const TransactionTable = ({
     setIsDeleteDialogOpen(true);
   };
 
+  // TODO divide into smaller components
   return (
     <div className="">
       <DeleteDialog
@@ -212,6 +194,16 @@ const TransactionTable = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y-2 divide-black bg-theme-highlight">
+                  {transactions.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={5}
+                        className="whitespace-nowrap px-3 py-4 text-sm text-gray-500"
+                      >
+                        No transactions found
+                      </td>
+                    </tr>
+                  )}
                   {transactions.map((transaction) => (
                     <tr key={transaction.id}>
                       <td className="w-full max-w-0 truncate whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
@@ -321,6 +313,44 @@ const DeleteDialog = ({
         </div>
       </div>
     </Dialog>
+  );
+};
+
+const NavigationOptions = ({
+  monthYear,
+  handleMonthYearChange,
+}: {
+  monthYear: { month: number; year: number };
+  handleMonthYearChange: (isPrevious: boolean) => void;
+}) => {
+  const { month, year } = monthYear;
+  const date = new Date(year, month, 1);
+  const monthString = date.toLocaleString("en-us", { month: "long" });
+
+  return (
+    <div>
+      <div className="mx-auto flex max-w-6xl">
+        <div className="min-w-full px-3 align-middle">
+          <div className="flex flex-row items-center justify-between overflow-hidden rounded-md border-2 border-black bg-theme-highlight py-2 shadow-[2px_2px_0px_rgba(0,0,0,1)]">
+            <button
+              className="mx-4 rounded-md border-2 border-black bg-theme-main px-2 py-0.5 text-white shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-colors hover:bg-theme-hover hover:shadow-[2px_2px_0px_rgba(0,0,0,1)]"
+              onClick={() => handleMonthYearChange(true)}
+            >
+              <MdOutlineKeyboardArrowLeft size={25} />
+            </button>
+            <p className="capitalize">
+              {monthString} - {year}
+            </p>
+            <button
+              className="mx-4 rounded-md border-2 border-black bg-theme-main px-2 py-0.5 text-white shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-colors hover:bg-theme-hover hover:shadow-[2px_2px_0px_rgba(0,0,0,1)]"
+              onClick={() => handleMonthYearChange(false)}
+            >
+              <MdOutlineKeyboardArrowRight size={25} />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
