@@ -5,6 +5,11 @@ function isNumeric(str: any): boolean {
   return !isNaN(str as any) && !isNaN(parseFloat(str as any));
 }
 
+function isValidAmount(amount: string): boolean {
+  const amountNumber = Number(amount);
+  return isNumeric(amount) && amountNumber > 0 && amountNumber <= 5000;
+}
+
 function timestampToDate(timestamp: Timestamp) {
   const date = timestamp.toDate();
   const year = date.getFullYear();
@@ -14,4 +19,4 @@ function timestampToDate(timestamp: Timestamp) {
   return `${day}/${month}/${year}`;
 }
 
-export { isNumeric, timestampToDate };
+export { isNumeric, isValidAmount, timestampToDate };

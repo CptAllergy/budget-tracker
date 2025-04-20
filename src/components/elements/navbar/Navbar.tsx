@@ -8,6 +8,7 @@ import SignIn from "@/components/elements/login/SignIn";
 import { spaceGrotesk } from "@/styles/fonts";
 import budgetTrackerLogo from "../../../../public/assets/budget_tracker.png";
 import Image from "next/image";
+import budgetTrackerCoinLogo from "../../../../public/assets/coin_budget_tracker.png";
 
 export const Navbar = () => {
   const { data: session } = useSession();
@@ -47,15 +48,15 @@ export const Navbar = () => {
 const NavbarBudgetTrackerLogo = () => {
   return (
     <Link href="/" className="flex items-center space-x-1 sm:space-x-2">
-      <div className="h-12 w-12">
+      <div className="h-10 w-10">
         <Image
           quality={100}
-          src={budgetTrackerLogo}
+          src={budgetTrackerCoinLogo}
           alt="Budget Tracker Logo"
         />
       </div>
       <h1
-        className={`${spaceGrotesk.className} mt-1 text-base font-extrabold tracking-wide text-white sm:text-lg`}
+        className={`${spaceGrotesk.className}  text-base font-extrabold tracking-wide text-white sm:text-lg`}
       >
         Budget Tracker
       </h1>

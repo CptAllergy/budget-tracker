@@ -152,12 +152,16 @@ export async function addNewTransactionFirebase(
 export async function deleteTransactionFirebase(
   db: Firestore,
   transaction: TransactionDTO,
-  user1: UserDTO,
-  setUser1: Dispatch<SetStateAction<UserDTO>>,
+  currentUser: UserDTO,
+  setCurrentUser: Dispatch<SetStateAction<UserDTO>>,
   setTransactionDocs: (
     updater: (prevDocs: DocumentSnapshot[]) => DocumentSnapshot[]
   ) => void
 ) {
+  if (transaction.userId !== currentUser.id) {
+    throw "Current user does not match transaction user";
+  }
+
   const userRef = doc(db, "users", transaction.userId);
   const transactionRef = doc(db, "transactions", transaction.id);
 
@@ -186,15 +190,58 @@ export async function deleteTransactionFirebase(
   });
 
   // Update the total for the current user
-  if (transaction.userId === user1.id) {
-    setUser1((prevState) => {
-      return {
-        ...prevState,
-        total: newUserTotal,
-      };
-    });
-  } else {
-    // TODO shouldn't this check be done before the transaction? Evaluate
+  setCurrentUser((prevState) => {
+    return {
+      ...prevState,
+      total: newUserTotal,
+    };
+  });
+}
+
+// TODO finish edit function
+export async function updateTransactionFirebase(
+  db: Firestore,
+  transaction: TransactionDTO,
+  currentUser: UserDTO,
+  setCurrentUser: Dispatch<SetStateAction<UserDTO>>,
+  setTransactionDocs: (
+    updater: (prevDocs: DocumentSnapshot[]) => DocumentSnapshot[]
+  ) => void
+) {
+  if (transaction.userId !== currentUser.id) {
     throw "Current user does not match transaction user";
   }
+
+  const userRef = doc(db, "users", transaction.userId);
+  const transactionRef = doc(db, "transactions", transaction.id);
+
+  // These Firestore operations must run inside an atomic transaction
+  const newUserTotal = await runTransaction(db, async (fbTransaction) => {
+    const userDocumentDoc = await fbTransaction.get(userRef);
+    if (!userDocumentDoc.exists()) {
+      throw "Document does not exist!";
+    }
+    // const userDocument = userDocumentDoc.data() as UserDTO;
+    // const newTotal = userDocument.total - Number(transaction.amount);
+
+    // TODO change only if the amount is different
+    // Decrease user total document by the deleted transaction
+    // fbTransaction.update(userRef, {
+    //   total: newTotal,
+    // });
+    // Delete transaction document
+    // TODO make sure this update is working, and only updating the correct fields
+    fbTransaction.set(
+      transactionRef,
+      {
+        amount: transaction.amount,
+        label: transaction.label,
+        timestamp: transaction.timestamp,
+      },
+      { merge: true }
+    );
+
+    // TODO return the correct value here. Could be positive or negative depending on the amount change
+    return 0;
+  });
 }

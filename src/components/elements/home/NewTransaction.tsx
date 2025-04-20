@@ -16,7 +16,7 @@ import {
   useForm,
   UseFormRegister,
 } from "react-hook-form";
-import { isNumeric } from "@/utils/helpers/parsers";
+import { isNumeric, isValidAmount } from "@/utils/helpers/parsers";
 import { AlertContext } from "@/contexts/AlertContext";
 import {
   toggleStatusAlert,
@@ -59,12 +59,7 @@ const NewTransaction = ({
     // Replace comma with period
     const amountString = newData.amount.toString().replace(",", ".");
 
-    if (
-      // Validate amount
-      !isNumeric(amountString) ||
-      Number(amountString) <= 0 ||
-      Number(amountString) > 5000
-    ) {
+    if (!isValidAmount(amountString)) {
       toggleStatusErrorAlert(alertContext.current, "ADD_FAILED");
       return;
     }
