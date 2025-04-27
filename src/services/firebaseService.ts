@@ -103,8 +103,8 @@ export async function fetchTransactionsFirebase(
 export async function addNewTransactionFirebase(
   db: Firestore,
   newTransaction: CreateTransactionDTO,
-  user: UserDTO,
-  setUser: Dispatch<SetStateAction<UserDTO>>,
+  currentUser: UserDTO,
+  setCurrentUser: Dispatch<SetStateAction<UserDTO>>,
   setTransactionDocs: (
     updater: (prevDocs: DocumentSnapshot[]) => DocumentSnapshot[]
   ) => void
@@ -112,7 +112,7 @@ export async function addNewTransactionFirebase(
   // Load the first page
   await fetchTransactionsFirebase(db, setTransactionDocs);
 
-  const userRef = doc(db, "users", user.id);
+  const userRef = doc(db, "users", currentUser.id);
   const transactionRef = doc(collection(db, "transactions"));
 
   // These Firestore operations must run inside an atomic transaction
@@ -135,7 +135,7 @@ export async function addNewTransactionFirebase(
   });
 
   // Update the total for the current user
-  setUser((prevState) => {
+  setCurrentUser((prevState) => {
     return {
       ...prevState,
       total: newUserTotal,
@@ -152,12 +152,16 @@ export async function addNewTransactionFirebase(
 export async function deleteTransactionFirebase(
   db: Firestore,
   transaction: TransactionDTO,
-  user1: UserDTO,
-  setUser1: Dispatch<SetStateAction<UserDTO>>,
+  currentUser: UserDTO,
+  setCurrentUser: Dispatch<SetStateAction<UserDTO>>,
   setTransactionDocs: (
     updater: (prevDocs: DocumentSnapshot[]) => DocumentSnapshot[]
   ) => void
 ) {
+  if (transaction.userId !== currentUser.id) {
+    throw "Current user does not match transaction user";
+  }
+
   const userRef = doc(db, "users", transaction.userId);
   const transactionRef = doc(db, "transactions", transaction.id);
 
@@ -181,20 +185,100 @@ export async function deleteTransactionFirebase(
   });
 
   // Delete reference Update the reference list
-  setTransactionDocs((prevRefs) => {
-    return prevRefs.filter((value) => value.id != transaction.id);
+  setTransactionDocs((prevDocs) => {
+    return prevDocs.filter((value) => value.id != transaction.id);
   });
 
   // Update the total for the current user
-  if (transaction.userId === user1.id) {
-    setUser1((prevState) => {
-      return {
-        ...prevState,
-        total: newUserTotal,
-      };
-    });
-  } else {
-    // TODO shouldn't this check be done before the transaction? Evaluate
+  setCurrentUser((prevState) => {
+    return {
+      ...prevState,
+      total: newUserTotal,
+    };
+  });
+}
+
+export async function updateTransactionFirebase(
+  db: Firestore,
+  updatedTransaction: TransactionDTO,
+  currentUser: UserDTO,
+  setCurrentUser: Dispatch<SetStateAction<UserDTO>>,
+  setTransactionDocs: (
+    updater: (prevDocs: DocumentSnapshot[]) => DocumentSnapshot[]
+  ) => void
+) {
+  if (updatedTransaction.userId !== currentUser.id) {
     throw "Current user does not match transaction user";
   }
+
+  const userRef = doc(db, "users", updatedTransaction.userId);
+  const transactionRef = doc(db, "transactions", updatedTransaction.id);
+
+  // These Firestore operations must run inside an atomic transaction
+  const { newUserTotal, prevTimestamp } = await runTransaction(
+    db,
+    async (fbTransaction) => {
+      const userDocumentDoc = await fbTransaction.get(userRef);
+      const transactionDocumentDoc = await fbTransaction.get(transactionRef);
+      if (!userDocumentDoc.exists() || !transactionDocumentDoc.exists()) {
+        throw "Document does not exist!";
+      }
+
+      const userDocument = userDocumentDoc.data() as UserDTO;
+      let newTotal = userDocument.total;
+
+      // Update user total document by the updated amount, if it changed
+      const transactionDocument =
+        transactionDocumentDoc.data() as TransactionDTO;
+      if (transactionDocument.amount !== updatedTransaction.amount) {
+        const difference =
+          updatedTransaction.amount - transactionDocument.amount;
+
+        newTotal = userDocument.total + difference;
+        fbTransaction.update(userRef, {
+          total: newTotal,
+        });
+      }
+
+      fbTransaction.update(transactionRef, {
+        amount: updatedTransaction.amount,
+        label: updatedTransaction.label,
+        timestamp: updatedTransaction.timestamp,
+      });
+
+      return {
+        newUserTotal: newTotal,
+        prevTimestamp: transactionDocument.timestamp,
+      };
+    }
+  );
+
+  // Update the total for the current user
+  setCurrentUser((prevState) => {
+    return {
+      ...prevState,
+      total: newUserTotal,
+    };
+  });
+
+  // Replace the transaction document in the state
+  const transactionDoc = await getDoc(transactionRef);
+  setTransactionDocs((prevDocs) => {
+    const filteredList = prevDocs.filter(
+      (value) => value.id != transactionDoc.id
+    );
+
+    const isSameMonth =
+      prevTimestamp.toDate().getMonth() ===
+      transactionDoc.data()?.timestamp.toDate().getMonth();
+
+    // Sort by timestamp
+    if (isSameMonth) {
+      return [transactionDoc, ...filteredList].sort((a, b) =>
+        a.data()?.timestamp < b.data()?.timestamp ? 1 : -1
+      );
+    } else {
+      return filteredList;
+    }
+  });
 }

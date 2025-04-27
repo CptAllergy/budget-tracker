@@ -6,8 +6,8 @@ import { LoadingRoundedButton } from "@/components/loading/buttons/LoadingRounde
 import { signOut, useSession } from "next-auth/react";
 import SignIn from "@/components/elements/login/SignIn";
 import { spaceGrotesk } from "@/styles/fonts";
-import budgetTrackerLogo from "../../../../public/assets/budget_tracker.png";
 import Image from "next/image";
+import budgetTrackerCoinLogo from "../../../../public/assets/coin_budget_tracker.png";
 
 export const Navbar = () => {
   const { data: session } = useSession();
@@ -26,11 +26,11 @@ export const Navbar = () => {
 
   return (
     <>
-      <div className="relative z-10 h-16 w-full border-b-2 border-black bg-theme-main">
-        <div className="absolute bottom-0 left-0 top-0 ml-2 flex items-center">
+      <div className="bg-theme-main relative z-10 h-16 w-full border-b-2 border-black">
+        <div className="absolute top-0 bottom-0 left-0 ml-2 flex items-center">
           <NavbarBudgetTrackerLogo />
         </div>
-        <div className="absolute bottom-0 right-0 top-0 mr-2 mt-1 flex items-center md:mr-4">
+        <div className="absolute top-0 right-0 bottom-0 mt-1 mr-2 flex items-center md:mr-4">
           {loading ? (
             <NavbarLoadingSkeleton />
           ) : session?.user ? (
@@ -47,15 +47,15 @@ export const Navbar = () => {
 const NavbarBudgetTrackerLogo = () => {
   return (
     <Link href="/" className="flex items-center space-x-1 sm:space-x-2">
-      <div className="h-12 w-12">
+      <div className="h-10 w-10">
         <Image
           quality={100}
-          src={budgetTrackerLogo}
+          src={budgetTrackerCoinLogo}
           alt="Budget Tracker Logo"
         />
       </div>
       <h1
-        className={`${spaceGrotesk.className} mt-1 text-base font-extrabold tracking-wide text-white sm:text-lg`}
+        className={`${spaceGrotesk.className} text-base font-extrabold tracking-wide text-white sm:text-lg`}
       >
         Budget Tracker
       </h1>

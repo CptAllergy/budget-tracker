@@ -18,21 +18,21 @@ import { AlertContext } from "@/contexts/AlertContext";
 import {
   deleteTransactionFirebase,
   fetchTransactionsFirebase,
+  updateTransactionFirebase,
 } from "@/services/firebaseService";
 import {
-  MdDelete,
   MdOutlineKeyboardArrowLeft,
   MdOutlineKeyboardArrowRight,
 } from "react-icons/md";
 import { TransactionListLoading } from "@/components/loading/elements/home/LoadingHome";
-import {
-  Dialog,
-  DialogBackdrop,
-  DialogPanel,
-  DialogTitle,
-} from "@headlessui/react";
 import { timestampToDate } from "@/utils/helpers/parsers";
 import { TransactionContext } from "@/contexts/TransactionsContext";
+import { HiMiniEllipsisHorizontal } from "react-icons/hi2";
+import {
+  DeleteDialog,
+  EditDialog,
+} from "@/components/commons/dialogs/ActionDialog";
+import { DropdownMenu } from "@/components/commons/menus/DropdownMenu";
 
 const TransactionList = ({
   currentUser,
@@ -62,17 +62,6 @@ const TransactionList = ({
     );
   }, [db, monthYear]);
 
-  // const fetchNextPage = async (monthYear: { month: number; year: number }) => {
-  //   if (transactionContext.transactions.length > 0) {
-  //     setLoading(true);
-  //     fetchTransactionsFirebase(db, setTransactionDocs.current, monthYear).then(
-  //       () => {
-  //         setLoading(false);
-  //       }
-  //     );
-  //   }
-  // };
-
   const removeTransaction = async (transaction: TransactionDTO) => {
     try {
       await deleteTransactionFirebase(
@@ -87,6 +76,23 @@ const TransactionList = ({
     } catch (error) {
       toggleStatusErrorAlert(alertContext.current, "DELETE_FAILED");
       throw "Error deleting transaction";
+    }
+  };
+
+  const updateTransaction = async (transaction: TransactionDTO) => {
+    try {
+      await updateTransactionFirebase(
+        db,
+        transaction,
+        currentUser,
+        setCurrentUser,
+        setTransactionDocs.current
+      );
+
+      toggleStatusAlert(alertContext.current, "Transaction updated");
+    } catch (error) {
+      toggleStatusErrorAlert(alertContext.current, "UPDATE_FAILED");
+      throw "Error updating transaction";
     }
   };
 
@@ -105,7 +111,7 @@ const TransactionList = ({
   };
 
   return (
-    <div className="mx-1 mb-5 mt-5">
+    <div className="mx-1 mt-5 mb-5">
       {loading ? (
         // TODO could probably improve this loading animation
         <TransactionListLoading />
@@ -118,6 +124,7 @@ const TransactionList = ({
           <TransactionTable
             transactions={transactionContext.transactions}
             removeTransaction={removeTransaction}
+            updateTransaction={updateTransaction}
             currentUser={currentUser}
             loading={loading}
           />
@@ -130,21 +137,30 @@ const TransactionList = ({
 const TransactionTable = ({
   transactions,
   removeTransaction,
+  updateTransaction,
   currentUser,
   loading,
 }: {
   transactions: TransactionDTO[];
   removeTransaction: (transaction: TransactionDTO) => void;
+  updateTransaction: (transaction: TransactionDTO) => void;
   currentUser: UserDTO;
   loading: boolean;
 }) => {
+  // TODO can this be refactored into a single dialog component?
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [deletedTransaction, setDeletedTransaction] =
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  const [selectedTransaction, setSelectedTransaction] =
     useState<TransactionDTO>();
 
   const showDeleteDialog = (transaction: TransactionDTO) => {
-    setDeletedTransaction(transaction);
+    setSelectedTransaction(transaction);
     setIsDeleteDialogOpen(true);
+  };
+  const showEditDialog = (transaction: TransactionDTO) => {
+    setSelectedTransaction(transaction);
+    setIsEditDialogOpen(true);
   };
 
   // TODO divide into smaller components
@@ -154,14 +170,20 @@ const TransactionTable = ({
         isDialogOpen={isDeleteDialogOpen}
         setIsDialogOpen={setIsDeleteDialogOpen}
         removeTransaction={removeTransaction}
-        transaction={deletedTransaction}
+        transaction={selectedTransaction}
+      />
+      <EditDialog
+        isDialogOpen={isEditDialogOpen}
+        setIsDialogOpen={setIsEditDialogOpen}
+        updateTransaction={updateTransaction}
+        transaction={selectedTransaction}
       />
       <div className="mx-auto flex max-w-6xl flex-col">
         <div className="overflow-x-auto">
           <div className="inline-block min-w-full px-3 py-2 align-middle">
             <div className="overflow-hidden rounded-md border-2 border-black shadow-[5px_5px_0px_rgba(0,0,0,1)]">
               <table className="w-full">
-                <thead className="border-b-2 border-black bg-theme-secondary">
+                <thead className="bg-theme-secondary border-b-2 border-black">
                   <tr>
                     <th
                       scope="col"
@@ -193,12 +215,12 @@ const TransactionTable = ({
                     ></th>
                   </tr>
                 </thead>
-                <tbody className="divide-y-2 divide-black bg-theme-highlight">
+                <tbody className="bg-theme-highlight divide-y-2 divide-black">
                   {transactions.length === 0 && (
                     <tr>
                       <td
                         colSpan={5}
-                        className="whitespace-nowrap px-3 py-4 text-sm text-gray-500"
+                        className="px-3 py-4 text-sm whitespace-nowrap text-gray-500"
                       >
                         No transactions found
                       </td>
@@ -206,7 +228,7 @@ const TransactionTable = ({
                   )}
                   {transactions.map((transaction) => (
                     <tr key={transaction.id}>
-                      <td className="w-full max-w-0 truncate whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
+                      <td className="w-full max-w-0 truncate py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
                         {transaction.label}
                         <dl className="font-normal lg:hidden">
                           <dt className="mt-1 truncate text-gray-700 sm:hidden">
@@ -217,23 +239,42 @@ const TransactionTable = ({
                           </dt>
                         </dl>
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                      <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500">
                         {Number(transaction.amount).toFixed(2)}€
                       </td>
-                      <td className="hidden whitespace-nowrap px-3 py-4 text-sm text-gray-500 sm:table-cell">
+                      <td className="hidden px-3 py-4 text-sm whitespace-nowrap text-gray-500 sm:table-cell">
                         {timestampToDate(transaction.timestamp)}
                       </td>
-                      <td className="hidden whitespace-nowrap px-3 py-4 text-sm text-gray-500 lg:table-cell">
+                      <td className="hidden px-3 py-4 text-sm whitespace-nowrap text-gray-500 lg:table-cell">
                         {transaction.username}
                       </td>
-                      <td className="relative whitespace-nowrap py-4 pr-4 text-right text-sm font-medium sm:pr-6">
+                      <td className="relative py-4 pr-4 text-right text-sm font-medium whitespace-nowrap sm:pr-6">
                         {currentUser.id === transaction.userId && (
-                          <button
-                            className="text-theme-main transition-colors hover:text-theme-hover"
-                            onClick={() => showDeleteDialog(transaction)}
-                          >
-                            <MdDelete size={22} />
-                          </button>
+                          <>
+                            <DropdownMenu
+                              menuButton={
+                                <div className="bg-theme-main hover:bg-theme-hover rounded-md border-2 border-black p-1 text-white transition-colors">
+                                  <HiMiniEllipsisHorizontal size={20} />
+                                </div>
+                              }
+                              menuItems={[
+                                {
+                                  icon: <></>,
+                                  label: "Edit",
+                                  onClick: () => {
+                                    showEditDialog(transaction);
+                                  },
+                                },
+                                {
+                                  icon: <></>,
+                                  label: "Delete",
+                                  onClick: () => {
+                                    showDeleteDialog(transaction);
+                                  },
+                                },
+                              ]}
+                            />
+                          </>
                         )}
                       </td>
                     </tr>
@@ -245,74 +286,6 @@ const TransactionTable = ({
         </div>
       </div>
     </div>
-  );
-};
-
-const DeleteDialog = ({
-  isDialogOpen,
-  setIsDialogOpen,
-  removeTransaction,
-  transaction,
-}: {
-  isDialogOpen: boolean;
-  setIsDialogOpen: Dispatch<SetStateAction<boolean>>;
-  removeTransaction: (transaction: TransactionDTO) => void;
-  transaction: TransactionDTO | undefined;
-}) => {
-  const deleteTransaction = () => {
-    if (transaction) {
-      removeTransaction(transaction);
-      setIsDialogOpen(false);
-    }
-  };
-
-  return (
-    <Dialog
-      open={isDialogOpen}
-      as="div"
-      className="z-30 focus:outline-none"
-      onClose={() => setIsDialogOpen(false)}
-    >
-      <DialogBackdrop
-        transition
-        className="fixed inset-0 z-10 bg-black/80 duration-300 data-[closed]:opacity-0"
-      />
-      <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
-        <div className="flex min-h-full items-center justify-center p-4">
-          <DialogPanel
-            transition
-            className="w-full max-w-md rounded-md border-2 border-black bg-theme-secondary p-6 shadow-[4px_4px_0px_rgba(0,0,0,1)] duration-200 data-[closed]:opacity-0"
-          >
-            <DialogTitle as="h3" className="text-lg font-bold">
-              Delete Transaction
-            </DialogTitle>
-            {transaction && (
-              <p className="mt-4 text-sm font-medium">
-                {transaction.label} | {Number(transaction.amount).toFixed(2)}€ |{" "}
-                {timestampToDate(transaction.timestamp)}
-              </p>
-            )}
-            <p className="mt-2 text-sm font-medium">
-              Are you sure you want to delete this transaction?
-            </p>
-            <div className="mt-4 flex flex-col-reverse justify-end gap-2 sm:flex-row">
-              <button
-                className="rounded-md border-2 border-black bg-white px-4 py-2 text-sm font-semibold shadow-[4px_4px_0px_rgba(0,0,0,1)] transition hover:shadow-[5px_5px_0px_rgba(0,0,0,1)] focus:outline-none"
-                onClick={() => setIsDialogOpen(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className="rounded-md border-2 border-black bg-theme-main px-4 py-2 text-sm font-semibold text-white shadow-[4px_4px_0px_rgba(0,0,0,1)] transition hover:bg-theme-hover hover:shadow-[5px_5px_0px_rgba(0,0,0,1)] focus:outline-none"
-                onClick={deleteTransaction}
-              >
-                Delete
-              </button>
-            </div>
-          </DialogPanel>
-        </div>
-      </div>
-    </Dialog>
   );
 };
 
@@ -331,9 +304,9 @@ const NavigationOptions = ({
     <div>
       <div className="mx-auto flex max-w-6xl">
         <div className="min-w-full px-3 align-middle">
-          <div className="flex flex-row items-center justify-between overflow-hidden rounded-md border-2 border-black bg-theme-highlight py-2 shadow-[2px_2px_0px_rgba(0,0,0,1)]">
+          <div className="bg-theme-highlight flex flex-row items-center justify-between overflow-hidden rounded-md border-2 border-black py-2 shadow-[2px_2px_0px_rgba(0,0,0,1)]">
             <button
-              className="mx-4 rounded-md border-2 border-black bg-theme-main px-2 py-0.5 text-white shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-colors hover:bg-theme-hover hover:shadow-[2px_2px_0px_rgba(0,0,0,1)]"
+              className="bg-theme-main hover:bg-theme-hover mx-4 rounded-md border-2 border-black px-2 py-0.5 text-white shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-colors hover:shadow-[2px_2px_0px_rgba(0,0,0,1)]"
               onClick={() => handleMonthYearChange(true)}
             >
               <MdOutlineKeyboardArrowLeft size={25} />
@@ -342,7 +315,7 @@ const NavigationOptions = ({
               {monthString} - {year}
             </p>
             <button
-              className="mx-4 rounded-md border-2 border-black bg-theme-main px-2 py-0.5 text-white shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-colors hover:bg-theme-hover hover:shadow-[2px_2px_0px_rgba(0,0,0,1)]"
+              className="bg-theme-main hover:bg-theme-hover mx-4 rounded-md border-2 border-black px-2 py-0.5 text-white shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-colors hover:shadow-[2px_2px_0px_rgba(0,0,0,1)]"
               onClick={() => handleMonthYearChange(false)}
             >
               <MdOutlineKeyboardArrowRight size={25} />

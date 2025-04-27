@@ -35,7 +35,7 @@ export const AlertSnackbar = () => {
     <>
       {isAlertEnabled && (
         <div
-          className={`${opacity} fixed bottom-5 left-5 right-5 z-10 rounded-md border-2 border-black bg-theme-secondary shadow-[4px_4px_0px_rgba(0,0,0,1)] transition-opacity md:right-auto md:mr-5`}
+          className={`${opacity} bg-theme-secondary fixed right-5 bottom-5 left-5 z-10 rounded-md border-2 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] transition-opacity md:right-auto md:mr-5`}
         >
           <div className="flex w-full items-center p-4 font-medium">
             <span className="pr-3">
@@ -47,7 +47,7 @@ export const AlertSnackbar = () => {
                 <span className="ml-1">. Please</span>
                 <span
                   onClick={() => window.location.reload()}
-                  className="ml-1 mr-1 cursor-pointer text-blue-400 hover:text-blue-300 hover:underline"
+                  className="mr-1 ml-1 cursor-pointer text-blue-400 hover:text-blue-300 hover:underline"
                 >
                   refresh
                 </span>
@@ -56,7 +56,7 @@ export const AlertSnackbar = () => {
             ) : (
               <span
                 onClick={() => setAlertEnabled(false)}
-                className="ml-2 cursor-pointer rounded-xl p-0.5 text-black hover:bg-gray-600 hover:bg-opacity-50 hover:text-gray-800"
+                className="hover:bg-opacity-50 ml-2 cursor-pointer rounded-xl p-0.5 text-black hover:bg-gray-600 hover:text-gray-800"
               >
                 <IoMdCloseCircle size={25} />
               </span>

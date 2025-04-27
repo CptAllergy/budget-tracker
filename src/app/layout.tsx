@@ -1,5 +1,5 @@
 import "@/styles/globals.css";
-import { AlertSnackbar } from "@/components/alerts/AlertSnackbar";
+import { AlertSnackbar } from "@/components/commons/alerts/AlertSnackbar";
 import { AlertContextProvider } from "@/contexts/AlertContext";
 import { SessionProvider } from "next-auth/react";
 import { Metadata } from "next";

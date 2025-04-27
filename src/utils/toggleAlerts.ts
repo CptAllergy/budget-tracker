@@ -27,6 +27,10 @@ export const toggleStatusErrorAlert = (
       setAlertMessage("Failed to add new transaction");
       break;
     }
+    case "UPDATE_FAILED": {
+      setAlertMessage("Failed to update transaction");
+      break;
+    }
     default: {
       setAlertMessage("An unexpected error has occurred");
       setRefreshEnabled(true);
