@@ -15,6 +15,7 @@ export type CreateTransactionDTO = {
   userId: string;
   username: string;
   timestamp: Timestamp;
+  newDate?: Date;
 };
 
 export type UserDTO = {

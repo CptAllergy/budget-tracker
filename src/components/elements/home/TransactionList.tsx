@@ -17,7 +17,8 @@ import {
 import { AlertContext } from "@/contexts/AlertContext";
 import {
   deleteTransactionFirebase,
-  fetchTransactionsFirebase, updateTransactionFirebase,
+  fetchTransactionsFirebase,
+  updateTransactionFirebase,
 } from "@/services/firebaseService";
 import {
   MdOutlineKeyboardArrowLeft,
@@ -27,7 +28,11 @@ import { TransactionListLoading } from "@/components/loading/elements/home/Loadi
 import { timestampToDate } from "@/utils/helpers/parsers";
 import { TransactionContext } from "@/contexts/TransactionsContext";
 import { HiMiniEllipsisHorizontal } from "react-icons/hi2";
-import { DeleteDialog } from "@/components/commons/dialogs/ActionDialog";
+import {
+  DeleteDialog,
+  EditDialog,
+} from "@/components/commons/dialogs/ActionDialog";
+import { DropdownMenu } from "@/components/commons/menus/DropdownMenu";
 
 const TransactionList = ({
   currentUser,
@@ -106,7 +111,7 @@ const TransactionList = ({
   };
 
   return (
-    <div className="mx-1 mb-5 mt-5">
+    <div className="mx-1 mt-5 mb-5">
       {loading ? (
         // TODO could probably improve this loading animation
         <TransactionListLoading />
@@ -119,6 +124,7 @@ const TransactionList = ({
           <TransactionTable
             transactions={transactionContext.transactions}
             removeTransaction={removeTransaction}
+            updateTransaction={updateTransaction}
             currentUser={currentUser}
             loading={loading}
           />
@@ -131,21 +137,30 @@ const TransactionList = ({
 const TransactionTable = ({
   transactions,
   removeTransaction,
+  updateTransaction,
   currentUser,
   loading,
 }: {
   transactions: TransactionDTO[];
   removeTransaction: (transaction: TransactionDTO) => void;
+  updateTransaction: (transaction: TransactionDTO) => void;
   currentUser: UserDTO;
   loading: boolean;
 }) => {
+  // TODO can this be refactored into a single dialog component?
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [deletedTransaction, setDeletedTransaction] =
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  const [selectedTransaction, setSelectedTransaction] =
     useState<TransactionDTO>();
 
   const showDeleteDialog = (transaction: TransactionDTO) => {
-    setDeletedTransaction(transaction);
+    setSelectedTransaction(transaction);
     setIsDeleteDialogOpen(true);
+  };
+  const showEditDialog = (transaction: TransactionDTO) => {
+    setSelectedTransaction(transaction);
+    setIsEditDialogOpen(true);
   };
 
   // TODO divide into smaller components
@@ -155,14 +170,20 @@ const TransactionTable = ({
         isDialogOpen={isDeleteDialogOpen}
         setIsDialogOpen={setIsDeleteDialogOpen}
         removeTransaction={removeTransaction}
-        transaction={deletedTransaction}
+        transaction={selectedTransaction}
+      />
+      <EditDialog
+        isDialogOpen={isEditDialogOpen}
+        setIsDialogOpen={setIsEditDialogOpen}
+        updateTransaction={updateTransaction}
+        transaction={selectedTransaction}
       />
       <div className="mx-auto flex max-w-6xl flex-col">
         <div className="overflow-x-auto">
           <div className="inline-block min-w-full px-3 py-2 align-middle">
             <div className="overflow-hidden rounded-md border-2 border-black shadow-[5px_5px_0px_rgba(0,0,0,1)]">
               <table className="w-full">
-                <thead className="border-b-2 border-black bg-theme-secondary">
+                <thead className="bg-theme-secondary border-b-2 border-black">
                   <tr>
                     <th
                       scope="col"
@@ -194,12 +215,12 @@ const TransactionTable = ({
                     ></th>
                   </tr>
                 </thead>
-                <tbody className="divide-y-2 divide-black bg-theme-highlight">
+                <tbody className="bg-theme-highlight divide-y-2 divide-black">
                   {transactions.length === 0 && (
                     <tr>
                       <td
                         colSpan={5}
-                        className="whitespace-nowrap px-3 py-4 text-sm text-gray-500"
+                        className="px-3 py-4 text-sm whitespace-nowrap text-gray-500"
                       >
                         No transactions found
                       </td>
@@ -207,7 +228,7 @@ const TransactionTable = ({
                   )}
                   {transactions.map((transaction) => (
                     <tr key={transaction.id}>
-                      <td className="w-full max-w-0 truncate whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
+                      <td className="w-full max-w-0 truncate py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
                         {transaction.label}
                         <dl className="font-normal lg:hidden">
                           <dt className="mt-1 truncate text-gray-700 sm:hidden">
@@ -218,23 +239,42 @@ const TransactionTable = ({
                           </dt>
                         </dl>
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                      <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500">
                         {Number(transaction.amount).toFixed(2)}€
                       </td>
-                      <td className="hidden whitespace-nowrap px-3 py-4 text-sm text-gray-500 sm:table-cell">
+                      <td className="hidden px-3 py-4 text-sm whitespace-nowrap text-gray-500 sm:table-cell">
                         {timestampToDate(transaction.timestamp)}
                       </td>
-                      <td className="hidden whitespace-nowrap px-3 py-4 text-sm text-gray-500 lg:table-cell">
+                      <td className="hidden px-3 py-4 text-sm whitespace-nowrap text-gray-500 lg:table-cell">
                         {transaction.username}
                       </td>
-                      <td className="relative whitespace-nowrap py-4 pr-4 text-right text-sm font-medium sm:pr-6">
+                      <td className="relative py-4 pr-4 text-right text-sm font-medium whitespace-nowrap sm:pr-6">
                         {currentUser.id === transaction.userId && (
-                          <button
-                            className="rounded-md border-2 border-black bg-theme-main p-1 text-black transition-colors hover:bg-theme-hover"
-                            onClick={() => showDeleteDialog(transaction)}
-                          >
-                            <HiMiniEllipsisHorizontal size={20} />
-                          </button>
+                          <>
+                            <DropdownMenu
+                              menuButton={
+                                <div className="bg-theme-main hover:bg-theme-hover rounded-md border-2 border-black p-1 text-white transition-colors">
+                                  <HiMiniEllipsisHorizontal size={20} />
+                                </div>
+                              }
+                              menuItems={[
+                                {
+                                  icon: <></>,
+                                  label: "Edit",
+                                  onClick: () => {
+                                    showEditDialog(transaction);
+                                  },
+                                },
+                                {
+                                  icon: <></>,
+                                  label: "Delete",
+                                  onClick: () => {
+                                    showDeleteDialog(transaction);
+                                  },
+                                },
+                              ]}
+                            />
+                          </>
                         )}
                       </td>
                     </tr>
@@ -264,9 +304,9 @@ const NavigationOptions = ({
     <div>
       <div className="mx-auto flex max-w-6xl">
         <div className="min-w-full px-3 align-middle">
-          <div className="flex flex-row items-center justify-between overflow-hidden rounded-md border-2 border-black bg-theme-highlight py-2 shadow-[2px_2px_0px_rgba(0,0,0,1)]">
+          <div className="bg-theme-highlight flex flex-row items-center justify-between overflow-hidden rounded-md border-2 border-black py-2 shadow-[2px_2px_0px_rgba(0,0,0,1)]">
             <button
-              className="mx-4 rounded-md border-2 border-black bg-theme-main px-2 py-0.5 text-white shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-colors hover:bg-theme-hover hover:shadow-[2px_2px_0px_rgba(0,0,0,1)]"
+              className="bg-theme-main hover:bg-theme-hover mx-4 rounded-md border-2 border-black px-2 py-0.5 text-white shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-colors hover:shadow-[2px_2px_0px_rgba(0,0,0,1)]"
               onClick={() => handleMonthYearChange(true)}
             >
               <MdOutlineKeyboardArrowLeft size={25} />
@@ -275,7 +315,7 @@ const NavigationOptions = ({
               {monthString} - {year}
             </p>
             <button
-              className="mx-4 rounded-md border-2 border-black bg-theme-main px-2 py-0.5 text-white shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-colors hover:bg-theme-hover hover:shadow-[2px_2px_0px_rgba(0,0,0,1)]"
+              className="bg-theme-main hover:bg-theme-hover mx-4 rounded-md border-2 border-black px-2 py-0.5 text-white shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-colors hover:shadow-[2px_2px_0px_rgba(0,0,0,1)]"
               onClick={() => handleMonthYearChange(false)}
             >
               <MdOutlineKeyboardArrowRight size={25} />

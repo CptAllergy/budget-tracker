@@ -22,8 +22,9 @@ export const DropdownMenu = ({
       <MenuItems
         anchor={anchorPosition}
         modal={false}
+        unmount={false}
         transition
-        className="z-50 mt-2 rounded-md bg-white shadow-md ring-1 ring-black ring-opacity-5 transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0"
+        className="bg-theme-main z-50 mt-1 rounded-md border-2 border-black shadow-[2px_2px_0px_rgba(0,0,0,1)] transition duration-100 ease-out data-closed:scale-95 data-closed:opacity-0"
       >
         {menuItems.map((menuItem, key) => {
           if (typeof menuItem.onClick !== "undefined") {
@@ -48,7 +49,7 @@ export const DropdownMenu = ({
 };
 
 const getDropdownMenuItemStyle = (): string => {
-  return "flex w-full items-center gap-4 py-3 pl-3 pr-14 text-sm text-gray-500 font-semibold data-[focus]:bg-gray-100 data-[focus]:text-gray-800";
+  return "flex w-full items-center gap-4 py-3 pl-3 pr-14 text-sm text-white font-semibold data-focus:bg-theme-hover transition-colors";
 };
 
 const DropdownMenuItemButton = ({

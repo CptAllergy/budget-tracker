@@ -26,7 +26,7 @@ const Login = () => {
   return (
     <div className="flex flex-col items-center">
       <Navbar />
-      <div className="mx-4 my-10 flex flex-col items-center rounded-md border-2 border-black bg-theme-secondary p-10 shadow-[5px_5px_0px_rgba(0,0,0,1)] md:my-16">
+      <div className="bg-theme-secondary mx-4 my-10 flex flex-col items-center rounded-md border-2 border-black p-10 shadow-[5px_5px_0px_rgba(0,0,0,1)] md:my-16">
         <p
           className={`${rancho.className} text-2xl font-semibold underline underline-offset-4 sm:text-3xl md:text-4xl`}
         >

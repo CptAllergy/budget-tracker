@@ -178,7 +178,7 @@ const NewTransaction = ({
       <div className="mt-2">
         <button
           type="submit"
-          className="rounded-md bg-theme-main px-2 py-0.5 font-semibold text-white transition-colors hover:bg-theme-hover"
+          className="bg-theme-main hover:bg-theme-hover rounded-md px-2 py-0.5 font-semibold text-white transition-colors"
         >
           Submit
         </button>
