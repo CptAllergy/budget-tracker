@@ -1,26 +1,31 @@
 export const TRANSACTION_CATEGORIES = [
-  "Food",
-  "Transport",
-  "Entertainment",
-  "Health",
-  "Shopping",
   "Other",
+  "Groceries",
+  "Dining",
+  "Transportation",
+  "Investments",
+  "Gifts",
+  "Housing & Utilities",
+  "Health",
+  "Entertainment",
+  "Personal Care",
+  "Repairs",
+  "Personal Spending",
 ] as const;
 
 export type TransactionCategory = (typeof TRANSACTION_CATEGORIES)[number];
 
 export const TRANSACTION_TAGS = [
-  "Groceries",
-  "Dining Out",
+  "Food",
+  "Drinks",
+  "Vacation",
   "Public Transport",
-  "Taxi",
-  "Movies",
-  "Concerts",
-  "Gym",
-  "Doctor",
+  "Gas",
   "Pharmacy",
+  "Games",
   "Clothing",
   "Electronics",
+  "Subscriptions",
   "Miscellaneous",
 ] as const;
 
