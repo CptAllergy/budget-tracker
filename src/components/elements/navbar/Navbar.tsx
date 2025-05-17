@@ -8,7 +8,7 @@ import SignIn from "@/components/elements/login/SignIn";
 import { spaceGrotesk } from "@/styles/fonts";
 import Image from "next/image";
 import budgetTrackerCoinLogo from "../../../../public/assets/coin_budget_tracker.png";
-import { LuPlus, LuPlusCircle } from "react-icons/lu";
+import { LuPlus } from "react-icons/lu";
 
 export const Navbar = ({
   setIsAddDialogOpen,
