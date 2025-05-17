@@ -10,7 +10,7 @@ import {
   useState,
 } from "react";
 import { Navbar } from "@/components/elements/navbar/Navbar";
-import { UserDTO } from "@/types/DTO/dataTypes";
+import { CreateTransactionDTO, UserDTO } from "@/types/DTO/dataTypes";
 import { FirebaseOptions, initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import {
@@ -20,21 +20,30 @@ import {
 } from "firebase/auth";
 
 import { signOut, useSession } from "next-auth/react";
-import NewTransaction from "@/components/elements/home/NewTransaction";
 import Totals from "@/components/elements/home/Totals";
 import TransactionList from "@/components/elements/home/TransactionList";
 import { AlertContext } from "@/contexts/AlertContext";
-import { toggleStatusErrorAlert } from "@/utils/toggleAlerts";
-import { fetchUsersFirebase } from "@/services/firebaseService";
 import {
-  NewTransactionLoading,
+  toggleStatusAlert,
+  toggleStatusErrorAlert,
+} from "@/utils/toggleAlerts";
+import {
+  addNewTransactionFirebase,
+  fetchUsersFirebase,
+} from "@/services/firebaseService";
+import {
   TotalsLoading,
   TransactionListLoading,
 } from "@/components/loading/elements/home/LoadingHome";
 import NewChanges from "@/components/elements/home/NewChanges";
+import { AddDialog } from "@/components/commons/dialogs/ActionDialog";
+import { TransactionContext } from "@/contexts/TransactionsContext";
+import { LuPlus } from "react-icons/lu";
 
 const Home = () => {
   const alertContext = useRef(useContext(AlertContext));
+  const transactionContext = useContext(TransactionContext);
+  const setTransactionDocs = useRef(transactionContext.setTransactionDocs);
   const { data: session } = useSession();
 
   const [loading, setLoading] = useState(true);
@@ -42,6 +51,8 @@ const Home = () => {
   const [secondUser, setSecondUser] = useState<UserDTO>();
   // Used to detect new changes
   const [isChangeFound, setIsChangeFound] = useState<boolean>(false);
+
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   const db = useMemo(() => {
     const firebaseConfig: FirebaseOptions = JSON.parse(
@@ -78,9 +89,34 @@ const Home = () => {
     }
   }, [session?.user?.email, session?.user?.id_token, db]);
 
+  const createTransaction = async (newTransaction: CreateTransactionDTO) => {
+    try {
+      await addNewTransactionFirebase(
+        db,
+        newTransaction,
+        currentUser!,
+        setCurrentUser as Dispatch<SetStateAction<UserDTO>>,
+        setTransactionDocs.current
+      );
+
+      toggleStatusAlert(alertContext.current, "New transaction created");
+    } catch (error) {
+      toggleStatusErrorAlert(alertContext.current, "ADD_FAILED");
+      throw "Error adding new transaction";
+    }
+  };
+
   return (
     <div className="">
-      <Navbar />
+      <Navbar setIsAddDialogOpen={setIsAddDialogOpen} />
+      {currentUser && (
+        <AddDialog
+          isDialogOpen={isAddDialogOpen}
+          setIsDialogOpen={setIsAddDialogOpen}
+          user={currentUser}
+          createTransaction={createTransaction}
+        />
+      )}
       <div className="right sticky top-0 z-10 ml-auto flex w-max justify-end">
         {!loading && secondUser && (
           <NewChanges
@@ -91,21 +127,22 @@ const Home = () => {
           />
         )}
       </div>
-      <div className="mx-3 -mt-8">
+      <div className="fixed right-0 bottom-0 z-5 m-4 sm:hidden">
+        {!loading && currentUser && (
+          <button
+            onClick={() => setIsAddDialogOpen(true)}
+            className="bg-theme-secondary hover:bg-theme-secondary-hover rounded-md border-2 border-black p-1.5 text-white shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_rgba(0,0,0,1)]"
+          >
+            <LuPlus size="30" />
+          </button>
+        )}
+      </div>
+      <div className="mx-3 -mt-12">
         <section className="mx-4 flex flex-col items-center">
           {!loading && currentUser && secondUser ? (
             <Totals user1={currentUser} user2={secondUser} />
           ) : (
             <TotalsLoading />
-          )}
-          {!loading && currentUser ? (
-            <NewTransaction
-              user={currentUser}
-              setUser={setCurrentUser as Dispatch<SetStateAction<UserDTO>>}
-              db={db}
-            />
-          ) : (
-            <NewTransactionLoading />
           )}
         </section>
         <section className="mt-4 md:mt-10">
@@ -125,5 +162,4 @@ const Home = () => {
     </div>
   );
 };
-
 export default Home;

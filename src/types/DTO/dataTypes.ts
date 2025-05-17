@@ -1,4 +1,8 @@
 import { Timestamp } from "firebase/firestore";
+import {
+  TransactionCategory,
+  TransactionTag,
+} from "@/types/transactionFilterTypes";
 
 export type TransactionDTO = {
   id: string;
@@ -7,6 +11,8 @@ export type TransactionDTO = {
   userId: string;
   username: string;
   timestamp: Timestamp;
+  category?: TransactionCategory;
+  tags?: TransactionTag[];
 };
 
 export type CreateTransactionDTO = {
@@ -15,6 +21,8 @@ export type CreateTransactionDTO = {
   userId: string;
   username: string;
   timestamp: Timestamp;
+  category: TransactionCategory;
+  tags: TransactionTag[];
   newDate?: Date;
 };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
 import Link from "next/link";
 import { LoadingRoundedButton } from "@/components/loading/buttons/LoadingRoundedButton";
 import { signOut, useSession } from "next-auth/react";
@@ -8,8 +8,13 @@ import SignIn from "@/components/elements/login/SignIn";
 import { spaceGrotesk } from "@/styles/fonts";
 import Image from "next/image";
 import budgetTrackerCoinLogo from "../../../../public/assets/coin_budget_tracker.png";
+import { LuPlus, LuPlusCircle } from "react-icons/lu";
 
-export const Navbar = () => {
+export const Navbar = ({
+  setIsAddDialogOpen,
+}: {
+  setIsAddDialogOpen?: Dispatch<SetStateAction<boolean>>;
+}) => {
   const { data: session } = useSession();
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -34,7 +39,7 @@ export const Navbar = () => {
           {loading ? (
             <NavbarLoadingSkeleton />
           ) : session?.user ? (
-            <NavbarSignOutOptions />
+            <NavbarUserOptions setIsAddDialogOpen={setIsAddDialogOpen} />
           ) : (
             <NavbarSignInOptions />
           )}
@@ -79,15 +84,25 @@ const NavbarSignInOptions = () => {
   );
 };
 
-const NavbarSignOutOptions = () => {
+const NavbarUserOptions = ({
+  setIsAddDialogOpen,
+}: {
+  setIsAddDialogOpen?: Dispatch<SetStateAction<boolean>>;
+}) => {
   return (
-    <>
-      <button
-        className="mr-5 font-bold text-white underline"
-        onClick={() => signOut()}
-      >
+    <div className="flex items-center space-x-5 text-white md:space-x-8">
+      {setIsAddDialogOpen && (
+        <button
+          className="bg-theme-secondary hover:bg-theme-secondary-hover hidden items-center space-x-1 rounded-md border-2 border-black py-1 pr-2 pl-1 font-semibold text-black shadow-[4px_4px_0px_rgba(0,0,0,1)] transition-all hover:shadow-[5px_5px_0px_rgba(0,0,0,1)] sm:flex"
+          onClick={() => setIsAddDialogOpen(true)}
+        >
+          <LuPlus size="20" className="stroke-[2.5]" />
+          <span>New</span>
+        </button>
+      )}
+      <button className="mr-5 font-bold underline" onClick={() => signOut()}>
         Sign Out
       </button>
-    </>
+    </div>
   );
 };

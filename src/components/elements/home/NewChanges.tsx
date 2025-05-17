@@ -39,7 +39,7 @@ const NewChanges = ({
 
   const refreshButtonStyle = isChangeFound
     ? "bg-theme-main animate-pulse"
-    : "bg-gray-400 cursor-default opacity-30";
+    : "bg-gray-400 cursor-default opacity-0";
 
   const refreshButtonAction = () => {
     if (isChangeFound) {

@@ -8,6 +8,7 @@
     --color-theme-secondary: #cfb0e4;
     --color-theme-highlight: #fff4d9;
     --color-theme-hover: #407ce3;
+    --color-theme-secondary-hover: #b297c3;
     --color-theme-light: #f0ece4;
     --color-theme-loading-dark: #cbd5e1;
     --color-theme-loading-light: #ebebeb;
@@ -31,6 +32,32 @@
     button:not(:disabled),
     [role="button"]:not(:disabled) {
         cursor: pointer;
+    }
+}
+
+/* Hide scrollbar background color */
+.scrollbar-transparent {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(100, 100, 100, 0.6) transparent;
+}
+
+.scrollbar-transparent::-webkit-scrollbar {
+    width: 6px;
+}
+
+.scrollbar-transparent::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.scrollbar-transparent::-webkit-scrollbar-thumb {
+    background-color: rgba(100, 100, 100, 0.6); /* Thumb color */
+    border-radius: 4px;
+}
+
+
+@layer base {
+    body {
+        @apply focus:outline-violet-500;
     }
 }
 
@@ -142,10 +169,11 @@
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
+    * {
+        @apply border-border outline-ring/50;
     }
-  body {
-    @apply bg-background text-foreground;
+
+    body {
+        @apply bg-background text-foreground;
     }
 }

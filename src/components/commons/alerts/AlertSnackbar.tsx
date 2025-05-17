@@ -35,7 +35,7 @@ export const AlertSnackbar = () => {
     <>
       {isAlertEnabled && (
         <div
-          className={`${opacity} bg-theme-secondary fixed right-5 bottom-5 left-5 z-10 rounded-md border-2 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] transition-opacity md:right-auto md:mr-5`}
+          className={`${opacity} bg-theme-secondary fixed right-5 bottom-5 left-5 z-20 rounded-md border-2 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] transition-opacity md:right-auto md:mr-5`}
         >
           <div className="flex w-full items-center p-4 font-medium">
             <span className="pr-3">

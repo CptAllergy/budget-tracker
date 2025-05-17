@@ -244,6 +244,8 @@ export async function updateTransactionFirebase(
         amount: updatedTransaction.amount,
         label: updatedTransaction.label,
         timestamp: updatedTransaction.timestamp,
+        tags: updatedTransaction.tags,
+        category: updatedTransaction.category,
       });
 
       return {

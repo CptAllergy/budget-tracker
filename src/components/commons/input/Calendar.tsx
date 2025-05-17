@@ -2,6 +2,13 @@ import { DayPicker } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { ComponentProps } from "react";
+import { Control, Controller, FormState, useWatch } from "react-hook-form";
+import { CreateTransactionDTO } from "@/types/DTO/dataTypes";
+import { FormInputError } from "@/components/commons/input/Form";
+import { Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
+import { IoCalendarClearSharp } from "react-icons/io5";
+import { format } from "date-fns";
+import { isValidDate } from "@/utils/helpers/parsers";
 
 const Calendar = ({
   className,
@@ -60,4 +67,61 @@ const Calendar = ({
   );
 };
 
-export { Calendar };
+const FormInputCalendar = ({
+  control,
+  formState,
+}: {
+  control: Control<CreateTransactionDTO>;
+  formState: FormState<CreateTransactionDTO>;
+}) => {
+  const currentDate = useWatch({ control, name: "newDate" });
+
+  return (
+    <FormInputError fieldName="newDate" formState={formState}>
+      <Popover>
+        <PopoverButton className="w-full rounded-md border-2 border-black bg-white py-2 pl-2 shadow-[2px_2px_0px_rgba(0,0,0,1)]">
+          <span className="flex items-center gap-2">
+            <IoCalendarClearSharp
+              size={21}
+              className={`${currentDate ? "text-theme-hover" : "text-blue-300"} transition-colors duration-200`}
+            />
+            <p
+              className={`${currentDate ? "text-black" : "text-gray-400"} transition-colors duration-200`}
+            >
+              {currentDate
+                ? format(currentDate, "do MMM, yyyy")
+                : "Pick a date"}
+            </p>
+          </span>
+        </PopoverButton>
+        <PopoverPanel
+          transition
+          unmount={false}
+          anchor="bottom start"
+          className="z-10 rounded-md shadow-[4px_4px_0px_rgba(0,0,0,1)] transition duration-200 ease-in-out [--anchor-gap:--spacing(2)] data-closed:-translate-y-1 data-closed:opacity-0"
+        >
+          <Controller
+            control={control}
+            name="newDate"
+            rules={{
+              required: "Date is required",
+              validate: (value) =>
+                isValidDate(value) || "Date cannot be in the future",
+            }}
+            render={({ field: { onChange, onBlur } }) => (
+              <Calendar
+                defaultMonth={currentDate}
+                mode="single"
+                onDayBlur={onBlur}
+                selected={currentDate}
+                onSelect={onChange}
+              />
+            )}
+          />
+        </PopoverPanel>
+      </Popover>
+    </FormInputError>
+  );
+};
+
+export { Calendar, FormInputCalendar };

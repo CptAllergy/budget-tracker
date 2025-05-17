@@ -147,7 +147,6 @@ const TransactionTable = ({
   currentUser: UserDTO;
   loading: boolean;
 }) => {
-  // TODO can this be refactored into a single dialog component?
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
@@ -164,6 +163,7 @@ const TransactionTable = ({
   };
 
   // TODO divide into smaller components
+  // TODO display category and tags. This will probably require an alternative layout for mobile
   return (
     <div className="">
       <DeleteDialog

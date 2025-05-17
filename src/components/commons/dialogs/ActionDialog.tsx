@@ -6,31 +6,34 @@ import {
   useEffect,
   useRef,
 } from "react";
-import { CreateTransactionDTO, TransactionDTO } from "@/types/DTO/dataTypes";
+import {
+  CreateTransactionDTO,
+  TransactionDTO,
+  UserDTO,
+} from "@/types/DTO/dataTypes";
 import {
   Dialog,
   DialogBackdrop,
   DialogPanel,
   DialogTitle,
-  Popover,
-  PopoverButton,
-  PopoverPanel,
 } from "@headlessui/react";
 import { isValidAmount, isValidDate } from "@/utils/helpers/parsers";
-import { Controller, SubmitHandler, useForm, useWatch } from "react-hook-form";
+import { SubmitHandler, useForm } from "react-hook-form";
 import { toggleStatusErrorAlert } from "@/utils/toggleAlerts";
 import { AlertContext } from "@/contexts/AlertContext";
 import {
   FormInputNumber,
   FormInputText,
 } from "@/components/commons/input/Text";
-import { IoCalendarClearSharp } from "react-icons/io5";
 import { format } from "date-fns";
-import { Calendar } from "@/components/commons/input/Calendar";
+import { FormInputCalendar } from "@/components/commons/input/Calendar";
 import { Timestamp } from "firebase/firestore";
-import { FormInputError } from "@/components/commons/input/Form";
+import { TRANSACTION_CATEGORIES } from "@/types/transactionFilterTypes";
+import {
+  FormInputMultiSelect,
+  FormInputSelect,
+} from "@/components/commons/input/Select";
 
-// TODO can the Dialog be a single component that will change the state of the content it currently contains?
 type DialogProps = {
   dialogTitle: string;
   confirmText: string;
@@ -109,8 +112,8 @@ const DeleteDialog = ({
 
   return (
     <DialogComponent
-      dialogTitle={"Delete Transaction"}
-      confirmText={"Delete"}
+      dialogTitle="Delete Transaction"
+      confirmText="Delete"
       confirmAction={deleteTransaction}
       isDialogOpen={isDialogOpen}
       setIsDialogOpen={setIsDialogOpen}
@@ -147,10 +150,10 @@ const EditDialog = ({
         amount: transaction?.amount,
         label: transaction?.label,
         newDate: transaction?.timestamp.toDate(),
+        tags: transaction?.tags ? transaction.tags : [],
+        category: transaction?.category ? transaction.category : "Other",
       },
     });
-
-  const currentDate = useWatch({ control, name: "newDate" });
 
   useEffect(() => {
     if (transaction) {
@@ -161,6 +164,8 @@ const EditDialog = ({
           amount: transaction.amount,
           label: transaction.label,
           newDate: transaction.timestamp.toDate(),
+          tags: transaction?.tags ? transaction.tags : [],
+          category: transaction?.category ? transaction.category : "Other",
         });
       }, timeout);
     }
@@ -168,7 +173,7 @@ const EditDialog = ({
 
   const onSubmit: SubmitHandler<CreateTransactionDTO> = async (updatedData) => {
     if (!transaction || !updatedData.newDate) {
-      toggleStatusErrorAlert(alertContext.current, "ADD_FAILED");
+      toggleStatusErrorAlert(alertContext.current, "UPDATE_FAILED");
       return;
     }
 
@@ -176,12 +181,17 @@ const EditDialog = ({
     const amountString = updatedData.amount.toString().replace(",", ".");
 
     if (!isValidAmount(amountString)) {
-      toggleStatusErrorAlert(alertContext.current, "ADD_FAILED");
+      toggleStatusErrorAlert(alertContext.current, "UPDATE_FAILED");
       return;
     }
 
     if (!isValidDate(updatedData.newDate)) {
-      toggleStatusErrorAlert(alertContext.current, "ADD_FAILED");
+      toggleStatusErrorAlert(alertContext.current, "UPDATE_FAILED");
+      return;
+    }
+
+    if (!TRANSACTION_CATEGORIES.includes(updatedData.category)) {
+      toggleStatusErrorAlert(alertContext.current, "UPDATE_FAILED");
       return;
     }
 
@@ -189,6 +199,8 @@ const EditDialog = ({
       label: updatedData.label,
       amount: Number(amountString),
       timestamp: Timestamp.fromDate(updatedData.newDate),
+      tags: updatedData.tags,
+      category: updatedData.category,
       id: transaction.id,
       userId: transaction.userId,
       username: transaction.username,
@@ -200,67 +212,113 @@ const EditDialog = ({
 
   return (
     <DialogComponent
-      dialogTitle={"Update Transaction"}
-      confirmText={"Update"}
+      dialogTitle="Update Transaction"
+      confirmText="Update"
       confirmAction={handleSubmit(onSubmit)}
       isDialogOpen={isDialogOpen}
       setIsDialogOpen={setIsDialogOpen}
     >
       {transaction && (
-        <form className="mt-4 flex flex-col space-y-3">
+        <form className="mt-5 flex flex-col space-y-3">
           <div className="space-y-3">
+            <label className="ml-0.5 font-semibold">Description</label>
             <FormInputText register={register} formState={formState} />
+            <label className="ml-0.5 font-semibold">Amount</label>
             <FormInputNumber register={register} formState={formState} />
+            <label className="ml-0.5 font-semibold">Category</label>
+            <FormInputSelect control={control} />
+            <label className="ml-0.5 font-semibold">Tags</label>
+            <FormInputMultiSelect control={control} />
+            <label className="ml-0.5 font-semibold">Date</label>
+            <FormInputCalendar control={control} formState={formState} />
           </div>
-          <FormInputError fieldName="newDate" formState={formState}>
-            <Popover>
-              <PopoverButton className="w-full rounded-md border-2 border-black bg-white py-2 pl-2 shadow-[2px_2px_0px_rgba(0,0,0,1)]">
-                <span className="flex items-center gap-2">
-                  <IoCalendarClearSharp
-                    size={21}
-                    className={`${currentDate ? "text-theme-hover" : "text-blue-300"} transition-colors duration-200`}
-                  />
-                  <p
-                    className={`${currentDate ? "text-black" : "text-gray-400"} transition-colors duration-200`}
-                  >
-                    {currentDate
-                      ? format(currentDate, "do MMM, yyyy")
-                      : "Pick a date"}
-                  </p>
-                </span>
-              </PopoverButton>
-              <PopoverPanel
-                transition
-                unmount={false}
-                anchor="bottom start"
-                className="z-10 rounded-md shadow-[4px_4px_0px_rgba(0,0,0,1)] transition duration-200 ease-in-out [--anchor-gap:--spacing(2)] data-closed:-translate-y-1 data-closed:opacity-0"
-              >
-                <Controller
-                  control={control}
-                  name="newDate"
-                  rules={{
-                    required: "Date is required",
-                    validate: (value) =>
-                      isValidDate(value) || "Date cannot be in the future",
-                  }}
-                  render={({ field: { onChange, onBlur } }) => (
-                    <Calendar
-                      mode="single"
-                      onDayBlur={onBlur}
-                      selected={currentDate}
-                      onSelect={onChange}
-                    />
-                  )}
-                />
-              </PopoverPanel>
-            </Popover>
-          </FormInputError>
         </form>
       )}
     </DialogComponent>
   );
 };
 
-// TODO Add an AddDialog for new transactions
+const AddDialog = ({
+  isDialogOpen,
+  setIsDialogOpen,
+  user,
+  createTransaction,
+}: {
+  isDialogOpen: boolean;
+  setIsDialogOpen: Dispatch<SetStateAction<boolean>>;
+  user: UserDTO;
+  createTransaction: (transaction: CreateTransactionDTO) => void;
+}) => {
+  const alertContext = useRef(useContext(AlertContext));
 
-export { DeleteDialog, EditDialog };
+  const { register, handleSubmit, reset, formState, control } =
+    useForm<CreateTransactionDTO>({
+      defaultValues: {
+        tags: [],
+        category: "Other",
+      },
+    });
+
+  useEffect(() => {
+    // Reset the form on a timeout to allow the dialog transition to finish
+    setTimeout(() => {
+      reset({
+        tags: [],
+        category: "Other",
+      });
+    }, 400);
+  }, [reset, isDialogOpen]);
+
+  const onSubmit: SubmitHandler<CreateTransactionDTO> = async (newData) => {
+    // Replace comma with period
+    const amountString = newData.amount.toString().replace(",", ".");
+
+    if (!isValidAmount(amountString)) {
+      toggleStatusErrorAlert(alertContext.current, "ADD_FAILED");
+      return;
+    }
+
+    if (!TRANSACTION_CATEGORIES.includes(newData.category)) {
+      toggleStatusErrorAlert(alertContext.current, "ADD_FAILED");
+      return;
+    }
+
+    const newTransaction: CreateTransactionDTO = {
+      label: newData.label,
+      amount: Number(amountString),
+      userId: user.id,
+      username: user.name,
+      timestamp: Timestamp.fromDate(new Date()),
+      tags: newData.tags,
+      category: newData.category,
+    };
+
+    createTransaction(newTransaction);
+    setIsDialogOpen(false);
+  };
+
+  return (
+    <DialogComponent
+      dialogTitle="Create Transaction"
+      confirmText="Create"
+      confirmAction={handleSubmit(onSubmit)}
+      isDialogOpen={isDialogOpen}
+      setIsDialogOpen={setIsDialogOpen}
+    >
+      <form className="mt-5 flex flex-col space-y-3">
+        <div className="space-y-3">
+          <label className="ml-0.5 font-semibold">Description</label>
+          <FormInputText register={register} formState={formState} />
+          <label className="ml-0.5 font-semibold">Amount</label>
+          <FormInputNumber register={register} formState={formState} />
+          <label className="ml-0.5 font-semibold">Category</label>
+          <FormInputSelect control={control} />
+          <label className="ml-0.5 font-semibold">Tags</label>
+          <FormInputMultiSelect control={control} />
+        </div>
+      </form>
+    </DialogComponent>
+  );
+};
+
+export { DeleteDialog, EditDialog, AddDialog };
