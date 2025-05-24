@@ -10,11 +10,7 @@ import {
   useState,
 } from "react";
 import { Navbar } from "@/components/elements/navbar/Navbar";
-import {
-  CreateTransactionDTO,
-  TransactionGroupDTO,
-  UserDTO,
-} from "@/types/DTO/dataTypes";
+import { CreateTransactionDTO, UserDTO } from "@/types/DTO/dataTypes";
 import { FirebaseOptions, initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import {
@@ -24,7 +20,6 @@ import {
 } from "firebase/auth";
 
 import { signOut, useSession } from "next-auth/react";
-import Totals from "@/components/elements/home/Totals";
 import TransactionList from "@/components/elements/home/TransactionList";
 import { AlertContext } from "@/contexts/AlertContext";
 import {
@@ -33,25 +28,16 @@ import {
 } from "@/utils/toggleAlerts";
 import {
   getCurrentUserFirebase,
-  getTransactionGroupsFirebase,
   postTransactionFirebase,
 } from "@/services/firebaseService";
-import {
-  TotalsLoading,
-  TransactionListLoading,
-} from "@/components/loading/elements/home/LoadingHome";
-import NewChanges from "@/components/elements/home/NewChanges";
+import { TransactionListLoading } from "@/components/loading/elements/home/LoadingHome";
 import { AddDialog } from "@/components/commons/dialogs/ActionDialog";
 import { TransactionContext } from "@/contexts/TransactionsContext";
 import { LuPlus } from "react-icons/lu";
+import { rancho } from "@/styles/fonts";
 import { TransactionGroupsContext } from "@/contexts/TransactionGroupsContext";
-import { sortTransactionGroups } from "@/utils/helpers/transactionGroupUtils";
-import { redirect } from "next/navigation";
 
-// TODO consider looking into a state manager so changes to context dont cause re-renders (investigate if this is actually a problem)
-// TODO add stats page (monthly, yearly)
-// TODO check where unnecessary re-renders are occurring
-const Home = () => {
+const Profile = () => {
   const alertContext = useRef(useContext(AlertContext));
   const transactionContext = useContext(TransactionContext);
   const transactionGroupsContext = useContext(TransactionGroupsContext);
@@ -60,11 +46,6 @@ const Home = () => {
   const handleFilterChange = useRef(
     transactionGroupsContext.handleFilterChange
   );
-
-  const setTransactionGroups = useRef(
-    transactionGroupsContext.setTransactionGroups
-  );
-
   const handleGroupChange = useRef(transactionGroupsContext.handleGroupChange);
 
   const { data: session } = useSession();
@@ -72,9 +53,7 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<UserDTO>();
 
-  // Used to detect new changes
-  const [isChangeFound, setIsChangeFound] = useState<boolean>(false);
-
+  // TODO place this duplicate code in some common function
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   const db = useMemo(() => {
@@ -111,42 +90,15 @@ const Home = () => {
     }
   }, [session?.user?.email, session?.user?.id_token, db]);
 
-  // Runs after sign in to either redirect to profile page or set group
   useEffect(() => {
-    // TODO if received value from local storage with different groupId, use that value so set default (after checking it's valid) and then clear local storage
-    const selectDefaultPage = (groups: TransactionGroupDTO[]) => {
-      if (!groups || groups.length === 0) {
-        // Redirect to profile page if no groups are found
-        redirect("/profile");
-      } else {
-        // Since the groups are sorted, the first group is the favourite one
-        try {
-          handleFilterChange.current(
-            {
-              groupId: groups[0].id,
-              groupName: groups[0].name,
-            },
-            groups
-          );
-        } catch {
-          toggleStatusErrorAlert(alertContext.current, "GENERIC");
-        }
-      }
-    };
-
     if (currentUser) {
-      getTransactionGroupsFirebase(db, currentUser.id)
-        .then((groups) => {
-          const sortedGroups = sortTransactionGroups(
-            groups,
-            currentUser.groupId
-          );
-          setTransactionGroups.current(sortedGroups);
-          selectDefaultPage(sortedGroups);
-        })
-        .catch(() => toggleStatusErrorAlert(alertContext.current, "GENERIC"));
+      try {
+        handleFilterChange.current({ userId: currentUser.id });
+      } catch {
+        toggleStatusErrorAlert(alertContext.current, "GENERIC");
+      }
     }
-  }, [currentUser, db]);
+  }, [currentUser]);
 
   const createTransaction = async (newTransaction: CreateTransactionDTO) => {
     try {
@@ -179,15 +131,6 @@ const Home = () => {
           createTransaction={createTransaction}
         />
       )}
-      <div className="right sticky top-0 z-10 ml-auto flex w-max justify-end">
-        {!loading && (
-          <NewChanges
-            isChangeFound={isChangeFound}
-            setIsChangeFound={setIsChangeFound}
-            db={db}
-          />
-        )}
-      </div>
       <div className="fixed right-0 bottom-0 z-5 m-4 sm:hidden">
         {!loading && currentUser && (
           <button
@@ -198,10 +141,13 @@ const Home = () => {
           </button>
         )}
       </div>
-      <div className="mx-3 -mt-12">
+      <div className="mx-3 mt-12">
         <section className="mx-4 flex flex-col items-center">
-          {/*TODO handle loading inside component*/}
-          {!loading && currentUser ? <Totals /> : <TotalsLoading />}
+          <div
+            className={`${rancho.className} bg-theme-secondary w-full max-w-4xl rounded-md border-2 border-black py-1 text-center text-2xl shadow-[5px_5px_0px_rgba(0,0,0,1)] md:text-3xl`}
+          >
+            {currentUser?.name}&#39;s Profile
+          </div>
         </section>
         <section className="mt-4 md:mt-10">
           {!loading && currentUser ? (
@@ -214,4 +160,4 @@ const Home = () => {
     </div>
   );
 };
-export default Home;
+export default Profile;

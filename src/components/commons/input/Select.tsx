@@ -105,9 +105,11 @@ const MultiSelect = ({
 const Select = ({
   selectedCategory,
   onChange,
+  options,
 }: {
   selectedCategory: string;
   onChange: (value: string) => void;
+  options: string[];
 }) => {
   return (
     <Listbox value={selectedCategory} onChange={onChange}>
@@ -119,7 +121,7 @@ const Select = ({
         </div>
         <ChevronDownIcon className="group pointer-events-none absolute top-2.5 right-2.5 size-4" />
       </ListboxButton>
-      <SelectOptions options={TRANSACTION_CATEGORIES} />
+      <SelectOptions options={options} />
     </Listbox>
   );
 };
@@ -150,10 +152,14 @@ const FormInputSelect = ({
       control={control}
       name="category"
       render={({ field: { value, onChange } }) => (
-        <Select selectedCategory={value} onChange={onChange} />
+        <Select
+          selectedCategory={value}
+          onChange={onChange}
+          options={[...TRANSACTION_CATEGORIES]}
+        />
       )}
     />
   );
 };
 
-export { FormInputSelect, FormInputMultiSelect };
+export { FormInputSelect, FormInputMultiSelect, Select };

@@ -15,20 +15,22 @@ export default auth(async (req) => {
   } else if (
     req.auth &&
     authorizedUsers.includes(req.auth.user.email as string) &&
-    req.nextUrl.pathname !== "/"
+    !userPages.includes(req.nextUrl.pathname)
   ) {
     const newUrl = new URL("/", req.nextUrl.origin);
     return NextResponse.redirect(newUrl);
   } else if (
     req.auth &&
     !authorizedUsers.includes(req.auth.user.email as string) &&
-    req.nextUrl.pathname !== "/forbidden" &&
-    req.nextUrl.pathname !== "/preview"
+    !visitorPages.includes(req.nextUrl.pathname)
   ) {
     const newUrl = new URL("/forbidden", req.nextUrl.origin);
     return NextResponse.redirect(newUrl);
   }
 });
+
+const visitorPages = ["/forbidden", "/preview"];
+const userPages = ["/", "/profile"];
 
 export const config = {
   matcher: ["/((?!api|_next/static|_next/image|icons/).*)"],

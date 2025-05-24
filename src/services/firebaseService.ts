@@ -13,17 +13,19 @@ import {
 import {
   CreateTransactionDTO,
   TransactionDTO,
+  TransactionGroupDTO,
   UserDTO,
+  UserTotalDTO,
 } from "@/types/DTO/dataTypes";
 import { Dispatch, SetStateAction } from "react";
+import { TransactionListType } from "@/types/componentTypes";
 
-const MAX_PAGE_SIZE = Number(process.env.NEXT_PUBLIC_PAGE_SIZE);
+// TODO add firestore rules in firebase to only allow users with correct permission to read and write data
 
-export async function fetchUsersFirebase(
+export async function getCurrentUserFirebase(
   db: Firestore,
   userEmail: string,
-  setCurrentUser: Dispatch<SetStateAction<UserDTO>>,
-  setSecondUser: Dispatch<SetStateAction<UserDTO>>
+  setCurrentUser: Dispatch<SetStateAction<UserDTO>>
 ) {
   // Find the current logged-in user
   const currentUserQuery = query(
@@ -34,26 +36,41 @@ export async function fetchUsersFirebase(
   if (currentUserSnapshot.size !== 1) {
     throw "Failed to find current user";
   }
-  const currentUser = currentUserSnapshot.docs[0].data() as UserDTO;
 
-  // Find the users in the same group as the current user
-  const groupUsersQuery = query(
-    collection(db, "users"),
-    where("groupId", "==", currentUser.groupId)
+  const firstUser = currentUserSnapshot.docs[0];
+  const currentUser = { id: firstUser.id, ...firstUser.data() } as UserDTO;
+  setCurrentUser(currentUser);
+}
+
+export async function getTransactionGroupsFirebase(
+  db: Firestore,
+  userId: string
+) {
+  const queryTransactionGroups = query(
+    collection(db, "groups"),
+    where("members", "array-contains", userId)
   );
-  const groupUsersSnapshot = await getDocs(groupUsersQuery);
-  if (groupUsersSnapshot.size !== 2) {
-    throw "Group must have exactly 2 users";
-  }
-  // Set the current and second user
-  groupUsersSnapshot.forEach((doc) => {
-    const userDTO = doc.data() as UserDTO;
-    if (userDTO.email === currentUser.email) {
-      setCurrentUser({ ...userDTO, id: doc.id });
-    } else {
-      setSecondUser({ ...userDTO, id: doc.id });
-    }
-  });
+  const querySnapshot = await getDocs(queryTransactionGroups);
+
+  return await Promise.all(
+    querySnapshot.docs.map(async (doc) => {
+      const totalsSnapshot = await getDocs(
+        collection(db, "groups", doc.id, "totals")
+      );
+
+      const totals = totalsSnapshot.docs.map((total) => {
+        return {
+          id: total.id,
+          ...total.data(),
+        } as UserTotalDTO;
+      });
+      return {
+        id: doc.id,
+        ...doc.data(),
+        totals: totals,
+      } as TransactionGroupDTO;
+    })
+  );
 }
 
 export async function getUserByIdFirebase(db: Firestore, userId: string) {
@@ -70,11 +87,12 @@ export async function getUserByIdFirebase(db: Firestore, userId: string) {
   }
 }
 
-export async function fetchTransactionsFirebase(
+export async function getTransactionsFirebase(
   db: Firestore,
   setTransactionDocs: (
     updater: (prevDocs: DocumentSnapshot[]) => DocumentSnapshot[]
   ) => void,
+  filterId: TransactionListType,
   monthYear?: { month: number; year: number }
 ) {
   const date = new Date();
@@ -89,10 +107,15 @@ export async function fetchTransactionsFirebase(
   const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
   lastDay.setHours(23, 59, 59, 999);
 
+  const filter = filterId.userId
+    ? where("userId", "==", filterId.userId)
+    : where("groupId", "==", filterId.groupId);
+
   const queryTransactions = query(
     collection(db, "transactions"),
     where("timestamp", ">=", firstDay),
     where("timestamp", "<=", lastDay),
+    filter,
     orderBy("timestamp", "desc")
   );
 
@@ -100,34 +123,43 @@ export async function fetchTransactionsFirebase(
   setTransactionDocs(() => querySnapshot.docs);
 }
 
-export async function addNewTransactionFirebase(
+export async function postTransactionFirebase(
   db: Firestore,
   newTransaction: CreateTransactionDTO,
+  filterId: TransactionListType,
   currentUser: UserDTO,
-  setCurrentUser: Dispatch<SetStateAction<UserDTO>>,
+  handleGroupChange: (
+    updater: (prevDocs: TransactionGroupDTO) => TransactionGroupDTO
+  ) => void,
   setTransactionDocs: (
     updater: (prevDocs: DocumentSnapshot[]) => DocumentSnapshot[]
   ) => void
 ) {
   // Load the first page
-  await fetchTransactionsFirebase(db, setTransactionDocs);
+  await getTransactionsFirebase(db, setTransactionDocs, filterId);
 
-  const userRef = doc(db, "users", currentUser.id);
+  const totalRef = filterId.groupId
+    ? doc(db, "groups", filterId.groupId, "totals", currentUser.id)
+    : null;
   const transactionRef = doc(collection(db, "transactions"));
 
   // These Firestore operations must run inside an atomic transaction
   const newUserTotal = await runTransaction(db, async (fbTransaction) => {
-    const userDocumentDoc = await fbTransaction.get(userRef);
-    if (!userDocumentDoc.exists()) {
-      throw "Document does not exist!";
+    // const userDocumentDoc = await fbTransaction.get(userRef);
+    let newUserTotal = null;
+    if (totalRef) {
+      const userTotalDoc = await fbTransaction.get(totalRef);
+      if (!userTotalDoc.exists()) {
+        throw "Document does not exist!";
+      }
+      const userTotal = userTotalDoc.data() as UserTotalDTO;
+      newUserTotal = userTotal.total + newTransaction.amount;
+      // Increase user total
+      fbTransaction.update(totalRef, {
+        total: newUserTotal,
+      });
     }
-    const userDocument = userDocumentDoc.data() as UserDTO;
-    const newUserTotal = userDocument.total + newTransaction.amount;
 
-    // Increase user total document
-    fbTransaction.update(userRef, {
-      total: newUserTotal,
-    });
     // Add transaction document
     fbTransaction.set(transactionRef, newTransaction);
 
@@ -135,12 +167,7 @@ export async function addNewTransactionFirebase(
   });
 
   // Update the total for the current user
-  setCurrentUser((prevState) => {
-    return {
-      ...prevState,
-      total: newUserTotal,
-    };
-  });
+  updateCurrentUserTotalState(newUserTotal, currentUser.id, handleGroupChange);
 
   // Update the reference list
   const transactionDoc = await getDoc(transactionRef);
@@ -152,8 +179,11 @@ export async function addNewTransactionFirebase(
 export async function deleteTransactionFirebase(
   db: Firestore,
   transaction: TransactionDTO,
+  filterId: TransactionListType,
   currentUser: UserDTO,
-  setCurrentUser: Dispatch<SetStateAction<UserDTO>>,
+  handleGroupChange: (
+    updater: (prevDocs: TransactionGroupDTO) => TransactionGroupDTO
+  ) => void,
   setTransactionDocs: (
     updater: (prevDocs: DocumentSnapshot[]) => DocumentSnapshot[]
   ) => void
@@ -162,26 +192,31 @@ export async function deleteTransactionFirebase(
     throw "Current user does not match transaction user";
   }
 
-  const userRef = doc(db, "users", transaction.userId);
+  const totalRef = filterId.groupId
+    ? doc(db, "groups", filterId.groupId, "totals", currentUser.id)
+    : null;
   const transactionRef = doc(db, "transactions", transaction.id);
 
   // These Firestore operations must run inside an atomic transaction
   const newUserTotal = await runTransaction(db, async (fbTransaction) => {
-    const userDocumentDoc = await fbTransaction.get(userRef);
-    if (!userDocumentDoc.exists()) {
-      throw "Document does not exist!";
+    let newUserTotal = null;
+    if (totalRef) {
+      const userTotalDoc = await fbTransaction.get(totalRef);
+      if (!userTotalDoc.exists()) {
+        throw "Document does not exist!";
+      }
+      const userTotal = userTotalDoc.data() as UserTotalDTO;
+      newUserTotal = userTotal.total - Number(transaction.amount);
+      // Decrease user total document by the deleted transaction
+      fbTransaction.update(totalRef, {
+        total: newUserTotal,
+      });
     }
-    const userDocument = userDocumentDoc.data() as UserDTO;
-    const newTotal = userDocument.total - Number(transaction.amount);
 
-    // Decrease user total document by the deleted transaction
-    fbTransaction.update(userRef, {
-      total: newTotal,
-    });
     // Delete transaction document
     fbTransaction.delete(transactionRef);
 
-    return newTotal;
+    return newUserTotal;
   });
 
   // Delete reference Update the reference list
@@ -190,19 +225,17 @@ export async function deleteTransactionFirebase(
   });
 
   // Update the total for the current user
-  setCurrentUser((prevState) => {
-    return {
-      ...prevState,
-      total: newUserTotal,
-    };
-  });
+  updateCurrentUserTotalState(newUserTotal, currentUser.id, handleGroupChange);
 }
 
 export async function updateTransactionFirebase(
   db: Firestore,
   updatedTransaction: TransactionDTO,
+  filterId: TransactionListType,
   currentUser: UserDTO,
-  setCurrentUser: Dispatch<SetStateAction<UserDTO>>,
+  handleGroupChange: (
+    updater: (prevDocs: TransactionGroupDTO) => TransactionGroupDTO
+  ) => void,
   setTransactionDocs: (
     updater: (prevDocs: DocumentSnapshot[]) => DocumentSnapshot[]
   ) => void
@@ -211,33 +244,37 @@ export async function updateTransactionFirebase(
     throw "Current user does not match transaction user";
   }
 
-  const userRef = doc(db, "users", updatedTransaction.userId);
+  const totalRef = filterId.groupId
+    ? doc(db, "groups", filterId.groupId, "totals", currentUser.id)
+    : null;
   const transactionRef = doc(db, "transactions", updatedTransaction.id);
 
   // These Firestore operations must run inside an atomic transaction
   const { newUserTotal, prevTimestamp } = await runTransaction(
     db,
     async (fbTransaction) => {
-      const userDocumentDoc = await fbTransaction.get(userRef);
       const transactionDocumentDoc = await fbTransaction.get(transactionRef);
-      if (!userDocumentDoc.exists() || !transactionDocumentDoc.exists()) {
-        throw "Document does not exist!";
-      }
-
-      const userDocument = userDocumentDoc.data() as UserDTO;
-      let newTotal = userDocument.total;
-
-      // Update user total document by the updated amount, if it changed
       const transactionDocument =
         transactionDocumentDoc.data() as TransactionDTO;
-      if (transactionDocument.amount !== updatedTransaction.amount) {
-        const difference =
-          updatedTransaction.amount - transactionDocument.amount;
 
-        newTotal = userDocument.total + difference;
-        fbTransaction.update(userRef, {
-          total: newTotal,
-        });
+      let newUserTotal = null;
+      if (totalRef) {
+        const userTotalDoc = await fbTransaction.get(totalRef);
+        if (!userTotalDoc.exists() || !transactionDocumentDoc.exists()) {
+          throw "Document does not exist!";
+        }
+        const userTotal = userTotalDoc.data() as UserTotalDTO;
+        // Update user total document by the updated amount, if it changed
+
+        if (transactionDocument.amount !== updatedTransaction.amount) {
+          const difference =
+            updatedTransaction.amount - transactionDocument.amount;
+
+          newUserTotal = userTotal.total + difference;
+          fbTransaction.update(totalRef, {
+            total: newUserTotal,
+          });
+        }
       }
 
       fbTransaction.update(transactionRef, {
@@ -249,25 +286,20 @@ export async function updateTransactionFirebase(
       });
 
       return {
-        newUserTotal: newTotal,
+        newUserTotal: newUserTotal,
         prevTimestamp: transactionDocument.timestamp,
       };
     }
   );
 
   // Update the total for the current user
-  setCurrentUser((prevState) => {
-    return {
-      ...prevState,
-      total: newUserTotal,
-    };
-  });
+  updateCurrentUserTotalState(newUserTotal, currentUser.id, handleGroupChange);
 
   // Replace the transaction document in the state
   const transactionDoc = await getDoc(transactionRef);
   setTransactionDocs((prevDocs) => {
     const filteredList = prevDocs.filter(
-      (value) => value.id != transactionDoc.id
+      (value) => value.id !== transactionDoc.id
     );
 
     const isSameMonth =
@@ -283,4 +315,30 @@ export async function updateTransactionFirebase(
       return filteredList;
     }
   });
+}
+
+function updateCurrentUserTotalState(
+  newUserTotal: number | null,
+  currentUserId: string,
+  handleGroupChange: (
+    updater: (prevDocs: TransactionGroupDTO) => TransactionGroupDTO
+  ) => void
+) {
+  // Update the total for the current user
+  if (newUserTotal != null) {
+    handleGroupChange((prevState) => {
+      const prevTotal = prevState.totals.find(
+        (total) => total.id === currentUserId
+      );
+      const newTotal: UserTotalDTO = { ...prevTotal!, total: newUserTotal };
+      const newTotals: UserTotalDTO[] = [
+        ...prevState.totals.filter((total) => total.id !== currentUserId),
+        newTotal,
+      ];
+      return {
+        ...prevState,
+        totals: newTotals,
+      };
+    });
+  }
 }

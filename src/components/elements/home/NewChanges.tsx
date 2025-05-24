@@ -3,31 +3,28 @@
 import { Dispatch, SetStateAction, useEffect } from "react";
 import { Firestore } from "firebase/firestore";
 import { HiRefresh } from "react-icons/hi";
-import { UserDTO } from "@/types/DTO/dataTypes";
-import { getUserByIdFirebase } from "@/services/firebaseService";
 
 const NewChanges = ({
   isChangeFound,
   setIsChangeFound,
-  secondUser,
   db,
 }: {
   isChangeFound: boolean;
   setIsChangeFound: Dispatch<SetStateAction<boolean>>;
-  secondUser: UserDTO;
   db: Firestore;
 }) => {
+  // TODO refactor to check the group, instead of the second user
   useEffect(() => {
     const checkLatestTransaction = async () => {
-      const latestSecondUser = await getUserByIdFirebase(db, secondUser.id);
-
-      // Compare the most recent data to check for any changes
-      if (latestSecondUser && secondUser.total !== latestSecondUser.total) {
-        setIsChangeFound(true);
-      } else {
-        // No change found, check again after 10 seconds
-        setTimeout(checkLatestTransaction, 10000);
-      }
+      // const latestSecondUser = await getUserByIdFirebase(db, secondUser.id);
+      //
+      // // Compare the most recent data to check for any changes
+      // if (latestSecondUser && secondUser.total !== latestSecondUser.total) {
+      //   setIsChangeFound(true);
+      // } else {
+      //   // No change found, check again after 10 seconds
+      //   setTimeout(checkLatestTransaction, 10000);
+      // }
     };
 
     const timer = setTimeout(checkLatestTransaction, 10000);
@@ -35,7 +32,7 @@ const NewChanges = ({
     return () => {
       clearTimeout(timer);
     };
-  }, [db, secondUser, setIsChangeFound]);
+  }, [db, setIsChangeFound]);
 
   const refreshButtonStyle = isChangeFound
     ? "bg-theme-main animate-pulse"

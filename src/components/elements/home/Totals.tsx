@@ -1,24 +1,47 @@
 "use client";
 
-import { UserDTO } from "@/types/DTO/dataTypes";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { rancho } from "@/styles/fonts";
+import { TransactionGroupsContext } from "@/contexts/TransactionGroupsContext";
+import { AlertContext } from "@/contexts/AlertContext";
+import { toggleStatusErrorAlert } from "@/utils/toggleAlerts";
 
-const Totals = ({ user1, user2 }: { user1: UserDTO; user2: UserDTO }) => {
+const Totals = () => {
+  const alertContext = useRef(useContext(AlertContext));
+  const transactionGroupsContext = useContext(TransactionGroupsContext);
+
+  const { currentGroup } = transactionGroupsContext;
+
   const [sender, setSender] = useState("");
   const [receiver, setReceiver] = useState("");
   const [balance, setBalance] = useState(0);
 
+  // TODO refactor this logic to work for any number of users
   useEffect(() => {
-    const balance = user1.total / 2 - user2.total / 2;
+    if (currentGroup) {
+      if (
+        currentGroup.members.length !== 2 ||
+        currentGroup.totals.length !== 2
+      ) {
+        toggleStatusErrorAlert(alertContext.current, "GENERIC");
+        return;
+      }
 
-    const [sender, receiver] =
-      balance > 0 ? [user2.name, user1.name] : [user1.name, user2.name];
+      const groupUser1 = currentGroup.totals[0];
+      const groupUser2 = currentGroup.totals[1];
 
-    setSender(sender);
-    setReceiver(receiver);
-    setBalance(Math.abs(balance));
-  }, [user1, user2]);
+      const balance = groupUser1.total / 2 - groupUser2.total / 2;
+
+      const [sender, receiver] =
+        balance > 0
+          ? [groupUser2.name, groupUser1.name]
+          : [groupUser1.name, groupUser2.name];
+
+      setSender(sender);
+      setReceiver(receiver);
+      setBalance(Math.abs(balance));
+    }
+  }, [currentGroup]);
 
   return (
     <div className="bg-theme-secondary w-full max-w-4xl rounded-md border-2 border-black py-1 text-center shadow-[5px_5px_0px_rgba(0,0,0,1)]">

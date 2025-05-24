@@ -17,7 +17,7 @@ import {
 import { AlertContext } from "@/contexts/AlertContext";
 import {
   deleteTransactionFirebase,
-  fetchTransactionsFirebase,
+  getTransactionsFirebase,
   updateTransactionFirebase,
 } from "@/services/firebaseService";
 import {
@@ -33,19 +33,22 @@ import {
   EditDialog,
 } from "@/components/commons/dialogs/ActionDialog";
 import { DropdownMenu } from "@/components/commons/menus/DropdownMenu";
+import { TransactionGroupsContext } from "@/contexts/TransactionGroupsContext";
 
 const TransactionList = ({
   currentUser,
-  setCurrentUser,
   db,
 }: {
   currentUser: UserDTO;
-  setCurrentUser: Dispatch<SetStateAction<UserDTO>>;
   db: Firestore;
 }) => {
   const alertContext = useRef(useContext(AlertContext));
   const transactionContext = useContext(TransactionContext);
+  const transactionGroupsContext = useContext(TransactionGroupsContext);
+
   const setTransactionDocs = useRef(transactionContext.setTransactionDocs);
+  const handleGroupChange = useRef(transactionGroupsContext.handleGroupChange);
+  const filterId = transactionGroupsContext.filterId;
 
   const [monthYear, setMonthYear] = useState<{ month: number; year: number }>(
     () => {
@@ -57,18 +60,24 @@ const TransactionList = ({
 
   useEffect(() => {
     // Set transaction list
-    fetchTransactionsFirebase(db, setTransactionDocs.current, monthYear).then(
-      () => setLoading(false)
-    );
-  }, [db, monthYear]);
+    if (filterId) {
+      getTransactionsFirebase(
+        db,
+        setTransactionDocs.current,
+        filterId,
+        monthYear
+      ).then(() => setLoading(false));
+    }
+  }, [db, filterId, monthYear]);
 
   const removeTransaction = async (transaction: TransactionDTO) => {
     try {
       await deleteTransactionFirebase(
         db,
         transaction,
+        filterId!,
         currentUser,
-        setCurrentUser,
+        handleGroupChange.current,
         setTransactionDocs.current
       );
 
@@ -84,8 +93,9 @@ const TransactionList = ({
       await updateTransactionFirebase(
         db,
         transaction,
+        filterId!,
         currentUser,
-        setCurrentUser,
+        handleGroupChange.current,
         setTransactionDocs.current
       );
 

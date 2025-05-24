@@ -33,9 +33,11 @@ import {
   FormInputMultiSelect,
   FormInputSelect,
 } from "@/components/commons/input/Select";
+import { TransactionGroupsContext } from "@/contexts/TransactionGroupsContext";
 
 type DialogProps = {
   dialogTitle: string;
+  groupName?: string;
   confirmText: string;
   confirmAction: () => void;
   isDialogOpen: boolean;
@@ -44,6 +46,7 @@ type DialogProps = {
 
 const DialogComponent = ({
   dialogTitle,
+  groupName,
   confirmText,
   confirmAction,
   isDialogOpen,
@@ -68,7 +71,12 @@ const DialogComponent = ({
             className="bg-theme-secondary w-full max-w-md rounded-md border-2 border-black p-6 shadow-[4px_4px_0px_rgba(0,0,0,1)] duration-200 data-closed:opacity-0"
           >
             <DialogTitle as="h3" className="text-lg font-bold">
-              {dialogTitle}
+              <div>{dialogTitle}</div>
+              {groupName && (
+                <div className="py-2 text-right text-sm font-semibold">
+                  {groupName}
+                </div>
+              )}
             </DialogTitle>
             {children}
             <div className="mt-4 flex flex-col-reverse justify-end gap-2 sm:flex-row">
@@ -174,7 +182,7 @@ const EditDialog = ({
   const onSubmit: SubmitHandler<CreateTransactionDTO> = async (updatedData) => {
     if (!transaction || !updatedData.newDate) {
       toggleStatusErrorAlert(alertContext.current, "UPDATE_FAILED");
-      return;
+      throw "Invalid transaction data";
     }
 
     // Replace comma with period
@@ -182,17 +190,17 @@ const EditDialog = ({
 
     if (!isValidAmount(amountString)) {
       toggleStatusErrorAlert(alertContext.current, "UPDATE_FAILED");
-      return;
+      throw "Invalid transaction data: Invalid amount";
     }
 
     if (!isValidDate(updatedData.newDate)) {
       toggleStatusErrorAlert(alertContext.current, "UPDATE_FAILED");
-      return;
+      throw "Invalid transaction data: Invalid date";
     }
 
     if (!TRANSACTION_CATEGORIES.includes(updatedData.category)) {
       toggleStatusErrorAlert(alertContext.current, "UPDATE_FAILED");
-      return;
+      throw "Invalid transaction data: Invalid category";
     }
 
     const updatedTransaction: TransactionDTO = {
@@ -204,6 +212,7 @@ const EditDialog = ({
       id: transaction.id,
       userId: transaction.userId,
       username: transaction.username,
+      groupId: transaction.groupId,
     };
 
     updateTransaction(updatedTransaction);
@@ -250,6 +259,10 @@ const AddDialog = ({
   createTransaction: (transaction: CreateTransactionDTO) => void;
 }) => {
   const alertContext = useRef(useContext(AlertContext));
+  const transactionGroupsContext = useContext(TransactionGroupsContext);
+  const filterId = transactionGroupsContext.filterId;
+
+  const groupName = filterId?.groupName ? filterId.groupName : "Personal";
 
   const { register, handleSubmit, reset, formState, control } =
     useForm<CreateTransactionDTO>({
@@ -275,18 +288,26 @@ const AddDialog = ({
 
     if (!isValidAmount(amountString)) {
       toggleStatusErrorAlert(alertContext.current, "ADD_FAILED");
-      return;
+      throw "Invalid transaction data: Invalid amount";
     }
 
     if (!TRANSACTION_CATEGORIES.includes(newData.category)) {
       toggleStatusErrorAlert(alertContext.current, "ADD_FAILED");
-      return;
+      throw "Invalid transaction data: Invalid category";
     }
+
+    if (!filterId?.groupId && !filterId?.userId) {
+      toggleStatusErrorAlert(alertContext.current, "ADD_FAILED");
+      throw "Invalid transaction data: Invalid group";
+    }
+
+    const groupId = filterId.groupId ? filterId.groupId : null;
 
     const newTransaction: CreateTransactionDTO = {
       label: newData.label,
       amount: Number(amountString),
       userId: user.id,
+      groupId: groupId,
       username: user.name,
       timestamp: Timestamp.fromDate(new Date()),
       tags: newData.tags,
@@ -300,6 +321,7 @@ const AddDialog = ({
   return (
     <DialogComponent
       dialogTitle="Create Transaction"
+      groupName={groupName}
       confirmText="Create"
       confirmAction={handleSubmit(onSubmit)}
       isDialogOpen={isDialogOpen}

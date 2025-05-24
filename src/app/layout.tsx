@@ -7,6 +7,7 @@ import { ReactNode } from "react";
 
 import { dmSans } from "@/styles/fonts";
 import { TransactionContextProvider } from "@/contexts/TransactionsContext";
+import { TransactionGroupsContextProvider } from "@/contexts/TransactionGroupsContext";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
@@ -15,8 +16,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <SessionProvider>
           <AlertContextProvider>
             <TransactionContextProvider>
-              <AlertSnackbar />
-              {children}
+              <TransactionGroupsContextProvider>
+                <AlertSnackbar />
+                {children}
+              </TransactionGroupsContextProvider>
             </TransactionContextProvider>
           </AlertContextProvider>
         </SessionProvider>

@@ -9,6 +9,7 @@ export type TransactionDTO = {
   label: string;
   amount: number;
   userId: string;
+  groupId: string | null;
   username: string;
   timestamp: Timestamp;
   category?: TransactionCategory;
@@ -19,6 +20,7 @@ export type CreateTransactionDTO = {
   label: string;
   amount: number;
   userId: string;
+  groupId: string | null;
   username: string;
   timestamp: Timestamp;
   category: TransactionCategory;
@@ -31,5 +33,17 @@ export type UserDTO = {
   groupId: string;
   name: string;
   email: string;
+};
+
+export type UserTotalDTO = {
+  id: string;
+  name: string;
   total: number;
+};
+
+export type TransactionGroupDTO = {
+  id: string;
+  name: string;
+  members: string[];
+  totals: UserTotalDTO[];
 };
