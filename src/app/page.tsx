@@ -1,29 +1,11 @@
 "use client";
 
-import {
-  Dispatch,
-  SetStateAction,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { Navbar } from "@/components/elements/navbar/Navbar";
 import {
   CreateTransactionDTO,
   TransactionGroupDTO,
-  UserDTO,
 } from "@/types/DTO/dataTypes";
-import { FirebaseOptions, initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import {
-  getAuth,
-  GoogleAuthProvider,
-  signInWithCredential,
-} from "firebase/auth";
-
-import { signOut, useSession } from "next-auth/react";
 import Totals from "@/components/elements/home/Totals";
 import TransactionList from "@/components/elements/home/TransactionList";
 import { AlertContext } from "@/contexts/AlertContext";
@@ -32,7 +14,6 @@ import {
   toggleStatusErrorAlert,
 } from "@/utils/toggleAlerts";
 import {
-  getCurrentUserFirebase,
   getTransactionGroupsFirebase,
   postTransactionFirebase,
 } from "@/services/firebaseService";
@@ -45,8 +26,9 @@ import { AddDialog } from "@/components/commons/dialogs/ActionDialog";
 import { TransactionContext } from "@/contexts/TransactionsContext";
 import { LuPlus } from "react-icons/lu";
 import { TransactionGroupsContext } from "@/contexts/TransactionGroupsContext";
-import { sortTransactionGroups } from "@/utils/helpers/transactionGroupUtils";
+import { sortTransactionGroups } from "@/utils/sorters";
 import { redirect } from "next/navigation";
+import { useFirebaseSetup } from "@/utils/hooks";
 
 // TODO consider looking into a state manager so changes to context dont cause re-renders (investigate if this is actually a problem)
 // TODO add stats page (monthly, yearly)
@@ -67,49 +49,12 @@ const Home = () => {
 
   const handleGroupChange = useRef(transactionGroupsContext.handleGroupChange);
 
-  const { data: session } = useSession();
-
-  const [loading, setLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<UserDTO>();
-
   // Used to detect new changes
   const [isChangeFound, setIsChangeFound] = useState<boolean>(false);
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
-  const db = useMemo(() => {
-    const firebaseConfig: FirebaseOptions = JSON.parse(
-      process.env.NEXT_PUBLIC_FIREBASE_CONFIG!!
-    );
-    const app = initializeApp(firebaseConfig);
-    return getFirestore(app);
-  }, []);
-
-  useEffect(() => {
-    const auth = getAuth();
-    if (session?.user?.email && session.user.id_token) {
-      const credential = GoogleAuthProvider.credential(session.user.id_token);
-      signInWithCredential(auth, credential)
-        .then(async () => {
-          // Set the current and second user
-          await getCurrentUserFirebase(
-            db,
-            session.user.email,
-            setCurrentUser as Dispatch<SetStateAction<UserDTO>>
-          );
-          setLoading(false);
-        })
-        .catch((error) => {
-          if (error.code === "auth/invalid-credential") {
-            // Update session storage with auth error
-            sessionStorage.setItem("session_error", "true");
-            void signOut();
-          } else {
-            toggleStatusErrorAlert(alertContext.current, "GENERIC");
-          }
-        });
-    }
-  }, [session?.user?.email, session?.user?.id_token, db]);
+  const { db, currentUser, firebaseLoading } = useFirebaseSetup();
 
   // Runs after sign in to either redirect to profile page or set group
   useEffect(() => {
@@ -180,7 +125,7 @@ const Home = () => {
         />
       )}
       <div className="right sticky top-0 z-10 ml-auto flex w-max justify-end">
-        {!loading && (
+        {!firebaseLoading && (
           <NewChanges
             isChangeFound={isChangeFound}
             setIsChangeFound={setIsChangeFound}
@@ -189,7 +134,7 @@ const Home = () => {
         )}
       </div>
       <div className="fixed right-0 bottom-0 z-5 m-4 sm:hidden">
-        {!loading && currentUser && (
+        {!firebaseLoading && currentUser && (
           <button
             onClick={() => setIsAddDialogOpen(true)}
             className="bg-theme-secondary hover:bg-theme-secondary-hover rounded-md border-2 border-black p-1.5 text-white shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_rgba(0,0,0,1)]"
@@ -201,10 +146,10 @@ const Home = () => {
       <div className="mx-3 -mt-12">
         <section className="mx-4 flex flex-col items-center">
           {/*TODO handle loading inside component*/}
-          {!loading && currentUser ? <Totals /> : <TotalsLoading />}
+          {!firebaseLoading && currentUser ? <Totals /> : <TotalsLoading />}
         </section>
         <section className="mt-4 md:mt-10">
-          {!loading && currentUser ? (
+          {!firebaseLoading && currentUser ? (
             <TransactionList currentUser={currentUser} db={db} />
           ) : (
             <TransactionListLoading />

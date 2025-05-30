@@ -1,25 +1,8 @@
 "use client";
 
-import {
-  Dispatch,
-  SetStateAction,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { Navbar } from "@/components/elements/navbar/Navbar";
-import { CreateTransactionDTO, UserDTO } from "@/types/DTO/dataTypes";
-import { FirebaseOptions, initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import {
-  getAuth,
-  GoogleAuthProvider,
-  signInWithCredential,
-} from "firebase/auth";
-
-import { signOut, useSession } from "next-auth/react";
+import { CreateTransactionDTO } from "@/types/DTO/dataTypes";
 import TransactionList from "@/components/elements/home/TransactionList";
 import { AlertContext } from "@/contexts/AlertContext";
 import {
@@ -27,7 +10,7 @@ import {
   toggleStatusErrorAlert,
 } from "@/utils/toggleAlerts";
 import {
-  getCurrentUserFirebase,
+  getTransactionGroupsFirebase,
   postTransactionFirebase,
 } from "@/services/firebaseService";
 import { TransactionListLoading } from "@/components/loading/elements/home/LoadingHome";
@@ -36,11 +19,17 @@ import { TransactionContext } from "@/contexts/TransactionsContext";
 import { LuPlus } from "react-icons/lu";
 import { rancho } from "@/styles/fonts";
 import { TransactionGroupsContext } from "@/contexts/TransactionGroupsContext";
+import { useFirebaseSetup } from "@/utils/hooks";
+import { sortTransactionGroups } from "@/utils/sorters";
 
 const Profile = () => {
   const alertContext = useRef(useContext(AlertContext));
   const transactionContext = useContext(TransactionContext);
   const transactionGroupsContext = useContext(TransactionGroupsContext);
+
+  const setTransactionGroups = useRef(
+    transactionGroupsContext.setTransactionGroups
+  );
 
   const setTransactionDocs = useRef(transactionContext.setTransactionDocs);
   const handleFilterChange = useRef(
@@ -48,57 +37,26 @@ const Profile = () => {
   );
   const handleGroupChange = useRef(transactionGroupsContext.handleGroupChange);
 
-  const { data: session } = useSession();
-
-  const [loading, setLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<UserDTO>();
-
-  // TODO place this duplicate code in some common function
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
-  const db = useMemo(() => {
-    const firebaseConfig: FirebaseOptions = JSON.parse(
-      process.env.NEXT_PUBLIC_FIREBASE_CONFIG!!
-    );
-    const app = initializeApp(firebaseConfig);
-    return getFirestore(app);
-  }, []);
-
-  useEffect(() => {
-    const auth = getAuth();
-    if (session?.user?.email && session.user.id_token) {
-      const credential = GoogleAuthProvider.credential(session.user.id_token);
-      signInWithCredential(auth, credential)
-        .then(async () => {
-          // Set the current and second user
-          await getCurrentUserFirebase(
-            db,
-            session.user.email,
-            setCurrentUser as Dispatch<SetStateAction<UserDTO>>
-          );
-          setLoading(false);
-        })
-        .catch((error) => {
-          if (error.code === "auth/invalid-credential") {
-            // Update session storage with auth error
-            sessionStorage.setItem("session_error", "true");
-            void signOut();
-          } else {
-            toggleStatusErrorAlert(alertContext.current, "GENERIC");
-          }
-        });
-    }
-  }, [session?.user?.email, session?.user?.id_token, db]);
+  const { db, currentUser, firebaseLoading } = useFirebaseSetup();
 
   useEffect(() => {
     if (currentUser) {
       try {
+        getTransactionGroupsFirebase(db, currentUser.id).then((groups) => {
+          const sortedGroups = sortTransactionGroups(
+            groups,
+            currentUser.groupId
+          );
+          setTransactionGroups.current(sortedGroups);
+        });
         handleFilterChange.current({ userId: currentUser.id });
       } catch {
         toggleStatusErrorAlert(alertContext.current, "GENERIC");
       }
     }
-  }, [currentUser]);
+  }, [currentUser, db]);
 
   const createTransaction = async (newTransaction: CreateTransactionDTO) => {
     try {
@@ -132,7 +90,7 @@ const Profile = () => {
         />
       )}
       <div className="fixed right-0 bottom-0 z-5 m-4 sm:hidden">
-        {!loading && currentUser && (
+        {!firebaseLoading && currentUser && (
           <button
             onClick={() => setIsAddDialogOpen(true)}
             className="bg-theme-secondary hover:bg-theme-secondary-hover rounded-md border-2 border-black p-1.5 text-white shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_rgba(0,0,0,1)]"
@@ -150,7 +108,7 @@ const Profile = () => {
           </div>
         </section>
         <section className="mt-4 md:mt-10">
-          {!loading && currentUser ? (
+          {!firebaseLoading && currentUser ? (
             <TransactionList currentUser={currentUser} db={db} />
           ) : (
             <TransactionListLoading />

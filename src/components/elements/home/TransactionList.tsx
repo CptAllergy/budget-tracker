@@ -1,14 +1,7 @@
 "use client";
 
 import { TransactionDTO, UserDTO } from "@/types/DTO/dataTypes";
-import {
-  Dispatch,
-  SetStateAction,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { Firestore } from "firebase/firestore";
 import {
   toggleStatusAlert,
@@ -25,7 +18,7 @@ import {
   MdOutlineKeyboardArrowRight,
 } from "react-icons/md";
 import { TransactionListLoading } from "@/components/loading/elements/home/LoadingHome";
-import { timestampToDate } from "@/utils/helpers/parsers";
+import { timestampToDate } from "@/utils/validations";
 import { TransactionContext } from "@/contexts/TransactionsContext";
 import { HiMiniEllipsisHorizontal } from "react-icons/hi2";
 import {

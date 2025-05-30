@@ -1,7 +1,7 @@
 import {
   ButtonType,
   getRoundedButtonStyles,
-} from "@/utils/styleFunctions/buttonStyles";
+} from "@/utils/styles/buttonStyles";
 import { Url } from "next/dist/shared/lib/router/router";
 import Link from "next/link";
 import { PropsWithChildren } from "react";

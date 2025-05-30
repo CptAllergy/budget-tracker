@@ -17,7 +17,7 @@ import {
   DialogPanel,
   DialogTitle,
 } from "@headlessui/react";
-import { isValidAmount, isValidDate } from "@/utils/helpers/parsers";
+import { isValidAmount, isValidDate } from "@/utils/validations";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { toggleStatusErrorAlert } from "@/utils/toggleAlerts";
 import { AlertContext } from "@/contexts/AlertContext";

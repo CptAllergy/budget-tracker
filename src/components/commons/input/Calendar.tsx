@@ -1,5 +1,5 @@
 import { DayPicker } from "react-day-picker";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils/utils";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { ComponentProps } from "react";
 import { Control, Controller, FormState, useWatch } from "react-hook-form";
@@ -8,7 +8,7 @@ import { FormInputError } from "@/components/commons/input/Form";
 import { Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
 import { IoCalendarClearSharp } from "react-icons/io5";
 import { format } from "date-fns";
-import { isValidDate } from "@/utils/helpers/parsers";
+import { isValidDate } from "@/utils/validations";
 
 const Calendar = ({
   className,

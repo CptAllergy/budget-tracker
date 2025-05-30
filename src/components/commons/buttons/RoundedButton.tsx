@@ -1,7 +1,7 @@
 import {
   ButtonType,
   getRoundedButtonStyles,
-} from "@/utils/styleFunctions/buttonStyles";
+} from "@/utils/styles/buttonStyles";
 import { PropsWithChildren } from "react";
 import { LoadingRoundedButton } from "@/components/loading/buttons/LoadingRoundedButton";
 
