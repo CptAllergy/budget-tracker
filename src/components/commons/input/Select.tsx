@@ -36,6 +36,7 @@ const MultiSelectChip = ({
   );
 };
 
+// TODO display icon for the categories, maybe the tags as well
 const SelectOptions = ({ options }: { options: readonly string[] }) => {
   return (
     <ListboxOptions

@@ -366,7 +366,7 @@ const TransactionCards = ({
                 {Number(transaction.amount).toFixed(2)}€
               </span>
             </AccordionTrigger>
-            <AccordionContent className="bg-theme-secondary border-t-2 border-black px-2.5 py-1">
+            <AccordionContent className="bg-theme-secondary rounded-b-md border-t-2 border-black px-2.5 py-1">
               <div className="flex justify-between">
                 <div>
                   <dt className="mb-0.5 text-xs font-medium text-black/40">
@@ -432,6 +432,7 @@ const TagList = ({
             )}
           </div>
         ))}
+      {/*TODO on hover of the more tag, display all of the remaining tags*/}
       {tags && limit && tags.length > limit && (
         <span className="rounded-md bg-gray-200 px-2 py-1 text-xs text-gray-500">
           +{tags.length - limit} more
