@@ -1,6 +1,6 @@
 "use client";
 
-import { TransactionDTO, UserDTO } from "@/types/DTO/dataTypes";
+import { ExpenseDTO, UserDTO } from "@/types/DTO/dataTypes";
 import { useContext, useEffect, useRef, useState } from "react";
 import { Firestore } from "firebase/firestore";
 import {
@@ -9,24 +9,16 @@ import {
 } from "@/utils/toggleAlerts";
 import { AlertContext } from "@/contexts/AlertContext";
 import {
-  deleteTransactionFirebase,
-  getTransactionsFirebase,
-  updateTransactionFirebase,
+  deleteExpenseFirebase,
+  getExpensesFirebase,
+  updateExpenseFirebase,
 } from "@/services/firebaseService";
-import {
-  MdOutlineKeyboardArrowLeft,
-  MdOutlineKeyboardArrowRight,
-} from "react-icons/md";
 import { TransactionListLoading } from "@/components/loading/elements/home/LoadingHome";
 import { timestampToDate } from "@/utils/validations";
-import { TransactionContext } from "@/contexts/TransactionsContext";
+import { ExpensesContext } from "@/contexts/ExpensesContext";
 import { HiMiniEllipsisHorizontal } from "react-icons/hi2";
-import {
-  DeleteDialog,
-  EditDialog,
-} from "@/components/commons/dialogs/ActionDialog";
 import { DropdownMenu } from "@/components/commons/menus/DropdownMenu";
-import { TransactionGroupsContext } from "@/contexts/TransactionGroupsContext";
+import { ExpenseGroupsContext } from "@/contexts/ExpenseGroupsContext";
 import {
   Accordion,
   AccordionContent,
@@ -34,172 +26,144 @@ import {
   AccordionTrigger,
 } from "@/components/commons/Accordion";
 import { getCategoryIcon } from "@/utils/styles/transactionFilterStyles";
-import { TransactionTag } from "@/types/transactionFilterTypes";
+import { ExpenseTag } from "@/types/transactionFilterTypes";
+import { DeleteDialog } from "@/components/commons/dialogs/DeleteDialog";
+import { EditDialog } from "@/components/commons/dialogs/EditDialog";
 
-const TransactionList = ({
+const ExpenseList = ({
   currentUser,
+  monthYear,
   db,
 }: {
   currentUser: UserDTO;
+  monthYear: { month: number; year: number };
   db: Firestore;
 }) => {
   const alertContext = useRef(useContext(AlertContext));
-  const transactionContext = useContext(TransactionContext);
-  const transactionGroupsContext = useContext(TransactionGroupsContext);
+  const expenseContext = useContext(ExpensesContext);
+  const expenseGroupsContext = useContext(ExpenseGroupsContext);
 
-  const setTransactionDocs = useRef(transactionContext.setTransactionDocs);
-  const handleGroupChange = useRef(transactionGroupsContext.handleGroupChange);
-  const filterId = transactionGroupsContext.filterId;
+  const setExpenseDocs = useRef(expenseContext.setExpenseDocs);
+  const handleGroupChange = useRef(expenseGroupsContext.handleGroupChange);
+  const filterId = expenseGroupsContext.filterId;
 
-  const [monthYear, setMonthYear] = useState<{ month: number; year: number }>(
-    () => {
-      const currentDate = new Date();
-      return { month: currentDate.getMonth(), year: currentDate.getFullYear() };
-    }
-  );
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set transaction list
+    // Set expense list
     if (filterId) {
-      getTransactionsFirebase(
-        db,
-        setTransactionDocs.current,
-        filterId,
-        monthYear
-      ).then(() => setLoading(false));
+      getExpensesFirebase(db, setExpenseDocs.current, filterId, monthYear).then(
+        () => setLoading(false)
+      );
     }
   }, [db, filterId, monthYear]);
 
-  const removeTransaction = async (transaction: TransactionDTO) => {
+  const removeExpense = async (expense: ExpenseDTO) => {
     try {
-      await deleteTransactionFirebase(
+      await deleteExpenseFirebase(
         db,
-        transaction,
+        expense,
         filterId!,
         currentUser,
         handleGroupChange.current,
-        setTransactionDocs.current
+        setExpenseDocs.current
       );
 
-      toggleStatusAlert(alertContext.current, "Transaction deleted");
+      toggleStatusAlert(alertContext.current, "Expense deleted");
     } catch (error) {
       toggleStatusErrorAlert(alertContext.current, "DELETE_FAILED");
-      throw "Error deleting transaction";
+      throw "Error deleting expense";
     }
   };
 
-  const updateTransaction = async (transaction: TransactionDTO) => {
+  const updateExpense = async (expense: ExpenseDTO) => {
     try {
-      await updateTransactionFirebase(
+      await updateExpenseFirebase(
         db,
-        transaction,
+        expense,
         filterId!,
         currentUser,
         handleGroupChange.current,
-        setTransactionDocs.current
+        setExpenseDocs.current
       );
 
-      toggleStatusAlert(alertContext.current, "Transaction updated");
+      toggleStatusAlert(alertContext.current, "Expense updated");
     } catch (error) {
       toggleStatusErrorAlert(alertContext.current, "UPDATE_FAILED");
-      throw "Error updating transaction";
-    }
-  };
-
-  const handleMonthYearChange = (isPrevious: boolean) => {
-    if (isPrevious) {
-      setMonthYear((prev) => ({
-        month: prev.month === 0 ? 11 : prev.month - 1,
-        year: prev.month === 0 ? prev.year - 1 : prev.year,
-      }));
-    } else {
-      setMonthYear((prev) => ({
-        month: prev.month === 11 ? 0 : prev.month + 1,
-        year: prev.month === 11 ? prev.year + 1 : prev.year,
-      }));
+      throw "Error updating expense";
     }
   };
 
   return (
-    <div className="mx-1 mt-5 mb-5">
+    <div>
       {loading ? (
         // TODO could probably improve this loading animation
         <TransactionListLoading />
       ) : (
-        <>
-          <NavigationOptions
-            monthYear={monthYear}
-            handleMonthYearChange={handleMonthYearChange}
-          />
-          <TransactionContent
-            transactions={transactionContext.transactions}
-            removeTransaction={removeTransaction}
-            updateTransaction={updateTransaction}
-            currentUser={currentUser}
-            loading={loading}
-          />
-        </>
+        <ExpensesContent
+          expenses={expenseContext.expenses}
+          removeExpense={removeExpense}
+          updateExpense={updateExpense}
+          currentUser={currentUser}
+          loading={loading}
+        />
       )}
     </div>
   );
 };
 
-const TransactionContent = ({
-  transactions,
-  removeTransaction,
-  updateTransaction,
+const ExpensesContent = ({
+  expenses,
+  removeExpense,
+  updateExpense,
   currentUser,
   loading,
 }: {
-  transactions: TransactionDTO[];
-  removeTransaction: (transaction: TransactionDTO) => void;
-  updateTransaction: (transaction: TransactionDTO) => void;
+  expenses: ExpenseDTO[];
+  removeExpense: (expense: ExpenseDTO) => void;
+  updateExpense: (expense: ExpenseDTO) => void;
   currentUser: UserDTO;
   loading: boolean;
 }) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
-  const [selectedTransaction, setSelectedTransaction] =
-    useState<TransactionDTO>();
+  const [selectedExpense, setSelectedExpense] = useState<ExpenseDTO>();
 
-  const showDeleteDialog = (transaction: TransactionDTO) => {
-    setSelectedTransaction(transaction);
+  const showDeleteDialog = (expense: ExpenseDTO) => {
+    setSelectedExpense(expense);
     setIsDeleteDialogOpen(true);
   };
-  const showEditDialog = (transaction: TransactionDTO) => {
-    setSelectedTransaction(transaction);
+  const showEditDialog = (expense: ExpenseDTO) => {
+    setSelectedExpense(expense);
     setIsEditDialogOpen(true);
   };
 
   return (
-    <div className="">
+    <div>
       <DeleteDialog
         isDialogOpen={isDeleteDialogOpen}
         setIsDialogOpen={setIsDeleteDialogOpen}
-        removeTransaction={removeTransaction}
-        transaction={selectedTransaction}
+        removeExpenseData={{ removeExpense, expense: selectedExpense }}
       />
       <EditDialog
         isDialogOpen={isEditDialogOpen}
         setIsDialogOpen={setIsEditDialogOpen}
-        updateTransaction={updateTransaction}
-        transaction={selectedTransaction}
+        updateExpenseData={{ updateExpense, expense: selectedExpense }}
       />
       <div className="mx-auto flex max-w-6xl flex-col">
         <div className="inline-block min-w-full px-3 py-2 align-middle">
           <div className="hidden md:block">
-            <TransactionTable
-              transactions={transactions}
+            <ExpenseTable
+              expenses={expenses}
               currentUser={currentUser}
               showDeleteDialog={showDeleteDialog}
               showEditDialog={showEditDialog}
             />
           </div>
           <div className="block md:hidden">
-            <TransactionCards
-              transactions={transactions}
+            <ExpenseCards
+              expenses={expenses}
               currentUser={currentUser}
               showDeleteDialog={showDeleteDialog}
               showEditDialog={showEditDialog}
@@ -211,16 +175,16 @@ const TransactionContent = ({
   );
 };
 
-const TransactionTable = ({
-  transactions,
+const ExpenseTable = ({
+  expenses,
   currentUser,
   showDeleteDialog,
   showEditDialog,
 }: {
-  transactions: TransactionDTO[];
+  expenses: ExpenseDTO[];
   currentUser: UserDTO;
-  showDeleteDialog: (transaction: TransactionDTO) => void;
-  showEditDialog: (transaction: TransactionDTO) => void;
+  showDeleteDialog: (expense: ExpenseDTO) => void;
+  showEditDialog: (expense: ExpenseDTO) => void;
 }) => {
   return (
     <div className="overflow-hidden rounded-md border-2 border-black shadow-[5px_5px_0px_rgba(0,0,0,1)]">
@@ -229,7 +193,7 @@ const TransactionTable = ({
           <tr>
             <th
               scope="col"
-              className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+              className="py-3.5 pr-3 pl-6 text-left text-sm font-semibold text-gray-900"
             >
               Description
             </th>
@@ -270,49 +234,49 @@ const TransactionTable = ({
           </tr>
         </thead>
         <tbody className="bg-theme-highlight divide-y-2 divide-black">
-          {transactions.length === 0 && (
+          {expenses.length === 0 && (
             <tr>
               <td
                 colSpan={7}
                 className="px-3 py-4 text-sm whitespace-nowrap text-gray-500"
               >
-                No transactions found
+                No expenses found
               </td>
             </tr>
           )}
-          {transactions.map((transaction) => (
-            <tr key={transaction.id}>
-              <td className="w-full max-w-0 truncate py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-6">
-                {transaction.label}
+          {expenses.map((expense) => (
+            <tr key={expense.id}>
+              <td className="w-full max-w-0 truncate py-4 pr-3 pl-6 text-sm font-medium whitespace-nowrap text-gray-900">
+                {expense.label}
                 <dl className="font-normal lg:hidden">
                   <dt className="mt-1 truncate text-gray-700 sm:hidden">
-                    {timestampToDate(transaction.timestamp)}
+                    {timestampToDate(expense.timestamp)}
                   </dt>
                   <dt className="mt-1 truncate text-gray-500 sm:text-gray-700">
-                    {transaction.username}
+                    {expense.username}
                   </dt>
                 </dl>
               </td>
               <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500">
-                {Number(transaction.amount).toFixed(2)}€
+                {Number(expense.amount).toFixed(2)}€
               </td>
               {/*TODO better align this vertically*/}
               <td className="mt-1 flex gap-1 px-3 py-4 text-sm whitespace-nowrap text-gray-500">
-                <div> {getCategoryIcon(transaction.category)}</div>
-                <div> {transaction.category}</div>
+                <div> {getCategoryIcon(expense.category)}</div>
+                <div> {expense.category}</div>
               </td>
               <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500">
-                <TagList tags={transaction.tags} limit={3} />
+                <TagList tags={expense.tags} limit={3} />
               </td>
               <td className="hidden px-3 py-4 text-sm whitespace-nowrap text-gray-500 sm:table-cell">
-                {timestampToDate(transaction.timestamp)}
+                {timestampToDate(expense.timestamp)}
               </td>
               <td className="hidden px-3 py-4 text-sm whitespace-nowrap text-gray-500 lg:table-cell">
-                {transaction.username}
+                {expense.username}
               </td>
               <td className="relative py-4 pr-4 text-right text-sm font-medium whitespace-nowrap sm:pr-6">
-                <TransactionDropdownMenu
-                  selectedTransaction={transaction}
+                <ExpenseDropdownMenu
+                  selectedExpense={expense}
                   currentUser={currentUser}
                   showDeleteDialog={showDeleteDialog}
                   showEditDialog={showEditDialog}
@@ -326,44 +290,44 @@ const TransactionTable = ({
   );
 };
 
-const TransactionCards = ({
-  transactions,
+const ExpenseCards = ({
+  expenses,
   currentUser,
   showDeleteDialog,
   showEditDialog,
 }: {
-  transactions: TransactionDTO[];
+  expenses: ExpenseDTO[];
   currentUser: UserDTO;
-  showDeleteDialog: (transaction: TransactionDTO) => void;
-  showEditDialog: (transaction: TransactionDTO) => void;
+  showDeleteDialog: (expense: ExpenseDTO) => void;
+  showEditDialog: (expense: ExpenseDTO) => void;
 }) => {
   return (
     <div>
-      {transactions.length === 0 && (
+      {expenses.length === 0 && (
         <div>
           <div className="bg-theme-highlight mt-3 rounded-md border-2 border-black px-3 py-4 text-sm whitespace-nowrap text-gray-500 shadow-[2px_2px_0px_rgba(0,0,0,1)]">
-            No transactions found
+            No expenses found
           </div>
         </div>
       )}
       <Accordion type="single" collapsible className="mt-3 space-y-2 pb-6">
-        {transactions.map((transaction) => (
+        {expenses.map((expense) => (
           <AccordionItem
-            value={transaction.id}
-            key={transaction.id}
+            value={expense.id}
+            key={expense.id}
             className="bg-theme-highlight rounded-md border-2 border-black shadow-[2px_2px_0px_rgba(0,0,0,1)]"
           >
             <AccordionTrigger className="flex w-full gap-2 px-2">
               <div className="flex-1 space-x-1 truncate text-left text-sm font-medium whitespace-nowrap">
                 <span className="align-baseline text-lg leading-none">
-                  {getCategoryIcon(transaction.category)}
+                  {getCategoryIcon(expense.category)}
                 </span>
                 <span className="align-baseline text-gray-900">
-                  {transaction.label}
+                  {expense.label}
                 </span>
               </div>
-              <span className="text-sm whitespace-nowrap text-gray-500">
-                {Number(transaction.amount).toFixed(2)}€
+              <span className="text-sm whitespace-nowrap text-gray-500/50">
+                {Number(expense.amount).toFixed(2)}€
               </span>
             </AccordionTrigger>
             <AccordionContent className="bg-theme-secondary rounded-b-md border-t-2 border-black px-2.5 py-1">
@@ -373,13 +337,13 @@ const TransactionCards = ({
                     Category
                   </dt>
                   <dd className="mb-2 font-semibold text-black/70">
-                    {transaction.category}
+                    {expense.category}
                   </dd>
                   <dt className="mb-0.5 text-xs font-medium text-black/40">
                     Tags
                   </dt>
                   <dd className="mb-2 font-semibold text-black/70">
-                    <TagList tags={transaction.tags} />
+                    <TagList tags={expense.tags} />
                   </dd>
                 </div>
                 <dl className="text-right">
@@ -387,19 +351,19 @@ const TransactionCards = ({
                     Date
                   </dt>
                   <dd className="mb-2 font-semibold text-black/70">
-                    {timestampToDate(transaction.timestamp)}
+                    {timestampToDate(expense.timestamp)}
                   </dd>
                   <dt className="mb-0.5 text-xs font-medium text-black/40">
                     User
                   </dt>
                   <dd className="mb-2 font-semibold text-black/70">
-                    {transaction.username}
+                    {expense.username}
                   </dd>
                 </dl>
               </div>
               <div className="text-right">
-                <TransactionDropdownMenu
-                  selectedTransaction={transaction}
+                <ExpenseDropdownMenu
+                  selectedExpense={expense}
                   currentUser={currentUser}
                   showDeleteDialog={showDeleteDialog}
                   showEditDialog={showEditDialog}
@@ -413,13 +377,7 @@ const TransactionCards = ({
   );
 };
 
-const TagList = ({
-  tags,
-  limit,
-}: {
-  tags?: TransactionTag[];
-  limit?: number;
-}) => {
+const TagList = ({ tags, limit }: { tags?: ExpenseTag[]; limit?: number }) => {
   return (
     <div>
       {tags &&
@@ -442,20 +400,20 @@ const TagList = ({
   );
 };
 
-const TransactionDropdownMenu = ({
-  selectedTransaction,
+const ExpenseDropdownMenu = ({
+  selectedExpense,
   currentUser,
   showDeleteDialog,
   showEditDialog,
 }: {
-  selectedTransaction: TransactionDTO;
+  selectedExpense: ExpenseDTO;
   currentUser: UserDTO;
-  showDeleteDialog: (transaction: TransactionDTO) => void;
-  showEditDialog: (transaction: TransactionDTO) => void;
+  showDeleteDialog: (expense: ExpenseDTO) => void;
+  showEditDialog: (expense: ExpenseDTO) => void;
 }) => {
   return (
     <div>
-      {currentUser.id === selectedTransaction.userId && (
+      {currentUser.id === selectedExpense.userId && (
         <DropdownMenu
           menuButton={
             <div className="bg-theme-main hover:bg-theme-hover inline-flex rounded-md border-2 border-black px-3 py-0.5 text-white transition-colors md:px-1 md:py-1">
@@ -467,14 +425,14 @@ const TransactionDropdownMenu = ({
               icon: <></>,
               label: "Edit",
               onClick: () => {
-                showEditDialog(selectedTransaction);
+                showEditDialog(selectedExpense);
               },
             },
             {
               icon: <></>,
               label: "Delete",
               onClick: () => {
-                showDeleteDialog(selectedTransaction);
+                showDeleteDialog(selectedExpense);
               },
             },
           ]}
@@ -484,45 +442,4 @@ const TransactionDropdownMenu = ({
   );
 };
 
-const NavigationOptions = ({
-  monthYear,
-  handleMonthYearChange,
-}: {
-  monthYear: {
-    month: number;
-    year: number;
-  };
-  handleMonthYearChange: (isPrevious: boolean) => void;
-}) => {
-  const { month, year } = monthYear;
-  const date = new Date(year, month, 1);
-  const monthString = date.toLocaleString("en-us", { month: "long" });
-
-  return (
-    <div>
-      <div className="mx-auto flex max-w-6xl">
-        <div className="min-w-full px-3 align-middle">
-          <div className="bg-theme-highlight flex flex-row items-center justify-between overflow-hidden rounded-md border-2 border-black py-2 shadow-[2px_2px_0px_rgba(0,0,0,1)]">
-            <button
-              className="bg-theme-main hover:bg-theme-hover mx-4 rounded-md border-2 border-black px-2 py-0.5 text-white shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-colors hover:shadow-[2px_2px_0px_rgba(0,0,0,1)]"
-              onClick={() => handleMonthYearChange(true)}
-            >
-              <MdOutlineKeyboardArrowLeft size={25} />
-            </button>
-            <p className="capitalize">
-              {monthString} - {year}
-            </p>
-            <button
-              className="bg-theme-main hover:bg-theme-hover mx-4 rounded-md border-2 border-black px-2 py-0.5 text-white shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-colors hover:shadow-[2px_2px_0px_rgba(0,0,0,1)]"
-              onClick={() => handleMonthYearChange(false)}
-            >
-              <MdOutlineKeyboardArrowRight size={25} />
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default TransactionList;
+export default ExpenseList;

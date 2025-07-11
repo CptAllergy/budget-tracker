@@ -3,6 +3,7 @@
 import { AlertContextType, AlertType } from "@/contexts/AlertContext";
 import { CustomErrorCode } from "@/types/errorTypes";
 
+// TODO receive error here and print it to the console
 export const toggleStatusErrorAlert = (
   alertContext: AlertContextType,
   errorCode: CustomErrorCode
@@ -20,15 +21,15 @@ export const toggleStatusErrorAlert = (
       break;
     }
     case "DELETE_FAILED": {
-      setAlertMessage("Failed to remove transaction");
+      setAlertMessage("Unexpected error while deleting");
       break;
     }
     case "ADD_FAILED": {
-      setAlertMessage("Failed to add new transaction");
+      setAlertMessage("Unexpected error while creating");
       break;
     }
     case "UPDATE_FAILED": {
-      setAlertMessage("Failed to update transaction");
+      setAlertMessage("Unexpected error while updating");
       break;
     }
     default: {

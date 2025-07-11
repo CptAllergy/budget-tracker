@@ -8,14 +8,6 @@ export const TotalsLoading = () => {
   );
 };
 
-export const NewTransactionLoading = () => {
-  return (
-    <div className="mx-1 mt-5 flex w-full flex-col items-center md:mt-10">
-      <LoadingRoundedText theme="dark" className="h-44 w-full max-w-4xl" />
-    </div>
-  );
-};
-
 export const TransactionListLoading = () => {
   return (
     <div className="my-5 flex w-full flex-col items-center md:my-10">

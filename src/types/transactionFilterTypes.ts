@@ -1,4 +1,4 @@
-export const TRANSACTION_CATEGORIES = [
+export const EXPENSE_CATEGORIES = [
   "Other",
   "Groceries",
   "Dining",
@@ -13,9 +13,9 @@ export const TRANSACTION_CATEGORIES = [
   "Personal Spending",
 ] as const;
 
-export type TransactionCategory = (typeof TRANSACTION_CATEGORIES)[number];
+export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
 
-export const TRANSACTION_TAGS = [
+export const EXPENSE_TAGS = [
   "Food",
   "Drinks",
   "Vacation",
@@ -29,4 +29,18 @@ export const TRANSACTION_TAGS = [
   "Miscellaneous",
 ] as const;
 
-export type TransactionTag = (typeof TRANSACTION_TAGS)[number];
+export type ExpenseTag = (typeof EXPENSE_TAGS)[number];
+
+export const EARNING_CATEGORIES = [
+  "Other",
+  "Salary",
+  "Meal Allowance",
+  "Stock Sales",
+  "Interest",
+  "Dividends",
+  "Refunds",
+  "Gifts",
+  "Bonuses",
+] as const;
+
+export type EarningCategory = (typeof EARNING_CATEGORIES)[number];

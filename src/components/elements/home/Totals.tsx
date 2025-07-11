@@ -2,15 +2,15 @@
 
 import { useContext, useEffect, useRef, useState } from "react";
 import { rancho } from "@/styles/fonts";
-import { TransactionGroupsContext } from "@/contexts/TransactionGroupsContext";
+import { ExpenseGroupsContext } from "@/contexts/ExpenseGroupsContext";
 import { AlertContext } from "@/contexts/AlertContext";
 import { toggleStatusErrorAlert } from "@/utils/toggleAlerts";
 
 const Totals = () => {
   const alertContext = useRef(useContext(AlertContext));
-  const transactionGroupsContext = useContext(TransactionGroupsContext);
+  const expenseGroupsContext = useContext(ExpenseGroupsContext);
 
-  const { currentGroup } = transactionGroupsContext;
+  const { currentGroup } = expenseGroupsContext;
 
   const [sender, setSender] = useState("");
   const [receiver, setReceiver] = useState("");

@@ -1,22 +1,7 @@
-import {
-  TransactionCategory,
-  TransactionTag,
-} from "@/types/transactionFilterTypes";
-
-// TODO will I use this?
-export function getTransactionFilterColor(
-  transactionFilter: TransactionCategory | TransactionTag
-): string {
-  switch (transactionFilter) {
-    case "Food":
-      return "bg-green-500";
-    default:
-      return "bg-gray-200";
-  }
-}
+import { ExpenseCategory, ExpenseTag } from "@/types/transactionFilterTypes";
 
 export function getCategoryIcon(
-  transactionFilter?: TransactionCategory | TransactionTag
+  transactionFilter?: ExpenseCategory | ExpenseTag
 ): string {
   switch (transactionFilter) {
     // Transaction Categories

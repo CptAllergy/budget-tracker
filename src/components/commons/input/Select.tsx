@@ -8,11 +8,12 @@ import {
 import { ChevronDownIcon } from "lucide-react";
 import { clsx } from "clsx";
 import {
-  TRANSACTION_CATEGORIES,
-  TRANSACTION_TAGS,
+  EARNING_CATEGORIES,
+  EXPENSE_CATEGORIES,
+  EXPENSE_TAGS,
 } from "@/types/transactionFilterTypes";
 import { Control, Controller } from "react-hook-form";
-import { CreateTransactionDTO } from "@/types/DTO/dataTypes";
+import { CreateEarningDTO, CreateExpenseDTO } from "@/types/DTO/dataTypes";
 
 // TODO Instead of hiding the overflowing chip, don't render the final element and show how many more there are, or some other solution
 const MultiSelectChip = ({
@@ -98,7 +99,7 @@ const MultiSelect = ({
           aria-hidden="true"
         />
       </ListboxButton>
-      <SelectOptions options={TRANSACTION_TAGS} />
+      <SelectOptions options={EXPENSE_TAGS} />
     </Listbox>
   );
 };
@@ -130,7 +131,7 @@ const Select = ({
 const FormInputMultiSelect = ({
   control,
 }: {
-  control: Control<CreateTransactionDTO>;
+  control: Control<CreateExpenseDTO>;
 }) => {
   return (
     <Controller
@@ -143,10 +144,10 @@ const FormInputMultiSelect = ({
   );
 };
 
-const FormInputSelect = ({
+const FormInputExpenseSelect = ({
   control,
 }: {
-  control: Control<CreateTransactionDTO>;
+  control: Control<CreateExpenseDTO>;
 }) => {
   return (
     <Controller
@@ -156,11 +157,36 @@ const FormInputSelect = ({
         <Select
           selectedCategory={value}
           onChange={onChange}
-          options={[...TRANSACTION_CATEGORIES]}
+          options={[...EXPENSE_CATEGORIES]}
         />
       )}
     />
   );
 };
 
-export { FormInputSelect, FormInputMultiSelect, Select };
+const FormInputEarningSelect = ({
+  control,
+}: {
+  control: Control<CreateEarningDTO>;
+}) => {
+  return (
+    <Controller
+      control={control}
+      name="category"
+      render={({ field: { value, onChange } }) => (
+        <Select
+          selectedCategory={value}
+          onChange={onChange}
+          options={[...EARNING_CATEGORIES]}
+        />
+      )}
+    />
+  );
+};
+
+export {
+  FormInputExpenseSelect,
+  FormInputEarningSelect,
+  FormInputMultiSelect,
+  Select,
+};

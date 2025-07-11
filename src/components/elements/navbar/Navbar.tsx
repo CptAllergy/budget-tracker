@@ -34,7 +34,7 @@ import {
   DrawerTrigger,
 } from "@/components/commons/menus/DrawerMenu";
 import { UserDTO } from "@/types/DTO/dataTypes";
-import { TransactionGroupsContext } from "@/contexts/TransactionGroupsContext";
+import { ExpenseGroupsContext } from "@/contexts/ExpenseGroupsContext";
 import { AlertContext } from "@/contexts/AlertContext";
 import { toggleStatusErrorAlert } from "@/utils/toggleAlerts";
 
@@ -111,10 +111,10 @@ const NavbarGroupSelectorDrawer = ({
     >
       <DrawerHeader className="flex flex-row items-center justify-between">
         <DrawerTitle className="-ml-1.5 text-base sm:ml-0">
-          Transaction Groups
+          Expense Groups
         </DrawerTitle>
         <DrawerDescription className="sr-only">
-          Choose Transaction Groups
+          Choose Expense Groups
         </DrawerDescription>
         <DrawerClose className="rounded-md border-2 border-black bg-white p-1.5 shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all hover:shadow-[3px_3px_0px_rgba(0,0,0,1)] sm:mr-1">
           <LuX className="size-4 [stroke-width:3]" />
@@ -130,16 +130,15 @@ const NavbarGroupSelectorDrawer = ({
 // TODO allow user to create new groups
 const GroupSelectorList = ({ currentUser }: { currentUser: UserDTO }) => {
   const alertContext = useRef(useContext(AlertContext));
-  const transactionGroupsContext = useContext(TransactionGroupsContext);
+  const expenseGroupsContext = useContext(ExpenseGroupsContext);
 
-  const filterId = transactionGroupsContext.filterId;
-  const handleFilterChange = useRef(
-    transactionGroupsContext.handleFilterChange
-  );
+  const filterId = expenseGroupsContext.filterId;
+  const handleFilterChange = useRef(expenseGroupsContext.handleFilterChange);
 
-  const transactionGroups = transactionGroupsContext.transactionGroups;
+  const expenseGroups = expenseGroupsContext.expenseGroups;
 
   const handleGroupClick = (groupId: string, groupName: string) => {
+    // TODO when changing from group to profile there is a flicker due to changing the filterId, try to avoid this
     // TODO redirecting from the profile page to the home page does not save the chosen group. Maybe add something to local storage to make this move and then remove it, similar to the login
     try {
       handleFilterChange.current({ groupId: groupId, groupName: groupName });
@@ -169,12 +168,12 @@ const GroupSelectorList = ({ currentUser }: { currentUser: UserDTO }) => {
           <div className="truncate font-semibold">Profile</div>
         </Link>
         <hr className="my-4 border-t border-b border-black" />
-        {transactionGroups.length === 0 ? (
+        {expenseGroups.length === 0 ? (
           <div className="ml-2 text-sm font-semibold sm:text-base">
             You don&#39;t have any groups
           </div>
         ) : (
-          transactionGroups.map((group) => (
+          expenseGroups.map((group) => (
             <Link
               key={group.id}
               href="/"

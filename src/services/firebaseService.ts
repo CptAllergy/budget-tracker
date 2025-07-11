@@ -1,5 +1,6 @@
 import {
   collection,
+  deleteDoc,
   doc,
   DocumentSnapshot,
   Firestore,
@@ -8,17 +9,20 @@ import {
   orderBy,
   query,
   runTransaction,
+  setDoc,
   where,
 } from "firebase/firestore";
 import {
-  CreateTransactionDTO,
-  TransactionDTO,
-  TransactionGroupDTO,
+  CreateEarningDTO,
+  CreateExpenseDTO,
+  EarningDTO,
+  ExpenseDTO,
+  ExpenseGroupDTO,
   UserDTO,
   UserTotalDTO,
 } from "@/types/DTO/dataTypes";
 import { Dispatch, SetStateAction } from "react";
-import { TransactionListType } from "@/types/componentTypes";
+import { ExpenseListType } from "@/types/componentTypes";
 
 export async function getCurrentUserFirebase(
   db: Firestore,
@@ -36,16 +40,12 @@ export async function getCurrentUserFirebase(
   setCurrentUser(currentUser);
 }
 
-export async function getTransactionGroupsFirebase(
-  db: Firestore,
-  userId: string
-) {
-  const queryTransactionGroups = query(
+export async function getExpenseGroupsFirebase(db: Firestore, userId: string) {
+  const queryExpenseGroups = query(
     collection(db, "groups"),
     where("members", "array-contains", userId)
   );
-  const querySnapshot = await getDocs(queryTransactionGroups);
-
+  const querySnapshot = await getDocs(queryExpenseGroups);
   return await Promise.all(
     querySnapshot.docs.map(async (doc) => {
       const totalsSnapshot = await getDocs(
@@ -62,70 +62,59 @@ export async function getTransactionGroupsFirebase(
         id: doc.id,
         ...doc.data(),
         totals: totals,
-      } as TransactionGroupDTO;
+      } as ExpenseGroupDTO;
     })
   );
 }
 
-export async function getTransactionsFirebase(
+export async function getExpensesFirebase(
   db: Firestore,
-  setTransactionDocs: (
+  setExpenseDocs: (
     updater: (prevDocs: DocumentSnapshot[]) => DocumentSnapshot[]
   ) => void,
-  filterId: TransactionListType,
+  filterId: ExpenseListType,
   monthYear?: { month: number; year: number }
 ) {
-  const date = new Date();
-
-  // Only set the month and year if they are provided, otherwise use the current date
-  if (monthYear) {
-    date.setMonth(monthYear.month);
-    date.setFullYear(monthYear.year);
-  }
-
-  const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
-  const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-  lastDay.setHours(23, 59, 59, 999);
+  const { firstDay, lastDay } = getMonthYearLimits(monthYear);
 
   const filter = filterId.userId
     ? where("userId", "==", filterId.userId)
     : where("groupId", "==", filterId.groupId);
 
-  const queryTransactions = query(
-    collection(db, "transactions"),
+  const queryExpenses = query(
+    collection(db, "expenses"),
     where("timestamp", ">=", firstDay),
     where("timestamp", "<=", lastDay),
     filter,
     orderBy("timestamp", "desc")
   );
 
-  const querySnapshot = await getDocs(queryTransactions);
-  setTransactionDocs(() => querySnapshot.docs);
+  const querySnapshot = await getDocs(queryExpenses);
+  setExpenseDocs(() => querySnapshot.docs);
 }
 
-export async function postTransactionFirebase(
+export async function postExpenseFirebase(
   db: Firestore,
-  newTransaction: CreateTransactionDTO,
-  filterId: TransactionListType,
+  newExpense: CreateExpenseDTO,
+  filterId: ExpenseListType,
   currentUser: UserDTO,
   handleGroupChange: (
-    updater: (prevDocs: TransactionGroupDTO) => TransactionGroupDTO
+    updater: (prevDocs: ExpenseGroupDTO) => ExpenseGroupDTO
   ) => void,
-  setTransactionDocs: (
+  setExpenseDocs: (
     updater: (prevDocs: DocumentSnapshot[]) => DocumentSnapshot[]
   ) => void
 ) {
   // Load the first page
-  await getTransactionsFirebase(db, setTransactionDocs, filterId);
+  await getExpensesFirebase(db, setExpenseDocs, filterId);
 
-  const totalRef = newTransaction.groupId
-    ? doc(db, "groups", newTransaction.groupId, "totals", currentUser.id)
+  const totalRef = newExpense.groupId
+    ? doc(db, "groups", newExpense.groupId, "totals", currentUser.id)
     : null;
-  const transactionRef = doc(collection(db, "transactions"));
+  const expenseRef = doc(collection(db, "expenses"));
 
   // These Firestore operations must run inside an atomic transaction
   const newUserTotal = await runTransaction(db, async (fbTransaction) => {
-    // const userDocumentDoc = await fbTransaction.get(userRef);
     let newUserTotal = null;
     if (totalRef) {
       const userTotalDoc = await fbTransaction.get(totalRef);
@@ -133,7 +122,7 @@ export async function postTransactionFirebase(
         throw "Document does not exist!";
       }
       const userTotal = userTotalDoc.data() as UserTotalDTO;
-      newUserTotal = userTotal.total + newTransaction.amount;
+      newUserTotal = userTotal.total + newExpense.amount;
 
       // Increase user total
       fbTransaction.update(totalRef, {
@@ -141,8 +130,8 @@ export async function postTransactionFirebase(
       });
     }
 
-    // Add transaction document
-    fbTransaction.set(transactionRef, newTransaction);
+    // Add expense document
+    fbTransaction.set(expenseRef, newExpense);
 
     return newUserTotal;
   });
@@ -156,32 +145,32 @@ export async function postTransactionFirebase(
   );
 
   // Update the reference list
-  const transactionDoc = await getDoc(transactionRef);
-  setTransactionDocs((prevDocs) => {
-    return [transactionDoc, ...prevDocs];
+  const expenseDoc = await getDoc(expenseRef);
+  setExpenseDocs((prevDocs) => {
+    return [expenseDoc, ...prevDocs];
   });
 }
 
-export async function deleteTransactionFirebase(
+export async function deleteExpenseFirebase(
   db: Firestore,
-  transaction: TransactionDTO,
-  filterId: TransactionListType,
+  expense: ExpenseDTO,
+  filterId: ExpenseListType,
   currentUser: UserDTO,
   handleGroupChange: (
-    updater: (prevDocs: TransactionGroupDTO) => TransactionGroupDTO
+    updater: (prevDocs: ExpenseGroupDTO) => ExpenseGroupDTO
   ) => void,
-  setTransactionDocs: (
+  setExpenseDocs: (
     updater: (prevDocs: DocumentSnapshot[]) => DocumentSnapshot[]
   ) => void
 ) {
-  if (transaction.userId !== currentUser.id) {
-    throw "Current user does not match transaction user";
+  if (expense.userId !== currentUser.id) {
+    throw "Current user does not match expense owner";
   }
 
-  const totalRef = transaction.groupId
-    ? doc(db, "groups", transaction.groupId, "totals", currentUser.id)
+  const totalRef = expense.groupId
+    ? doc(db, "groups", expense.groupId, "totals", currentUser.id)
     : null;
-  const transactionRef = doc(db, "transactions", transaction.id);
+  const expenseRef = doc(db, "expenses", expense.id);
 
   // These Firestore operations must run inside an atomic transaction
   const newUserTotal = await runTransaction(db, async (fbTransaction) => {
@@ -192,22 +181,22 @@ export async function deleteTransactionFirebase(
         throw "Document does not exist!";
       }
       const userTotal = userTotalDoc.data() as UserTotalDTO;
-      newUserTotal = userTotal.total - Number(transaction.amount);
-      // Decrease user total document by the deleted transaction
+      newUserTotal = userTotal.total - Number(expense.amount);
+      // Update user total document by the deleted expense
       fbTransaction.update(totalRef, {
         total: newUserTotal,
       });
     }
 
-    // Delete transaction document
-    fbTransaction.delete(transactionRef);
+    // Delete expense document
+    fbTransaction.delete(expenseRef);
 
     return newUserTotal;
   });
 
-  // Delete reference Update the reference list
-  setTransactionDocs((prevDocs) => {
-    return prevDocs.filter((value) => value.id != transaction.id);
+  // Delete reference document from the state
+  setExpenseDocs((prevDocs) => {
+    return prevDocs.filter((value) => value.id !== expense.id);
   });
 
   // Update the total for the current user
@@ -219,47 +208,45 @@ export async function deleteTransactionFirebase(
   );
 }
 
-export async function updateTransactionFirebase(
+export async function updateExpenseFirebase(
   db: Firestore,
-  updatedTransaction: TransactionDTO,
-  filterId: TransactionListType,
+  expenseUpdated: ExpenseDTO,
+  filterId: ExpenseListType,
   currentUser: UserDTO,
   handleGroupChange: (
-    updater: (prevDocs: TransactionGroupDTO) => TransactionGroupDTO
+    updater: (prevDocs: ExpenseGroupDTO) => ExpenseGroupDTO
   ) => void,
-  setTransactionDocs: (
+  setExpenseDocs: (
     updater: (prevDocs: DocumentSnapshot[]) => DocumentSnapshot[]
   ) => void
 ) {
-  if (updatedTransaction.userId !== currentUser.id) {
-    throw "Current user does not match transaction user";
+  if (expenseUpdated.userId !== currentUser.id) {
+    throw "Current user does not match expense owner";
   }
 
-  const totalRef = updatedTransaction.groupId
-    ? doc(db, "groups", updatedTransaction.groupId, "totals", currentUser.id)
+  const totalRef = expenseUpdated.groupId
+    ? doc(db, "groups", expenseUpdated.groupId, "totals", currentUser.id)
     : null;
-  const transactionRef = doc(db, "transactions", updatedTransaction.id);
+  const expenseRef = doc(db, "expenses", expenseUpdated.id);
 
   // These Firestore operations must run inside an atomic transaction
   const { newUserTotal, prevTimestamp } = await runTransaction(
     db,
     async (fbTransaction) => {
-      const transactionDocumentDoc = await fbTransaction.get(transactionRef);
-      const transactionDocument =
-        transactionDocumentDoc.data() as TransactionDTO;
+      const expenseDoc = await fbTransaction.get(expenseRef);
+      const expenseOld = expenseDoc.data() as ExpenseDTO;
 
       let newUserTotal = null;
       if (totalRef) {
         const userTotalDoc = await fbTransaction.get(totalRef);
-        if (!userTotalDoc.exists() || !transactionDocumentDoc.exists()) {
+        if (!userTotalDoc.exists() || !expenseDoc.exists()) {
           throw "Document does not exist!";
         }
         const userTotal = userTotalDoc.data() as UserTotalDTO;
         // Update user total document by the updated amount, if it changed
 
-        if (transactionDocument.amount !== updatedTransaction.amount) {
-          const difference =
-            updatedTransaction.amount - transactionDocument.amount;
+        if (expenseOld.amount !== expenseUpdated.amount) {
+          const difference = expenseUpdated.amount - expenseOld.amount;
 
           newUserTotal = userTotal.total + difference;
           fbTransaction.update(totalRef, {
@@ -268,17 +255,17 @@ export async function updateTransactionFirebase(
         }
       }
 
-      fbTransaction.update(transactionRef, {
-        amount: updatedTransaction.amount,
-        label: updatedTransaction.label,
-        timestamp: updatedTransaction.timestamp,
-        tags: updatedTransaction.tags,
-        category: updatedTransaction.category,
+      fbTransaction.update(expenseRef, {
+        amount: expenseUpdated.amount,
+        label: expenseUpdated.label,
+        timestamp: expenseUpdated.timestamp,
+        tags: expenseUpdated.tags,
+        category: expenseUpdated.category,
       });
 
       return {
         newUserTotal: newUserTotal,
-        prevTimestamp: transactionDocument.timestamp,
+        prevTimestamp: expenseOld.timestamp,
       };
     }
   );
@@ -291,21 +278,133 @@ export async function updateTransactionFirebase(
     handleGroupChange
   );
 
-  // Replace the transaction document in the state
-  const transactionDoc = await getDoc(transactionRef);
-  setTransactionDocs((prevDocs) => {
-    const filteredList = prevDocs.filter(
-      (value) => value.id !== transactionDoc.id
-    );
+  // Replace the expense document in the state
+  const expenseDoc = await getDoc(expenseRef);
+  setExpenseDocs((prevDocs) => {
+    const filteredList = prevDocs.filter((value) => value.id !== expenseDoc.id);
 
     const isSameMonth =
       prevTimestamp.toDate().getMonth() ===
-      transactionDoc.data()?.timestamp.toDate().getMonth();
+      expenseDoc.data()?.timestamp.toDate().getMonth();
 
     // Sort by timestamp
     if (isSameMonth) {
-      return [transactionDoc, ...filteredList].sort((a, b) =>
+      return [expenseDoc, ...filteredList].sort((a, b) =>
         a.data()?.timestamp < b.data()?.timestamp ? 1 : -1
+      );
+    } else {
+      return filteredList;
+    }
+  });
+}
+
+export async function getEarningsFirebase(
+  db: Firestore,
+  setEarnings: Dispatch<SetStateAction<EarningDTO[]>>,
+  userId: string,
+  monthYear?: { month: number; year: number }
+) {
+  const { firstDay, lastDay } = getMonthYearLimits(monthYear);
+
+  const queryEarnings = query(
+    collection(db, "earnings"),
+    where("timestamp", ">=", firstDay),
+    where("timestamp", "<=", lastDay),
+    where("userId", "==", userId),
+    orderBy("timestamp", "desc")
+  );
+
+  const querySnapshot = await getDocs(queryEarnings);
+  const earnings = querySnapshot.docs.map((doc) => {
+    return { id: doc.id, ...doc.data() } as EarningDTO;
+  });
+  setEarnings(earnings);
+}
+
+export async function postEarningFirebase(
+  db: Firestore,
+  newEarning: CreateEarningDTO,
+  userId: string,
+  setEarnings: Dispatch<SetStateAction<EarningDTO[]>>
+) {
+  // Load the first page
+  await getEarningsFirebase(db, setEarnings, userId);
+
+  const earningRef = doc(collection(db, "earnings"));
+
+  // Add earning document
+  await setDoc(earningRef, newEarning);
+
+  // Update earnings list
+  const earningDoc = await getDoc(earningRef);
+  const earning = { id: earningDoc.id, ...earningDoc.data() } as EarningDTO;
+  setEarnings((prevDocs) => {
+    return [earning, ...prevDocs];
+  });
+}
+
+export async function deleteEarningFirebase(
+  db: Firestore,
+  earning: EarningDTO,
+  currentUser: UserDTO,
+  setEarnings: Dispatch<SetStateAction<EarningDTO[]>>
+) {
+  if (earning.userId !== currentUser.id) {
+    throw "Current user does not match earning owner";
+  }
+
+  const earningRef = doc(db, "earnings", earning.id);
+
+  // Delete transaction document
+  await deleteDoc(earningRef);
+
+  // Delete reference document from the state
+  setEarnings((prevDocs) => {
+    return prevDocs.filter((value) => value.id !== earning.id);
+  });
+}
+
+export async function updateEarningFirebase(
+  db: Firestore,
+  earningUpdated: EarningDTO,
+  currentUser: UserDTO,
+  setEarnings: Dispatch<SetStateAction<EarningDTO[]>>
+) {
+  if (earningUpdated.userId !== currentUser.id) {
+    throw "Current user does not match earning owner";
+  }
+
+  const earningRef = doc(db, "earnings", earningUpdated.id);
+
+  // These Firestore operations must run inside an atomic transaction
+  const prevTimestamp = await runTransaction(db, async (fbTransaction) => {
+    const earningDoc = await fbTransaction.get(earningRef);
+    const earningOld = earningDoc.data() as EarningDTO;
+
+    fbTransaction.update(earningRef, {
+      amount: earningUpdated.amount,
+      label: earningUpdated.label,
+      timestamp: earningUpdated.timestamp,
+      category: earningUpdated.category,
+    });
+
+    return earningOld.timestamp;
+  });
+
+  // Replace earning in the state
+  const earningDoc = await getDoc(earningRef);
+  const earning = { id: earningDoc.id, ...earningDoc.data() } as EarningDTO;
+  setEarnings((prevDocs) => {
+    const filteredList = prevDocs.filter((value) => value.id !== earning.id);
+
+    const isSameMonth =
+      prevTimestamp.toDate().getMonth() ===
+      earning.timestamp.toDate().getMonth();
+
+    // Sort by timestamp
+    if (isSameMonth) {
+      return [earning, ...filteredList].sort((a, b) =>
+        a.timestamp < b.timestamp ? 1 : -1
       );
     } else {
       return filteredList;
@@ -316,9 +415,9 @@ export async function updateTransactionFirebase(
 function updateCurrentUserTotalState(
   newUserTotal: number | null,
   currentUserId: string,
-  filterId: TransactionListType,
+  filterId: ExpenseListType,
   handleGroupChange: (
-    updater: (prevDocs: TransactionGroupDTO) => TransactionGroupDTO
+    updater: (prevDocs: ExpenseGroupDTO) => ExpenseGroupDTO
   ) => void
 ) {
   if (newUserTotal != null && filterId.groupId != null) {
@@ -338,4 +437,22 @@ function updateCurrentUserTotalState(
       };
     });
   }
+}
+
+function getMonthYearLimits(monthYear?: { month: number; year: number }): {
+  firstDay: Date;
+  lastDay: Date;
+} {
+  const date = new Date();
+
+  // Only set the month and year if they are provided, otherwise use the current date
+  if (monthYear) {
+    date.setMonth(monthYear.month);
+    date.setFullYear(monthYear.year);
+  }
+
+  const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+  const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+  lastDay.setHours(23, 59, 59, 999);
+  return { firstDay, lastDay };
 }

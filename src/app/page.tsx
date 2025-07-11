@@ -3,66 +3,73 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { Navbar } from "@/components/elements/navbar/Navbar";
 import {
-  CreateTransactionDTO,
-  TransactionGroupDTO,
+  CreateEarningDTO,
+  CreateExpenseDTO,
+  ExpenseGroupDTO,
 } from "@/types/DTO/dataTypes";
 import Totals from "@/components/elements/home/Totals";
-import TransactionList from "@/components/elements/home/TransactionList";
+import ExpenseList from "@/components/elements/home/ExpenseList";
 import { AlertContext } from "@/contexts/AlertContext";
 import {
   toggleStatusAlert,
   toggleStatusErrorAlert,
 } from "@/utils/toggleAlerts";
 import {
-  getTransactionGroupsFirebase,
-  postTransactionFirebase,
+  getExpenseGroupsFirebase,
+  postEarningFirebase,
+  postExpenseFirebase,
 } from "@/services/firebaseService";
 import {
   TotalsLoading,
   TransactionListLoading,
 } from "@/components/loading/elements/home/LoadingHome";
 import NewChanges from "@/components/elements/home/NewChanges";
-import { AddDialog } from "@/components/commons/dialogs/ActionDialog";
-import { TransactionContext } from "@/contexts/TransactionsContext";
+import { ExpensesContext } from "@/contexts/ExpensesContext";
 import { LuPlus } from "react-icons/lu";
-import { TransactionGroupsContext } from "@/contexts/TransactionGroupsContext";
-import { sortTransactionGroups } from "@/utils/sorters";
-import { redirect } from "next/navigation";
+import { ExpenseGroupsContext } from "@/contexts/ExpenseGroupsContext";
+import { sortExpenseGroups } from "@/utils/sorters";
+import { useRouter } from "next/navigation";
 import { useFirebaseSetup } from "@/utils/hooks";
+import MonthNavigation from "@/components/elements/home/MonthNavigation";
+import { AddDialog } from "@/components/commons/dialogs/AddDialog";
 
 // TODO consider looking into a state manager so changes to context dont cause re-renders (investigate if this is actually a problem)
 // TODO add stats page (monthly, yearly)
 // TODO check where unnecessary re-renders are occurring
+// TODO fix bug, when adding a new transaction/earning the monthYear is not updated, only the list of expenses/earnings. To fix, update monthYear instead when adding a new transaction/earning
+// TODO add settings menu where user can change color of earning and expenses (red, green or grey, for a negative or neutral value)
 const Home = () => {
   const alertContext = useRef(useContext(AlertContext));
-  const transactionContext = useContext(TransactionContext);
-  const transactionGroupsContext = useContext(TransactionGroupsContext);
+  const expensesContext = useContext(ExpensesContext);
+  const expenseGroupsContext = useContext(ExpenseGroupsContext);
 
-  const setTransactionDocs = useRef(transactionContext.setTransactionDocs);
-  const handleFilterChange = useRef(
-    transactionGroupsContext.handleFilterChange
-  );
+  const setExpenseDocs = useRef(expensesContext.setExpenseDocs);
+  const handleFilterChange = useRef(expenseGroupsContext.handleFilterChange);
 
-  const setTransactionGroups = useRef(
-    transactionGroupsContext.setTransactionGroups
-  );
+  const setExpenseGroups = useRef(expenseGroupsContext.setExpenseGroups);
 
-  const handleGroupChange = useRef(transactionGroupsContext.handleGroupChange);
+  const handleGroupChange = useRef(expenseGroupsContext.handleGroupChange);
 
   // Used to detect new changes
   const [isChangeFound, setIsChangeFound] = useState<boolean>(false);
-
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [monthYear, setMonthYear] = useState<{ month: number; year: number }>(
+    () => {
+      const currentDate = new Date();
+      return { month: currentDate.getMonth(), year: currentDate.getFullYear() };
+    }
+  );
 
   const { db, currentUser, firebaseLoading } = useFirebaseSetup();
+  const router = useRouter();
 
   // Runs after sign in to either redirect to profile page or set group
   useEffect(() => {
     // TODO if received value from local storage with different groupId, use that value so set default (after checking it's valid) and then clear local storage
-    const selectDefaultPage = (groups: TransactionGroupDTO[]) => {
+    const selectDefaultPage = (groups: ExpenseGroupDTO[]) => {
       if (!groups || groups.length === 0) {
         // Redirect to profile page if no groups are found
-        redirect("/profile");
+        router.push("/profile");
       } else {
         // Since the groups are sorted, the first group is the favourite one
         try {
@@ -80,36 +87,48 @@ const Home = () => {
     };
 
     if (currentUser) {
-      getTransactionGroupsFirebase(db, currentUser.id)
+      getExpenseGroupsFirebase(db, currentUser.id)
         .then((groups) => {
-          const sortedGroups = sortTransactionGroups(
-            groups,
-            currentUser.groupId
-          );
-          setTransactionGroups.current(sortedGroups);
+          const sortedGroups = sortExpenseGroups(groups, currentUser.groupId);
+          setExpenseGroups.current(sortedGroups);
           selectDefaultPage(sortedGroups);
         })
         .catch(() => toggleStatusErrorAlert(alertContext.current, "GENERIC"));
     }
-  }, [currentUser, db]);
+  }, [currentUser, db, router]);
 
-  const createTransaction = async (newTransaction: CreateTransactionDTO) => {
+  const createExpense = async (newExpense: CreateExpenseDTO) => {
     try {
-      await postTransactionFirebase(
+      await postExpenseFirebase(
         db,
-        newTransaction,
-        transactionGroupsContext.filterId!,
+        newExpense,
+        expenseGroupsContext.filterId!,
         currentUser!,
         handleGroupChange.current,
-        setTransactionDocs.current
+        setExpenseDocs.current
       );
 
-      toggleStatusAlert(alertContext.current, "New transaction created");
+      toggleStatusAlert(alertContext.current, "New expense created");
     } catch (error) {
       toggleStatusErrorAlert(alertContext.current, "ADD_FAILED");
-      throw "Error adding new transaction";
+      throw "Error adding new expense";
     }
   };
+
+  const createEarning = async (newEarning: CreateEarningDTO) => {
+    try {
+      await postEarningFirebase(db, newEarning, currentUser!.id, () => {});
+
+      toggleStatusAlert(
+        alertContext.current,
+        "New earning created in your profile"
+      );
+    } catch (error) {
+      toggleStatusErrorAlert(alertContext.current, "ADD_FAILED");
+      throw "Error adding new earning";
+    }
+  };
+
   return (
     <div className="">
       <Navbar
@@ -121,7 +140,8 @@ const Home = () => {
           isDialogOpen={isAddDialogOpen}
           setIsDialogOpen={setIsAddDialogOpen}
           user={currentUser}
-          createTransaction={createTransaction}
+          createExpense={createExpense}
+          createEarning={createEarning}
         />
       )}
       <div className="right sticky top-0 z-10 ml-auto flex w-max justify-end">
@@ -150,7 +170,17 @@ const Home = () => {
         </section>
         <section className="mt-4 md:mt-10">
           {!firebaseLoading && currentUser ? (
-            <TransactionList currentUser={currentUser} db={db} />
+            <div className="mx-1 mt-5 mb-5">
+              <MonthNavigation
+                monthYear={monthYear}
+                setMonthYear={setMonthYear}
+              />
+              <ExpenseList
+                currentUser={currentUser}
+                monthYear={monthYear}
+                db={db}
+              />
+            </div>
           ) : (
             <TransactionListLoading />
           )}

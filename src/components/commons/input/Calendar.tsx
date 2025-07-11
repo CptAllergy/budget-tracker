@@ -1,9 +1,9 @@
 import { DayPicker } from "react-day-picker";
 import { cn } from "@/utils/utils";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
-import { ComponentProps } from "react";
+import { ComponentProps, PropsWithChildren } from "react";
 import { Control, Controller, FormState, useWatch } from "react-hook-form";
-import { CreateTransactionDTO } from "@/types/DTO/dataTypes";
+import { CreateEarningDTO, CreateExpenseDTO } from "@/types/DTO/dataTypes";
 import { FormInputError } from "@/components/commons/input/Form";
 import { Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
 import { IoCalendarClearSharp } from "react-icons/io5";
@@ -15,7 +15,7 @@ const Calendar = ({
   showOutsideDays = true,
   ...props
 }: ComponentProps<typeof DayPicker>) => {
-  // TODO improve this calendar, maybe use a different component, this one is not updated and it gives some issues
+  // TODO improve this calendar, maybe use a different component, this one is not updated and it gives some issues (shadcn has been updated, check it out)
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
@@ -68,15 +68,14 @@ const Calendar = ({
   );
 };
 
-const FormInputCalendar = ({
-  control,
+const FormCalendarWrapper = ({
   formState,
-}: {
-  control: Control<CreateTransactionDTO>;
-  formState: FormState<CreateTransactionDTO>;
-}) => {
-  const currentDate = useWatch({ control, name: "newDate" });
-
+  currentDate,
+  children,
+}: PropsWithChildren<{
+  formState: FormState<CreateExpenseDTO | CreateEarningDTO>;
+  currentDate: Date | undefined;
+}>) => {
   return (
     <FormInputError fieldName="newDate" formState={formState}>
       <Popover>
@@ -101,28 +100,77 @@ const FormInputCalendar = ({
           anchor="bottom start"
           className="z-10 rounded-md shadow-[4px_4px_0px_rgba(0,0,0,1)] transition duration-200 ease-in-out [--anchor-gap:--spacing(2)] data-closed:-translate-y-1 data-closed:opacity-0"
         >
-          <Controller
-            control={control}
-            name="newDate"
-            rules={{
-              required: "Date is required",
-              validate: (value) =>
-                isValidDate(value) || "Date cannot be in the future",
-            }}
-            render={({ field: { onChange, onBlur } }) => (
-              <Calendar
-                defaultMonth={currentDate}
-                mode="single"
-                onDayBlur={onBlur}
-                selected={currentDate}
-                onSelect={onChange}
-              />
-            )}
-          />
+          {children}
         </PopoverPanel>
       </Popover>
     </FormInputError>
   );
 };
 
-export { Calendar, FormInputCalendar };
+const FormInputExpenseCalendar = ({
+  control,
+  formState,
+}: {
+  control: Control<CreateExpenseDTO>;
+  formState: FormState<CreateExpenseDTO>;
+}) => {
+  const currentDate = useWatch({ control, name: "newDate" });
+
+  return (
+    <FormCalendarWrapper formState={formState} currentDate={currentDate}>
+      <Controller
+        control={control}
+        name="newDate"
+        rules={{
+          required: "Date is required",
+          validate: (value) =>
+            isValidDate(value) || "Date cannot be in the future",
+        }}
+        render={({ field: { onChange, onBlur } }) => (
+          <Calendar
+            defaultMonth={currentDate}
+            mode="single"
+            onDayBlur={onBlur}
+            selected={currentDate}
+            onSelect={onChange}
+          />
+        )}
+      />
+    </FormCalendarWrapper>
+  );
+};
+
+const FormInputEarningCalendar = ({
+  control,
+  formState,
+}: {
+  control: Control<CreateEarningDTO>;
+  formState: FormState<CreateEarningDTO>;
+}) => {
+  const currentDate = useWatch({ control, name: "newDate" });
+
+  return (
+    <FormCalendarWrapper formState={formState} currentDate={currentDate}>
+      <Controller
+        control={control}
+        name="newDate"
+        rules={{
+          required: "Date is required",
+          validate: (value) =>
+            isValidDate(value) || "Date cannot be in the future",
+        }}
+        render={({ field: { onChange, onBlur } }) => (
+          <Calendar
+            defaultMonth={currentDate}
+            mode="single"
+            onDayBlur={onBlur}
+            selected={currentDate}
+            onSelect={onChange}
+          />
+        )}
+      />
+    </FormCalendarWrapper>
+  );
+};
+
+export { FormInputExpenseCalendar, FormInputEarningCalendar };

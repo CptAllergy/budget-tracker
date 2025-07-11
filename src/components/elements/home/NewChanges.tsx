@@ -15,7 +15,7 @@ const NewChanges = ({
 }) => {
   // TODO refactor to check the group, instead of the second user
   useEffect(() => {
-    const checkLatestTransaction = async () => {
+    const checkGroupUpdates = async () => {
       // const latestSecondUser = await getUserByIdFirebase(db, secondUser.id);
       //
       // // Compare the most recent data to check for any changes
@@ -27,7 +27,7 @@ const NewChanges = ({
       // }
     };
 
-    const timer = setTimeout(checkLatestTransaction, 10000);
+    const timer = setTimeout(checkGroupUpdates, 10000);
 
     return () => {
       clearTimeout(timer);

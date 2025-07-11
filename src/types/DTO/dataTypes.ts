@@ -1,10 +1,11 @@
 import { Timestamp } from "firebase/firestore";
 import {
-  TransactionCategory,
-  TransactionTag,
+  EarningCategory,
+  ExpenseCategory,
+  ExpenseTag,
 } from "@/types/transactionFilterTypes";
 
-export type TransactionDTO = {
+export type ExpenseDTO = {
   id: string;
   label: string;
   amount: number;
@@ -12,19 +13,19 @@ export type TransactionDTO = {
   groupId: string | null;
   username: string;
   timestamp: Timestamp;
-  category?: TransactionCategory;
-  tags?: TransactionTag[];
+  category?: ExpenseCategory;
+  tags?: ExpenseTag[];
 };
 
-export type CreateTransactionDTO = {
+export type CreateExpenseDTO = {
   label: string;
   amount: number;
   userId: string;
   groupId: string | null;
   username: string;
   timestamp: Timestamp;
-  category: TransactionCategory;
-  tags: TransactionTag[];
+  category: ExpenseCategory;
+  tags: ExpenseTag[];
   newDate?: Date;
 };
 
@@ -41,9 +42,27 @@ export type UserTotalDTO = {
   total: number;
 };
 
-export type TransactionGroupDTO = {
+export type ExpenseGroupDTO = {
   id: string;
   name: string;
   members: string[];
   totals: UserTotalDTO[];
+};
+
+export type EarningDTO = {
+  id: string;
+  label: string;
+  amount: number;
+  userId: string;
+  timestamp: Timestamp;
+  category: EarningCategory;
+};
+
+export type CreateEarningDTO = {
+  label: string;
+  amount: number;
+  userId: string;
+  timestamp: Timestamp;
+  category: EarningCategory;
+  newDate?: Date;
 };

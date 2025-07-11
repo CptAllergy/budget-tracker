@@ -1,7 +1,7 @@
-import { TransactionGroupDTO } from "@/types/DTO/dataTypes";
+import { ExpenseGroupDTO } from "@/types/DTO/dataTypes";
 
-export function sortTransactionGroups(
-  groups: TransactionGroupDTO[],
+export function sortExpenseGroups(
+  groups: ExpenseGroupDTO[],
   favouriteGroup?: string
 ) {
   // Sort groups by name
