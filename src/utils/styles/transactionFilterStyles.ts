@@ -1,7 +1,11 @@
-import { ExpenseCategory, ExpenseTag } from "@/types/transactionFilterTypes";
+import {
+  EarningCategory,
+  ExpenseCategory,
+  ExpenseTag,
+} from "@/types/transactionFilterTypes";
 
 export function getCategoryIcon(
-  transactionFilter?: ExpenseCategory | ExpenseTag
+  transactionFilter?: ExpenseCategory | ExpenseTag | EarningCategory
 ): string {
   switch (transactionFilter) {
     // Transaction Categories
@@ -50,8 +54,17 @@ export function getCategoryIcon(
       return "💻";
     case "Subscriptions":
       return "🔄";
-    case "Miscellaneous":
-      return "📦";
+    // Earning Categories
+    case "Salary":
+      return "💼";
+    case "Meal Allowance":
+      return "🥪";
+    case "Investment Returns":
+      return "💰";
+    case "Refunds":
+      return "↩️";
+    case "Bonuses":
+      return "💎";
     default:
       return "🚫"; // Default icon for unknown categories
   }

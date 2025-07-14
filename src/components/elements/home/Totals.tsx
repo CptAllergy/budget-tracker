@@ -23,7 +23,11 @@ const Totals = () => {
         currentGroup.members.length !== 2 ||
         currentGroup.totals.length !== 2
       ) {
-        toggleStatusErrorAlert(alertContext.current, "GENERIC");
+        toggleStatusErrorAlert(
+          alertContext.current,
+          "GENERIC",
+          "Invalid group data"
+        );
         return;
       }
 

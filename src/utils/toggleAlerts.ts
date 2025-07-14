@@ -3,16 +3,18 @@
 import { AlertContextType, AlertType } from "@/contexts/AlertContext";
 import { CustomErrorCode } from "@/types/errorTypes";
 
-// TODO receive error here and print it to the console
 export const toggleStatusErrorAlert = (
   alertContext: AlertContextType,
-  errorCode: CustomErrorCode
+  errorCode: CustomErrorCode,
+  error: unknown
 ) => {
   const { setAlertEnabled, setRefreshEnabled, setAlertType, setAlertMessage } =
     alertContext;
 
   setAlertEnabled(true);
   setAlertType("error");
+
+  console.error(error);
 
   switch (errorCode) {
     case "SESSION_EXPIRED": {

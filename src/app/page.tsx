@@ -1,11 +1,20 @@
 "use client";
 
-import { useContext, useEffect, useRef, useState } from "react";
+import {
+  Dispatch,
+  SetStateAction,
+  Suspense,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { Navbar } from "@/components/elements/navbar/Navbar";
 import {
   CreateEarningDTO,
   CreateExpenseDTO,
   ExpenseGroupDTO,
+  UserDTO,
 } from "@/types/DTO/dataTypes";
 import Totals from "@/components/elements/home/Totals";
 import ExpenseList from "@/components/elements/home/ExpenseList";
@@ -28,17 +37,53 @@ import { ExpensesContext } from "@/contexts/ExpensesContext";
 import { LuPlus } from "react-icons/lu";
 import { ExpenseGroupsContext } from "@/contexts/ExpenseGroupsContext";
 import { sortExpenseGroups } from "@/utils/sorters";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useFirebaseSetup } from "@/utils/hooks";
 import MonthNavigation from "@/components/elements/home/MonthNavigation";
 import { AddDialog } from "@/components/commons/dialogs/AddDialog";
+import { MonthYearType } from "@/types/componentTypes";
+import { getCurrentMonthYear } from "@/utils/utils";
+import { Firestore } from "firebase/firestore";
 
+// TODO check where unnecessary re-renders are occurring
 // TODO consider looking into a state manager so changes to context dont cause re-renders (investigate if this is actually a problem)
 // TODO add stats page (monthly, yearly)
-// TODO check where unnecessary re-renders are occurring
-// TODO fix bug, when adding a new transaction/earning the monthYear is not updated, only the list of expenses/earnings. To fix, update monthYear instead when adding a new transaction/earning
 // TODO add settings menu where user can change color of earning and expenses (red, green or grey, for a negative or neutral value)
 const Home = () => {
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const { db, currentUser, firebaseLoading } = useFirebaseSetup();
+  return (
+    <div className="">
+      <Navbar
+        setIsAddDialogOpen={setIsAddDialogOpen}
+        currentUser={currentUser}
+      />
+      <Suspense>
+        <PageContents
+          db={db}
+          isAddDialogOpen={isAddDialogOpen}
+          setIsAddDialogOpen={setIsAddDialogOpen}
+          currentUser={currentUser}
+          firebaseLoading={firebaseLoading}
+        />
+      </Suspense>
+    </div>
+  );
+};
+
+const PageContents = ({
+  db,
+  isAddDialogOpen,
+  setIsAddDialogOpen,
+  currentUser,
+  firebaseLoading,
+}: {
+  db: Firestore;
+  isAddDialogOpen: boolean;
+  setIsAddDialogOpen: Dispatch<SetStateAction<boolean>>;
+  currentUser: UserDTO | undefined;
+  firebaseLoading: boolean;
+}) => {
   const alertContext = useRef(useContext(AlertContext));
   const expensesContext = useContext(ExpensesContext);
   const expenseGroupsContext = useContext(ExpenseGroupsContext);
@@ -52,36 +97,37 @@ const Home = () => {
 
   // Used to detect new changes
   const [isChangeFound, setIsChangeFound] = useState<boolean>(false);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [monthYear, setMonthYear] = useState<{ month: number; year: number }>(
-    () => {
-      const currentDate = new Date();
-      return { month: currentDate.getMonth(), year: currentDate.getFullYear() };
-    }
+
+  const [monthYear, setMonthYear] = useState<MonthYearType>(
+    getCurrentMonthYear()
   );
 
-  const { db, currentUser, firebaseLoading } = useFirebaseSetup();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Runs after sign in to either redirect to profile page or set group
+  // TODO sometimes there is a flicker when changing from profile to home page
   useEffect(() => {
-    // TODO if received value from local storage with different groupId, use that value so set default (after checking it's valid) and then clear local storage
     const selectDefaultPage = (groups: ExpenseGroupDTO[]) => {
       if (!groups || groups.length === 0) {
         // Redirect to profile page if no groups are found
         router.push("/profile");
       } else {
-        // Since the groups are sorted, the first group is the favourite one
+        // Check if groupId provided in the URl is available
+        const groupIdParam = searchParams.get("groupId");
+        const groupParam = groups.find((group) => group.id === groupIdParam);
+
         try {
+          // If groupId is not provided or not found, use the first group (favourite group)
           handleFilterChange.current(
             {
-              groupId: groups[0].id,
-              groupName: groups[0].name,
+              groupId: groupParam ? groupParam.id : groups[0].id,
+              groupName: groupParam ? groupParam.name : groups[0].name,
             },
             groups
           );
-        } catch {
-          toggleStatusErrorAlert(alertContext.current, "GENERIC");
+        } catch (error) {
+          toggleStatusErrorAlert(alertContext.current, "GENERIC", error);
         }
       }
     };
@@ -93,9 +139,11 @@ const Home = () => {
           setExpenseGroups.current(sortedGroups);
           selectDefaultPage(sortedGroups);
         })
-        .catch(() => toggleStatusErrorAlert(alertContext.current, "GENERIC"));
+        .catch((error) =>
+          toggleStatusErrorAlert(alertContext.current, "GENERIC", error)
+        );
     }
-  }, [currentUser, db, router]);
+  }, [currentUser, db, router, searchParams]);
 
   const createExpense = async (newExpense: CreateExpenseDTO) => {
     try {
@@ -107,34 +155,32 @@ const Home = () => {
         handleGroupChange.current,
         setExpenseDocs.current
       );
+      // Navigate to page with new content
+      setMonthYear(getCurrentMonthYear());
 
       toggleStatusAlert(alertContext.current, "New expense created");
     } catch (error) {
-      toggleStatusErrorAlert(alertContext.current, "ADD_FAILED");
+      toggleStatusErrorAlert(alertContext.current, "ADD_FAILED", error);
       throw "Error adding new expense";
     }
   };
 
   const createEarning = async (newEarning: CreateEarningDTO) => {
     try {
-      await postEarningFirebase(db, newEarning, currentUser!.id, () => {});
+      await postEarningFirebase(db, newEarning, () => {});
 
       toggleStatusAlert(
         alertContext.current,
-        "New earning created in your profile"
+        "New earning added to your profile"
       );
     } catch (error) {
-      toggleStatusErrorAlert(alertContext.current, "ADD_FAILED");
+      toggleStatusErrorAlert(alertContext.current, "ADD_FAILED", error);
       throw "Error adding new earning";
     }
   };
 
   return (
-    <div className="">
-      <Navbar
-        setIsAddDialogOpen={setIsAddDialogOpen}
-        currentUser={currentUser}
-      />
+    <>
       {currentUser && (
         <AddDialog
           isDialogOpen={isAddDialogOpen}
@@ -186,7 +232,8 @@ const Home = () => {
           )}
         </section>
       </div>
-    </div>
+    </>
   );
 };
+
 export default Home;

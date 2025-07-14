@@ -26,7 +26,6 @@ export const EXPENSE_TAGS = [
   "Clothing",
   "Electronics",
   "Subscriptions",
-  "Miscellaneous",
 ] as const;
 
 export type ExpenseTag = (typeof EXPENSE_TAGS)[number];
@@ -35,9 +34,7 @@ export const EARNING_CATEGORIES = [
   "Other",
   "Salary",
   "Meal Allowance",
-  "Stock Sales",
-  "Interest",
-  "Dividends",
+  "Investment Returns",
   "Refunds",
   "Gifts",
   "Bonuses",

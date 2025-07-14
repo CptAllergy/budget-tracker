@@ -24,6 +24,7 @@ import { HiMiniEllipsisHorizontal } from "react-icons/hi2";
 
 import { DeleteDialog } from "@/components/commons/dialogs/DeleteDialog";
 import { EditDialog } from "@/components/commons/dialogs/EditDialog";
+import { getCategoryIcon } from "@/utils/styles/transactionFilterStyles";
 
 const EarningsList = ({
   earnings,
@@ -44,7 +45,7 @@ const EarningsList = ({
 
       toggleStatusAlert(alertContext.current, "Earning deleted");
     } catch (error) {
-      toggleStatusErrorAlert(alertContext.current, "DELETE_FAILED");
+      toggleStatusErrorAlert(alertContext.current, "DELETE_FAILED", error);
       throw "Error deleting earning";
     }
   };
@@ -55,7 +56,7 @@ const EarningsList = ({
 
       toggleStatusAlert(alertContext.current, "Earning updated");
     } catch (error) {
-      toggleStatusErrorAlert(alertContext.current, "UPDATE_FAILED");
+      toggleStatusErrorAlert(alertContext.current, "UPDATE_FAILED", error);
       throw "Error updating earning";
     }
   };
@@ -199,10 +200,11 @@ const EarningTable = ({
               <td className="px-3 py-4 text-sm font-medium whitespace-nowrap text-emerald-500">
                 +{Number(earning.amount).toFixed(2)}€
               </td>
-              {/*TODO better align this vertically*/}
-              <td className="mt-1 flex gap-1 px-3 py-4 text-sm whitespace-nowrap text-gray-500">
-                {/*<div> {getCategoryIcon(.category)}</div>*/}
-                <div> {earning.category}</div>
+              <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500">
+                <div className="flex gap-1">
+                  <div> {getCategoryIcon(earning.category)}</div>
+                  <div> {earning.category}</div>
+                </div>
               </td>
               <td className="hidden px-3 py-4 text-sm whitespace-nowrap text-gray-500 sm:table-cell">
                 {timestampToDate(earning.timestamp)}
@@ -253,8 +255,7 @@ const EarningCards = ({
             <AccordionTrigger className="flex w-full gap-2 px-2">
               <div className="flex-1 space-x-1 truncate text-left text-sm font-medium whitespace-nowrap">
                 <span className="align-baseline text-lg leading-none">
-                  {/*TODO fix this*/}
-                  {/*{getCategoryIcon(earning.category)}*/}
+                  {getCategoryIcon(earning.category)}
                 </span>
                 <span className="align-baseline text-gray-900">
                   {earning.label}

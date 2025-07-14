@@ -105,9 +105,6 @@ export async function postExpenseFirebase(
     updater: (prevDocs: DocumentSnapshot[]) => DocumentSnapshot[]
   ) => void
 ) {
-  // Load the first page
-  await getExpensesFirebase(db, setExpenseDocs, filterId);
-
   const totalRef = newExpense.groupId
     ? doc(db, "groups", newExpense.groupId, "totals", currentUser.id)
     : null;
@@ -285,7 +282,9 @@ export async function updateExpenseFirebase(
 
     const isSameMonth =
       prevTimestamp.toDate().getMonth() ===
-      expenseDoc.data()?.timestamp.toDate().getMonth();
+        expenseDoc.data()?.timestamp.toDate().getMonth() &&
+      prevTimestamp.toDate().getFullYear() ===
+        expenseDoc.data()?.timestamp.toDate().getFullYear();
 
     // Sort by timestamp
     if (isSameMonth) {
@@ -324,12 +323,8 @@ export async function getEarningsFirebase(
 export async function postEarningFirebase(
   db: Firestore,
   newEarning: CreateEarningDTO,
-  userId: string,
   setEarnings: Dispatch<SetStateAction<EarningDTO[]>>
 ) {
-  // Load the first page
-  await getEarningsFirebase(db, setEarnings, userId);
-
   const earningRef = doc(collection(db, "earnings"));
 
   // Add earning document
@@ -399,7 +394,9 @@ export async function updateEarningFirebase(
 
     const isSameMonth =
       prevTimestamp.toDate().getMonth() ===
-      earning.timestamp.toDate().getMonth();
+        earning.timestamp.toDate().getMonth() &&
+      prevTimestamp.toDate().getFullYear() ===
+        earning.timestamp.toDate().getFullYear();
 
     // Sort by timestamp
     if (isSameMonth) {

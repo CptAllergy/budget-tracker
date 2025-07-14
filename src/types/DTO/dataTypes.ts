@@ -66,3 +66,5 @@ export type CreateEarningDTO = {
   category: EarningCategory;
   newDate?: Date;
 };
+
+export const NO_EXPENSE_GROUP = "Profile";

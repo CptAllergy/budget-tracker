@@ -29,15 +29,18 @@ import { getCategoryIcon } from "@/utils/styles/transactionFilterStyles";
 import { ExpenseTag } from "@/types/transactionFilterTypes";
 import { DeleteDialog } from "@/components/commons/dialogs/DeleteDialog";
 import { EditDialog } from "@/components/commons/dialogs/EditDialog";
+import { useGetGroupName } from "@/utils/hooks";
 
 const ExpenseList = ({
   currentUser,
   monthYear,
   db,
+  isProfile,
 }: {
   currentUser: UserDTO;
   monthYear: { month: number; year: number };
   db: Firestore;
+  isProfile?: boolean;
 }) => {
   const alertContext = useRef(useContext(AlertContext));
   const expenseContext = useContext(ExpensesContext);
@@ -71,7 +74,7 @@ const ExpenseList = ({
 
       toggleStatusAlert(alertContext.current, "Expense deleted");
     } catch (error) {
-      toggleStatusErrorAlert(alertContext.current, "DELETE_FAILED");
+      toggleStatusErrorAlert(alertContext.current, "DELETE_FAILED", error);
       throw "Error deleting expense";
     }
   };
@@ -89,7 +92,7 @@ const ExpenseList = ({
 
       toggleStatusAlert(alertContext.current, "Expense updated");
     } catch (error) {
-      toggleStatusErrorAlert(alertContext.current, "UPDATE_FAILED");
+      toggleStatusErrorAlert(alertContext.current, "UPDATE_FAILED", error);
       throw "Error updating expense";
     }
   };
@@ -106,6 +109,7 @@ const ExpenseList = ({
           updateExpense={updateExpense}
           currentUser={currentUser}
           loading={loading}
+          isProfile={isProfile}
         />
       )}
     </div>
@@ -118,12 +122,14 @@ const ExpensesContent = ({
   updateExpense,
   currentUser,
   loading,
+  isProfile,
 }: {
   expenses: ExpenseDTO[];
   removeExpense: (expense: ExpenseDTO) => void;
   updateExpense: (expense: ExpenseDTO) => void;
   currentUser: UserDTO;
   loading: boolean;
+  isProfile?: boolean;
 }) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -159,6 +165,7 @@ const ExpensesContent = ({
               currentUser={currentUser}
               showDeleteDialog={showDeleteDialog}
               showEditDialog={showEditDialog}
+              isProfile={isProfile}
             />
           </div>
           <div className="block md:hidden">
@@ -167,6 +174,7 @@ const ExpensesContent = ({
               currentUser={currentUser}
               showDeleteDialog={showDeleteDialog}
               showEditDialog={showEditDialog}
+              isProfile={isProfile}
             />
           </div>
         </div>
@@ -180,12 +188,16 @@ const ExpenseTable = ({
   currentUser,
   showDeleteDialog,
   showEditDialog,
+  isProfile,
 }: {
   expenses: ExpenseDTO[];
   currentUser: UserDTO;
   showDeleteDialog: (expense: ExpenseDTO) => void;
   showEditDialog: (expense: ExpenseDTO) => void;
+  isProfile?: boolean;
 }) => {
+  const { getGroupName } = useGetGroupName();
+
   return (
     <div className="overflow-hidden rounded-md border-2 border-black shadow-[5px_5px_0px_rgba(0,0,0,1)]">
       <table className="w-full">
@@ -225,7 +237,7 @@ const ExpenseTable = ({
               scope="col"
               className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell"
             >
-              User
+              {isProfile ? "Group" : "User"}
             </th>
             <th
               scope="col"
@@ -260,10 +272,11 @@ const ExpenseTable = ({
               <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500">
                 {Number(expense.amount).toFixed(2)}€
               </td>
-              {/*TODO better align this vertically*/}
-              <td className="mt-1 flex gap-1 px-3 py-4 text-sm whitespace-nowrap text-gray-500">
-                <div> {getCategoryIcon(expense.category)}</div>
-                <div> {expense.category}</div>
+              <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500">
+                <div className="flex gap-1">
+                  <div> {getCategoryIcon(expense.category)}</div>
+                  <div> {expense.category}</div>
+                </div>
               </td>
               <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500">
                 <TagList tags={expense.tags} limit={3} />
@@ -272,7 +285,7 @@ const ExpenseTable = ({
                 {timestampToDate(expense.timestamp)}
               </td>
               <td className="hidden px-3 py-4 text-sm whitespace-nowrap text-gray-500 lg:table-cell">
-                {expense.username}
+                {isProfile ? getGroupName(expense.groupId) : expense.username}
               </td>
               <td className="relative py-4 pr-4 text-right text-sm font-medium whitespace-nowrap sm:pr-6">
                 <ExpenseDropdownMenu
@@ -295,12 +308,16 @@ const ExpenseCards = ({
   currentUser,
   showDeleteDialog,
   showEditDialog,
+  isProfile,
 }: {
   expenses: ExpenseDTO[];
   currentUser: UserDTO;
   showDeleteDialog: (expense: ExpenseDTO) => void;
   showEditDialog: (expense: ExpenseDTO) => void;
+  isProfile?: boolean;
 }) => {
+  const { getGroupName } = useGetGroupName();
+
   return (
     <div>
       {expenses.length === 0 && (
@@ -354,10 +371,12 @@ const ExpenseCards = ({
                     {timestampToDate(expense.timestamp)}
                   </dd>
                   <dt className="mb-0.5 text-xs font-medium text-black/40">
-                    User
+                    {isProfile ? "Group" : "User"}
                   </dt>
                   <dd className="mb-2 font-semibold text-black/70">
-                    {expense.username}
+                    {isProfile
+                      ? getGroupName(expense.groupId)
+                      : expense.username}
                   </dd>
                 </dl>
               </div>

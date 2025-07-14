@@ -36,6 +36,8 @@ import { sortExpenseGroups } from "@/utils/sorters";
 import EarningsList from "@/components/elements/profile/EarningsList";
 import MonthNavigation from "@/components/elements/home/MonthNavigation";
 import { AddDialog } from "@/components/commons/dialogs/AddDialog";
+import { MonthYearType } from "@/types/componentTypes";
+import { getCurrentMonthYear } from "@/utils/utils";
 
 const Profile = () => {
   const alertContext = useRef(useContext(AlertContext));
@@ -51,11 +53,8 @@ const Profile = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [toggleExpenses, setToggleExpenses] = useState(true);
   const [earnings, setEarnings] = useState<EarningDTO[]>([]);
-  const [monthYear, setMonthYear] = useState<{ month: number; year: number }>(
-    () => {
-      const currentDate = new Date();
-      return { month: currentDate.getMonth(), year: currentDate.getFullYear() };
-    }
+  const [monthYear, setMonthYear] = useState<MonthYearType>(
+    getCurrentMonthYear()
   );
 
   const { db, currentUser, firebaseLoading } = useFirebaseSetup();
@@ -68,8 +67,8 @@ const Profile = () => {
           setExpenseGroups.current(sortedGroups);
         });
         handleFilterChange.current({ userId: currentUser.id });
-      } catch {
-        toggleStatusErrorAlert(alertContext.current, "GENERIC");
+      } catch (error) {
+        toggleStatusErrorAlert(alertContext.current, "GENERIC", error);
       }
     }
   }, [currentUser, db]);
@@ -93,21 +92,27 @@ const Profile = () => {
         handleGroupChange.current,
         setExpenseDocs.current
       );
+      // Navigate to page with new content
+      setToggleExpenses(true);
+      setMonthYear(getCurrentMonthYear());
 
       toggleStatusAlert(alertContext.current, "New expense created");
     } catch (error) {
-      toggleStatusErrorAlert(alertContext.current, "ADD_FAILED");
+      toggleStatusErrorAlert(alertContext.current, "ADD_FAILED", error);
       throw "Error adding new expense";
     }
   };
 
   const createEarning = async (newEarning: CreateEarningDTO) => {
     try {
-      await postEarningFirebase(db, newEarning, currentUser!.id, setEarnings);
+      await postEarningFirebase(db, newEarning, setEarnings);
+      // Navigate to page with new content
+      setToggleExpenses(false);
+      setMonthYear(getCurrentMonthYear());
 
       toggleStatusAlert(alertContext.current, "New earning created");
     } catch (error) {
-      toggleStatusErrorAlert(alertContext.current, "ADD_FAILED");
+      toggleStatusErrorAlert(alertContext.current, "ADD_FAILED", error);
       throw "Error adding new earning";
     }
   };
@@ -162,6 +167,7 @@ const Profile = () => {
                   currentUser={currentUser}
                   monthYear={monthYear}
                   db={db}
+                  isProfile={true}
                 />
               ) : (
                 <EarningsList

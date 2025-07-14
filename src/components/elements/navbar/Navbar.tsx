@@ -37,6 +37,7 @@ import { UserDTO } from "@/types/DTO/dataTypes";
 import { ExpenseGroupsContext } from "@/contexts/ExpenseGroupsContext";
 import { AlertContext } from "@/contexts/AlertContext";
 import { toggleStatusErrorAlert } from "@/utils/toggleAlerts";
+import { usePathname } from "next/navigation";
 
 export const Navbar = ({
   setIsAddDialogOpen,
@@ -131,6 +132,7 @@ const NavbarGroupSelectorDrawer = ({
 const GroupSelectorList = ({ currentUser }: { currentUser: UserDTO }) => {
   const alertContext = useRef(useContext(AlertContext));
   const expenseGroupsContext = useContext(ExpenseGroupsContext);
+  const pathname = usePathname();
 
   const filterId = expenseGroupsContext.filterId;
   const handleFilterChange = useRef(expenseGroupsContext.handleFilterChange);
@@ -138,12 +140,14 @@ const GroupSelectorList = ({ currentUser }: { currentUser: UserDTO }) => {
   const expenseGroups = expenseGroupsContext.expenseGroups;
 
   const handleGroupClick = (groupId: string, groupName: string) => {
-    // TODO when changing from group to profile there is a flicker due to changing the filterId, try to avoid this
-    // TODO redirecting from the profile page to the home page does not save the chosen group. Maybe add something to local storage to make this move and then remove it, similar to the login
     try {
+      if (pathname.includes("profile")) {
+        // Changing the filter when moving from profile to group can cause a flicker, this avoids that
+        return;
+      }
       handleFilterChange.current({ groupId: groupId, groupName: groupName });
-    } catch {
-      toggleStatusErrorAlert(alertContext.current, "GENERIC");
+    } catch (error) {
+      toggleStatusErrorAlert(alertContext.current, "GENERIC", error);
     }
   };
 
@@ -161,7 +165,6 @@ const GroupSelectorList = ({ currentUser }: { currentUser: UserDTO }) => {
       <div className="space-y-3">
         <Link
           href="/profile"
-          onClick={() => handleFilterChange.current({ userId: currentUser.id })}
           className={`${selectedProfileStyle} flex cursor-pointer items-center gap-2 rounded-md border-2 border-black p-1 text-sm/7 shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all sm:gap-3 sm:p-2 sm:text-base`}
         >
           <LuUser className="size-5 flex-shrink-0" />
@@ -176,7 +179,7 @@ const GroupSelectorList = ({ currentUser }: { currentUser: UserDTO }) => {
           expenseGroups.map((group) => (
             <Link
               key={group.id}
-              href="/"
+              href={{ pathname: "/", query: { groupId: group.id } }}
               onClick={() => handleGroupClick(group.id, group.name)}
               className={`${selectedGroupStyle(group.id)} flex cursor-pointer items-center gap-2 rounded-md border-2 border-black p-1 text-sm/7 shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all sm:gap-3 sm:p-2 sm:text-base`}
             >

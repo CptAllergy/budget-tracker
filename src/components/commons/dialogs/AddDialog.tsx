@@ -9,6 +9,7 @@ import {
 import {
   CreateEarningDTO,
   CreateExpenseDTO,
+  NO_EXPENSE_GROUP,
   UserDTO,
 } from "@/types/DTO/dataTypes";
 import { AlertContext, AlertContextType } from "@/contexts/AlertContext";
@@ -60,7 +61,7 @@ const AddDialog = ({
   const expenseGroupsContext = useContext(ExpenseGroupsContext);
   const filterId = expenseGroupsContext.filterId;
 
-  const groupName = filterId?.groupName ? filterId.groupName : "Personal";
+  const groupName = filterId?.groupName ? filterId.groupName : NO_EXPENSE_GROUP;
 
   const {
     handleSubmit: handleSubmitExpense,
@@ -92,7 +93,6 @@ const AddDialog = ({
     filterId
   );
 
-  // TODO should this reset everytime? What is best for the user experience?
   useEffect(() => {
     // Reset the isExpense state when the dialog is closed
     if (!isDialogOpen) {
@@ -243,17 +243,17 @@ const useExpenseForm = (
     const amountString = newData.amount.toString().replace(",", ".");
 
     if (!isValidAmount(amountString)) {
-      toggleStatusErrorAlert(alertContext, "ADD_FAILED");
+      toggleStatusErrorAlert(alertContext, "ADD_FAILED", "Invalid amount");
       throw "Invalid expense data: Invalid amount";
     }
 
     if (!EXPENSE_CATEGORIES.includes(newData.category)) {
-      toggleStatusErrorAlert(alertContext, "ADD_FAILED");
+      toggleStatusErrorAlert(alertContext, "ADD_FAILED", "Invalid category");
       throw "Invalid expense data: Invalid category";
     }
 
     if (!filterId?.groupId && !filterId?.userId) {
-      toggleStatusErrorAlert(alertContext, "ADD_FAILED");
+      toggleStatusErrorAlert(alertContext, "ADD_FAILED", "Invalid group");
       throw "Invalid expense data: Invalid group";
     }
 
@@ -307,17 +307,17 @@ const useEarningForm = (
     const amountString = newData.amount.toString().replace(",", ".");
 
     if (!isValidAmount(amountString)) {
-      toggleStatusErrorAlert(alertContext, "ADD_FAILED");
+      toggleStatusErrorAlert(alertContext, "ADD_FAILED", "Invalid amount");
       throw "Invalid earning data: Invalid amount";
     }
 
     if (!EARNING_CATEGORIES.includes(newData.category)) {
-      toggleStatusErrorAlert(alertContext, "ADD_FAILED");
+      toggleStatusErrorAlert(alertContext, "ADD_FAILED", "Invalid category");
       throw "Invalid earning data: Invalid category";
     }
 
     if (!filterId?.groupId && !filterId?.userId) {
-      toggleStatusErrorAlert(alertContext, "ADD_FAILED");
+      toggleStatusErrorAlert(alertContext, "ADD_FAILED", "Invalid group");
       throw "Invalid earning data: Invalid group";
     }
 

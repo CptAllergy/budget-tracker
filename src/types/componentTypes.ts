@@ -21,3 +21,8 @@ export type FormInputType = {
 export type ExpenseListType =
   | { groupId: string; groupName: string; userId?: never }
   | { userId: string; groupId?: never; groupName?: never };
+
+export type MonthYearType = {
+  month: number;
+  year: number;
+};

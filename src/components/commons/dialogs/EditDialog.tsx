@@ -219,7 +219,11 @@ const useExpenseForm = (
 
   const onSubmit: SubmitHandler<CreateExpenseDTO> = async (updatedData) => {
     if (!expense || !updatedData.newDate) {
-      toggleStatusErrorAlert(alertContext, "UPDATE_FAILED");
+      toggleStatusErrorAlert(
+        alertContext,
+        "UPDATE_FAILED",
+        "Invalid expense data"
+      );
       throw "Invalid expense data";
     }
 
@@ -227,17 +231,17 @@ const useExpenseForm = (
     const amountString = updatedData.amount.toString().replace(",", ".");
 
     if (!isValidAmount(amountString)) {
-      toggleStatusErrorAlert(alertContext, "UPDATE_FAILED");
+      toggleStatusErrorAlert(alertContext, "UPDATE_FAILED", "Invalid amount");
       throw "Invalid expense data: Invalid amount";
     }
 
     if (!isValidDate(updatedData.newDate)) {
-      toggleStatusErrorAlert(alertContext, "UPDATE_FAILED");
+      toggleStatusErrorAlert(alertContext, "UPDATE_FAILED", "Invalid date");
       throw "Invalid expense data: Invalid date";
     }
 
     if (!EXPENSE_CATEGORIES.includes(updatedData.category)) {
-      toggleStatusErrorAlert(alertContext, "UPDATE_FAILED");
+      toggleStatusErrorAlert(alertContext, "UPDATE_FAILED", "Invalid category");
       throw "Invalid expense data: Invalid category";
     }
 
@@ -298,7 +302,11 @@ const useEarningForm = (
 
   const onSubmit: SubmitHandler<CreateEarningDTO> = async (updatedData) => {
     if (!earning || !updatedData.newDate) {
-      toggleStatusErrorAlert(alertContext, "UPDATE_FAILED");
+      toggleStatusErrorAlert(
+        alertContext,
+        "UPDATE_FAILED",
+        "Invalid earning data"
+      );
       throw "Invalid earning data";
     }
 
@@ -306,17 +314,17 @@ const useEarningForm = (
     const amountString = updatedData.amount.toString().replace(",", ".");
 
     if (!isValidAmount(amountString)) {
-      toggleStatusErrorAlert(alertContext, "UPDATE_FAILED");
+      toggleStatusErrorAlert(alertContext, "UPDATE_FAILED", "Invalid amount");
       throw "Invalid earning data: Invalid amount";
     }
 
     if (!isValidDate(updatedData.newDate)) {
-      toggleStatusErrorAlert(alertContext, "UPDATE_FAILED");
+      toggleStatusErrorAlert(alertContext, "UPDATE_FAILED", "Invalid date");
       throw "Invalid earning data: Invalid date";
     }
 
     if (!EARNING_CATEGORIES.includes(updatedData.category)) {
-      toggleStatusErrorAlert(alertContext, "UPDATE_FAILED");
+      toggleStatusErrorAlert(alertContext, "UPDATE_FAILED", "Invalid category");
       throw "Invalid earning data: Invalid category";
     }
 

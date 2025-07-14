@@ -16,9 +16,10 @@ import {
   signInWithCredential,
 } from "firebase/auth";
 import { getCurrentUserFirebase } from "@/services/firebaseService";
-import { UserDTO } from "@/types/DTO/dataTypes";
+import { NO_EXPENSE_GROUP, UserDTO } from "@/types/DTO/dataTypes";
 import { toggleStatusErrorAlert } from "@/utils/toggleAlerts";
 import { AlertContext } from "@/contexts/AlertContext";
+import { ExpenseGroupsContext } from "@/contexts/ExpenseGroupsContext";
 
 export function useFirebaseSetup() {
   const alertContext = useRef(useContext(AlertContext));
@@ -56,7 +57,7 @@ export function useFirebaseSetup() {
             sessionStorage.setItem("session_error", "true");
             void signOut();
           } else {
-            toggleStatusErrorAlert(alertContext.current, "GENERIC");
+            toggleStatusErrorAlert(alertContext.current, "GENERIC", error);
           }
         });
     }
@@ -67,4 +68,15 @@ export function useFirebaseSetup() {
     currentUser,
     firebaseLoading,
   };
+}
+
+export function useGetGroupName() {
+  const expenseGroupsContext = useContext(ExpenseGroupsContext);
+  const expenseGroups = expenseGroupsContext.expenseGroups;
+  const getGroupName = (groupId: string | null) => {
+    const group = expenseGroups.find((group) => group.id === groupId);
+    return group ? group.name : NO_EXPENSE_GROUP;
+  };
+
+  return { getGroupName };
 }
