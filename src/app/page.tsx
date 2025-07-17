@@ -16,7 +16,6 @@ import {
   ExpenseGroupDTO,
   UserDTO,
 } from "@/types/DTO/dataTypes";
-import Totals from "@/components/elements/home/Totals";
 import ExpenseList from "@/components/elements/home/ExpenseList";
 import { AlertContext } from "@/contexts/AlertContext";
 import {
@@ -28,10 +27,6 @@ import {
   postEarningFirebase,
   postExpenseFirebase,
 } from "@/services/firebaseService";
-import {
-  TotalsLoading,
-  TransactionListLoading,
-} from "@/components/loading/elements/home/LoadingHome";
 import NewChanges from "@/components/elements/home/NewChanges";
 import { ExpensesContext } from "@/contexts/ExpensesContext";
 import { LuPlus } from "react-icons/lu";
@@ -44,9 +39,10 @@ import { AddDialog } from "@/components/commons/dialogs/AddDialog";
 import { MonthYearType } from "@/types/componentTypes";
 import { getCurrentMonthYear } from "@/utils/utils";
 import { Firestore } from "firebase/firestore";
+import Totals from "@/components/elements/home/Totals";
 
 // TODO check where unnecessary re-renders are occurring
-// TODO consider looking into a state manager so changes to context dont cause re-renders (investigate if this is actually a problem)
+// TODO consider looking into a state manager so changes to context dont cause re-renders (use react query to fetch data, try using react query for new features before replacing existing ones)
 // TODO add stats page (monthly, yearly)
 // TODO add settings menu where user can change color of earning and expenses (red, green or grey, for a negative or neutral value)
 const Home = () => {
@@ -191,13 +187,11 @@ const PageContents = ({
         />
       )}
       <div className="right sticky top-0 z-10 ml-auto flex w-max justify-end">
-        {!firebaseLoading && (
-          <NewChanges
-            isChangeFound={isChangeFound}
-            setIsChangeFound={setIsChangeFound}
-            db={db}
-          />
-        )}
+        <NewChanges
+          isChangeFound={isChangeFound}
+          setIsChangeFound={setIsChangeFound}
+          db={db}
+        />
       </div>
       <div className="fixed right-0 bottom-0 z-5 m-4 sm:hidden">
         {!firebaseLoading && currentUser && (
@@ -211,25 +205,20 @@ const PageContents = ({
       </div>
       <div className="mx-3 -mt-12">
         <section className="mx-4 flex flex-col items-center">
-          {/*TODO handle loading inside component*/}
-          {!firebaseLoading && currentUser ? <Totals /> : <TotalsLoading />}
+          <Totals />
         </section>
         <section className="mt-4 md:mt-10">
-          {!firebaseLoading && currentUser ? (
-            <div className="mx-1 mt-5 mb-5">
-              <MonthNavigation
-                monthYear={monthYear}
-                setMonthYear={setMonthYear}
-              />
-              <ExpenseList
-                currentUser={currentUser}
-                monthYear={monthYear}
-                db={db}
-              />
-            </div>
-          ) : (
-            <TransactionListLoading />
-          )}
+          <div className="mx-1 mt-5 mb-5">
+            <MonthNavigation
+              monthYear={monthYear}
+              setMonthYear={setMonthYear}
+            />
+            <ExpenseList
+              currentUser={currentUser}
+              monthYear={monthYear}
+              db={db}
+            />
+          </div>
         </section>
       </div>
     </>

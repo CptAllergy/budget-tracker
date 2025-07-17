@@ -5,6 +5,7 @@ import { rancho } from "@/styles/fonts";
 import { ExpenseGroupsContext } from "@/contexts/ExpenseGroupsContext";
 import { AlertContext } from "@/contexts/AlertContext";
 import { toggleStatusErrorAlert } from "@/utils/toggleAlerts";
+import { TotalsLoading } from "@/components/loading/elements/home/LoadingHome";
 
 const Totals = () => {
   const alertContext = useRef(useContext(AlertContext));
@@ -48,14 +49,20 @@ const Totals = () => {
   }, [currentGroup]);
 
   return (
-    <div className="bg-theme-secondary w-full max-w-4xl rounded-md border-2 border-black py-1 text-center shadow-[5px_5px_0px_rgba(0,0,0,1)]">
-      <div className={`${rancho.className} text-2xl md:text-3xl`}>
-        <span className="">
-          {sender} owes {receiver}{" "}
-        </span>
-        <span className="font-bold">{Number(balance).toFixed(2)}€</span>
-      </div>
-    </div>
+    <>
+      {currentGroup ? (
+        <div className="bg-theme-secondary w-full max-w-4xl rounded-md border-2 border-black py-1 text-center shadow-[5px_5px_0px_rgba(0,0,0,1)]">
+          <div className={`${rancho.className} text-2xl md:text-3xl`}>
+            <span className="">
+              {sender} owes {receiver}{" "}
+            </span>
+            <span className="font-bold">{Number(balance).toFixed(2)}€</span>
+          </div>
+        </div>
+      ) : (
+        <TotalsLoading />
+      )}
+    </>
   );
 };
 

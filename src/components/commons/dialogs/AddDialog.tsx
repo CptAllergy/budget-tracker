@@ -89,8 +89,7 @@ const AddDialog = ({
     setIsDialogOpen,
     user,
     createEarning,
-    alertContext.current,
-    filterId
+    alertContext.current
   );
 
   useEffect(() => {
@@ -277,14 +276,12 @@ const useExpenseForm = (
   return { handleSubmit, onSubmit, register, formState, control };
 };
 
-// TODO probably dont need filterId for this one
 const useEarningForm = (
   isDialogOpen: boolean,
   setIsDialogOpen: Dispatch<SetStateAction<boolean>>,
   user: UserDTO,
   createEarning: (earning: CreateEarningDTO) => void,
-  alertContext: AlertContextType,
-  filterId: ExpenseListType | undefined
+  alertContext: AlertContextType
 ) => {
   const { register, handleSubmit, reset, formState, control } =
     useForm<CreateEarningDTO>({
@@ -314,11 +311,6 @@ const useEarningForm = (
     if (!EARNING_CATEGORIES.includes(newData.category)) {
       toggleStatusErrorAlert(alertContext, "ADD_FAILED", "Invalid category");
       throw "Invalid earning data: Invalid category";
-    }
-
-    if (!filterId?.groupId && !filterId?.userId) {
-      toggleStatusErrorAlert(alertContext, "ADD_FAILED", "Invalid group");
-      throw "Invalid earning data: Invalid group";
     }
 
     const newEarning: CreateEarningDTO = {

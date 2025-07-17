@@ -37,7 +37,7 @@ const ExpenseList = ({
   db,
   isProfile,
 }: {
-  currentUser: UserDTO;
+  currentUser?: UserDTO;
   monthYear: { month: number; year: number };
   db: Firestore;
   isProfile?: boolean;
@@ -50,14 +50,10 @@ const ExpenseList = ({
   const handleGroupChange = useRef(expenseGroupsContext.handleGroupChange);
   const filterId = expenseGroupsContext.filterId;
 
-  const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     // Set expense list
     if (filterId) {
-      getExpensesFirebase(db, setExpenseDocs.current, filterId, monthYear).then(
-        () => setLoading(false)
-      );
+      void getExpensesFirebase(db, setExpenseDocs.current, filterId, monthYear);
     }
   }, [db, filterId, monthYear]);
 
@@ -67,7 +63,7 @@ const ExpenseList = ({
         db,
         expense,
         filterId!,
-        currentUser,
+        currentUser!,
         handleGroupChange.current,
         setExpenseDocs.current
       );
@@ -85,7 +81,7 @@ const ExpenseList = ({
         db,
         expense,
         filterId!,
-        currentUser,
+        currentUser!,
         handleGroupChange.current,
         setExpenseDocs.current
       );
@@ -99,18 +95,16 @@ const ExpenseList = ({
 
   return (
     <div>
-      {loading ? (
-        // TODO could probably improve this loading animation
-        <TransactionListLoading />
-      ) : (
+      {expenseContext.expenses && currentUser ? (
         <ExpensesContent
           expenses={expenseContext.expenses}
           removeExpense={removeExpense}
           updateExpense={updateExpense}
           currentUser={currentUser}
-          loading={loading}
           isProfile={isProfile}
         />
+      ) : (
+        <TransactionListLoading />
       )}
     </div>
   );
@@ -121,14 +115,12 @@ const ExpensesContent = ({
   removeExpense,
   updateExpense,
   currentUser,
-  loading,
   isProfile,
 }: {
   expenses: ExpenseDTO[];
   removeExpense: (expense: ExpenseDTO) => void;
   updateExpense: (expense: ExpenseDTO) => void;
   currentUser: UserDTO;
-  loading: boolean;
   isProfile?: boolean;
 }) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);

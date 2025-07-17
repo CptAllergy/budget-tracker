@@ -34,14 +34,14 @@ const EarningsList = ({
 }: {
   earnings: EarningDTO[];
   setEarnings: Dispatch<SetStateAction<EarningDTO[]>>;
-  currentUser: UserDTO;
+  currentUser?: UserDTO;
   db: Firestore;
 }) => {
   const alertContext = useRef(useContext(AlertContext));
 
   const removeEarning = async (earning: EarningDTO) => {
     try {
-      await deleteEarningFirebase(db, earning, currentUser, setEarnings);
+      await deleteEarningFirebase(db, earning, currentUser!, setEarnings);
 
       toggleStatusAlert(alertContext.current, "Earning deleted");
     } catch (error) {
@@ -52,7 +52,7 @@ const EarningsList = ({
 
   const updateEarning = async (earning: EarningDTO) => {
     try {
-      await updateEarningFirebase(db, earning, currentUser, setEarnings);
+      await updateEarningFirebase(db, earning, currentUser!, setEarnings);
 
       toggleStatusAlert(alertContext.current, "Earning updated");
     } catch (error) {
@@ -61,12 +61,16 @@ const EarningsList = ({
     }
   };
   return (
-    <EarningsContent
-      earnings={earnings}
-      currentUser={currentUser}
-      removeEarning={removeEarning}
-      updateEarning={updateEarning}
-    />
+    <div>
+      {currentUser && (
+        <EarningsContent
+          earnings={earnings}
+          currentUser={currentUser}
+          removeEarning={removeEarning}
+          updateEarning={updateEarning}
+        />
+      )}
+    </div>
   );
 };
 
