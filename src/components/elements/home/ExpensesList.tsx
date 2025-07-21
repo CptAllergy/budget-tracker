@@ -1,7 +1,7 @@
 "use client";
 
 import { ExpenseDTO, UserDTO } from "@/types/DTO/dataTypes";
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useRef, useState } from "react";
 import { Firestore } from "firebase/firestore";
 import {
   toggleStatusAlert,
@@ -10,7 +10,6 @@ import {
 import { AlertContext } from "@/contexts/AlertContext";
 import {
   deleteExpenseFirebase,
-  getExpensesFirebase,
   updateExpenseFirebase,
 } from "@/services/firebaseService";
 import { TransactionListLoading } from "@/components/loading/elements/home/LoadingHome";
@@ -31,31 +30,24 @@ import { DeleteDialog } from "@/components/commons/dialogs/DeleteDialog";
 import { EditDialog } from "@/components/commons/dialogs/EditDialog";
 import { useGetGroupName } from "@/utils/hooks";
 
-const ExpenseList = ({
+const ExpensesList = ({
+  expenses,
   currentUser,
-  monthYear,
   db,
   isProfile,
 }: {
+  expenses: ExpenseDTO[];
   currentUser?: UserDTO;
-  monthYear: { month: number; year: number };
   db: Firestore;
   isProfile?: boolean;
 }) => {
   const alertContext = useRef(useContext(AlertContext));
-  const expenseContext = useContext(ExpensesContext);
+  const expensesContext = useContext(ExpensesContext);
   const expenseGroupsContext = useContext(ExpenseGroupsContext);
 
-  const setExpenseDocs = useRef(expenseContext.setExpenseDocs);
+  const setExpenseDocs = useRef(expensesContext.setExpenseDocs);
   const handleGroupChange = useRef(expenseGroupsContext.handleGroupChange);
   const filterId = expenseGroupsContext.filterId;
-
-  useEffect(() => {
-    // Set expense list
-    if (filterId) {
-      void getExpensesFirebase(db, setExpenseDocs.current, filterId, monthYear);
-    }
-  }, [db, filterId, monthYear]);
 
   const removeExpense = async (expense: ExpenseDTO) => {
     try {
@@ -95,9 +87,9 @@ const ExpenseList = ({
 
   return (
     <div>
-      {expenseContext.expenses && currentUser ? (
+      {expenses && currentUser ? (
         <ExpensesContent
-          expenses={expenseContext.expenses}
+          expenses={expenses}
           removeExpense={removeExpense}
           updateExpense={updateExpense}
           currentUser={currentUser}
@@ -453,4 +445,4 @@ const ExpenseDropdownMenu = ({
   );
 };
 
-export default ExpenseList;
+export default ExpensesList;

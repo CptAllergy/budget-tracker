@@ -15,6 +15,10 @@
     --color-theme-loading-light: #ebebeb;
     --color-theme-background-light: #f2f2f2;
     --color-theme-background-dark: #d9d9d9;
+    --color-positive-dark: #228b22;
+    --color-positive-light: #00a86b;
+    --color-negative-dark: #b22222;
+    --color-negative-light:#dc0f1d;
 }
 
 /* Override default number input */

@@ -16,7 +16,7 @@ import {
   ExpenseGroupDTO,
   UserDTO,
 } from "@/types/DTO/dataTypes";
-import ExpenseList from "@/components/elements/home/ExpenseList";
+import ExpensesList from "@/components/elements/home/ExpensesList";
 import { AlertContext } from "@/contexts/AlertContext";
 import {
   toggleStatusAlert,
@@ -24,6 +24,7 @@ import {
 } from "@/utils/toggleAlerts";
 import {
   getExpenseGroupsFirebase,
+  getExpensesFirebase,
   postEarningFirebase,
   postExpenseFirebase,
 } from "@/services/firebaseService";
@@ -141,6 +142,18 @@ const PageContents = ({
     }
   }, [currentUser, db, router, searchParams]);
 
+  // Load expenses
+  useEffect(() => {
+    if (expenseGroupsContext.filterId) {
+      void getExpensesFirebase(
+        db,
+        setExpenseDocs.current,
+        expenseGroupsContext.filterId,
+        monthYear
+      );
+    }
+  }, [db, expenseGroupsContext.filterId, monthYear]);
+
   const createExpense = async (newExpense: CreateExpenseDTO) => {
     try {
       await postExpenseFirebase(
@@ -213,9 +226,9 @@ const PageContents = ({
               monthYear={monthYear}
               setMonthYear={setMonthYear}
             />
-            <ExpenseList
+            <ExpensesList
+              expenses={expensesContext.expenses}
               currentUser={currentUser}
-              monthYear={monthYear}
               db={db}
             />
           </div>

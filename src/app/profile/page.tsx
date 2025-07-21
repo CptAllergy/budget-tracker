@@ -14,7 +14,7 @@ import {
   CreateExpenseDTO,
   EarningDTO,
 } from "@/types/DTO/dataTypes";
-import ExpenseList from "@/components/elements/home/ExpenseList";
+import ExpensesList from "@/components/elements/home/ExpensesList";
 import { AlertContext } from "@/contexts/AlertContext";
 import {
   toggleStatusAlert,
@@ -23,12 +23,12 @@ import {
 import {
   getEarningsFirebase,
   getExpenseGroupsFirebase,
+  getExpensesFirebase,
   postEarningFirebase,
   postExpenseFirebase,
 } from "@/services/firebaseService";
 import { ExpensesContext } from "@/contexts/ExpensesContext";
 import { LuPlus } from "react-icons/lu";
-import { rancho } from "@/styles/fonts";
 import { ExpenseGroupsContext } from "@/contexts/ExpenseGroupsContext";
 import { useFirebaseSetup } from "@/utils/hooks";
 import { sortExpenseGroups } from "@/utils/sorters";
@@ -37,7 +37,7 @@ import MonthNavigation from "@/components/elements/home/MonthNavigation";
 import { AddDialog } from "@/components/commons/dialogs/AddDialog";
 import { MonthYearType } from "@/types/componentTypes";
 import { getCurrentMonthYear } from "@/utils/utils";
-import { TotalsLoading } from "@/components/loading/elements/home/LoadingHome";
+import ProfileSummary from "@/components/elements/profile/ProfileSummary";
 
 const Profile = () => {
   const alertContext = useRef(useContext(AlertContext));
@@ -59,6 +59,7 @@ const Profile = () => {
 
   const { db, currentUser, firebaseLoading } = useFirebaseSetup();
 
+  // Load expense groups
   useEffect(() => {
     if (currentUser) {
       try {
@@ -73,14 +74,26 @@ const Profile = () => {
     }
   }, [currentUser, db]);
 
+  // Load earnings
   useEffect(() => {
-    // Set expense list
     if (currentUser?.id) {
       getEarningsFirebase(db, setEarnings, currentUser.id, monthYear).then(
         () => {}
       );
     }
   }, [db, currentUser?.id, monthYear]);
+
+  // Load expenses
+  useEffect(() => {
+    if (expenseGroupsContext.filterId) {
+      void getExpensesFirebase(
+        db,
+        setExpenseDocs.current,
+        expenseGroupsContext.filterId,
+        monthYear
+      );
+    }
+  }, [db, expenseGroupsContext.filterId, monthYear]);
 
   const createExpense = async (newExpense: CreateExpenseDTO) => {
     try {
@@ -143,17 +156,12 @@ const Profile = () => {
         )}
       </div>
       <div className="mx-3 mt-12">
-        {/*TODO Add summary section with profit and loss for the month*/}
         <section className="mx-4 flex flex-col items-center">
-          {currentUser ? (
-            <div
-              className={`${rancho.className} bg-theme-secondary w-full max-w-4xl rounded-md border-2 border-black py-1 text-center text-2xl shadow-[5px_5px_0px_rgba(0,0,0,1)] md:text-3xl`}
-            >
-              {currentUser?.name}&#39;s Profile
-            </div>
-          ) : (
-            <TotalsLoading />
-          )}
+          <ProfileSummary
+            currentUser={currentUser}
+            expenses={expensesContext.expenses}
+            earnings={earnings}
+          />
         </section>
         <section className="mt-4 md:mt-10">
           <div className="mx-1 mt-5 mb-5">
@@ -166,9 +174,9 @@ const Profile = () => {
               setToggleExpenses={setToggleExpenses}
             />
             {toggleExpenses ? (
-              <ExpenseList
+              <ExpensesList
+                expenses={expensesContext.expenses}
                 currentUser={currentUser}
-                monthYear={monthYear}
                 db={db}
                 isProfile={true}
               />
