@@ -8,7 +8,7 @@ import {
 import {
   deleteExpenseFirebase,
   getCurrentUserFirebase,
-  getEarningsFirebase,
+  getEarningsFirebase, getEarningsMonthlySumFirebase,
   getExpenseGroupsFirebase,
   getExpensesFirebase,
   getExpensesMonthlySumFirebase,
@@ -361,6 +361,43 @@ export const useMonthlyExpenseTotal = (
 
       for (let month = 0; month < 12; month++) {
         const sum = await getExpensesMonthlySumFirebase(filterId!, {
+          month,
+          year,
+        });
+        results.push({ month, totalExpenses: sum ?? -1 });
+      }
+      return results;
+    },
+    enabled: !!filterId,
+    staleTime: 1000 * 60 * 30, // 30 minutes
+  });
+
+  useEffect(() => {
+    if (error) {
+      toggleStatusErrorAlert(alertContext.current, "GENERIC", error);
+    }
+  }, [error]);
+
+  return { monthlyExpenseTotals, isLoading };
+};
+
+export const useMonthlyEarningTotal = (
+  year: number,
+  filterId?: ExpenseListType
+) => {
+  const alertContext = useRef(useContext(AlertContext));
+
+  const {
+    data: monthlyExpenseTotals,
+    error,
+    isLoading,
+  } = useQuery({
+    queryKey: ["yearEarnings", filterId, year],
+    queryFn: async () => {
+      const results: MonthlyExpenseTotal[] = [];
+
+      for (let month = 0; month < 12; month++) {
+        const sum = await getEarningsMonthlySumFirebase(filterId!, {
           month,
           year,
         });

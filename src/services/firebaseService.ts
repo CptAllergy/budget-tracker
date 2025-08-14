@@ -119,6 +119,30 @@ export async function getExpensesMonthlySumFirebase(
   return snapshot.data().totalAmount;
 }
 
+export async function getEarningsMonthlySumFirebase(
+  filterId: ExpenseListType,
+  monthYear: MonthYearType
+) {
+  const { firstDay, lastDay } = getMonthYearLimits(monthYear);
+
+  const filter = filterId.userId
+    ? where("userId", "==", filterId.userId)
+    : where("groupId", "==", filterId.groupId);
+
+  const queryExpenses = query(
+    collection(db, "earnings"),
+    where("timestamp", ">=", firstDay),
+    where("timestamp", "<=", lastDay),
+    filter
+  );
+
+  const snapshot = await getAggregateFromServer(queryExpenses, {
+    totalAmount: sum("amount"),
+  });
+
+  return snapshot.data().totalAmount;
+}
+
 // TODO can replace currentUser with userId from expense
 export async function postExpenseFirebase(
   newExpense: CreateExpenseDTO,

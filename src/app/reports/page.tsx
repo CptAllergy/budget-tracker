@@ -42,7 +42,6 @@ import { TrendingUp } from "lucide-react";
 import { ExpenseDTO, ExpenseGroupDTO, UserDTO } from "@/types/DTO/dataTypes";
 import { EXPENSE_CATEGORIES } from "@/types/transactionFilterTypes";
 import { YearNavigation } from "@/components/elements/home/MonthNavigation";
-import ProfileSummary from "@/components/elements/profile/ProfileSummary";
 import { rancho } from "@/styles/fonts";
 
 // TODO make reports page look good
@@ -81,6 +80,7 @@ const ReportsContent = () => {
     return <div>Loading...</div>;
   }
 
+  // TODO change the filterId selection to a tabs/dropdown combo
   return (
     <div>
       <div className="mx-3 mt-12">
@@ -94,20 +94,29 @@ const ReportsContent = () => {
               />
             </section>
             <section className="mt-4 md:mt-10">
-              <YearNavigation
-                year={year}
-                setYear={setYear}
-                setMonthYear={setMonthYear}
-              />
+              <div className="mx-1 mt-5 mb-5">
+                <ReportTabs toggleReport={true} setToggleReport={() => {}} />
+                <YearNavigation
+                  year={year}
+                  setYear={setYear}
+                  setMonthYear={setMonthYear}
+                />
+                <div className="mx-auto flex max-w-6xl flex-col">
+                  <div className="inline-block min-w-full px-3 py-1 align-middle md:py-2">
+                    <div className="bg-theme-highlight grid grid-cols-2 gap-1 rounded-md border-2 border-black p-2 text-base font-semibold">
+                      <YearlyExpenseChart
+                        filterId={filterId}
+                        year={year}
+                        setMonthYear={setMonthYear}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
             </section>
           </>
         )}
 
-        <YearlyExpenseChart
-          filterId={filterId}
-          year={year}
-          setMonthYear={setMonthYear}
-        />
         {filterId?.groupId && (
           <ExpenseGroupReports filterId={filterId} monthYear={monthYear} />
         )}
@@ -346,7 +355,6 @@ const YearlyExpenseChart = ({
           </div>
         </div>
       </CardFooter>
-      ;
     </Card>
   );
 };
@@ -525,6 +533,35 @@ const DonutPieChart = ({ expenses }: { expenses: ExpenseDTO[] }) => {
         </div>
       </CardFooter>
     </Card>
+  );
+};
+
+const ReportTabs = ({
+  toggleReport,
+  setToggleReport,
+}: {
+  toggleReport: boolean;
+  setToggleReport: Dispatch<SetStateAction<boolean>>;
+}) => {
+  return (
+    <div className="mx-auto flex max-w-6xl flex-col">
+      <div className="inline-block min-w-full px-3 py-1 align-middle md:py-2">
+        <div className="bg-theme-highlight grid grid-cols-2 gap-1 rounded-md border-2 border-black p-2 text-base font-semibold">
+          <div
+            onClick={() => setToggleReport(true)}
+            className={`${toggleReport ? "bg-theme-main hover:bg-theme-hover border-2 border-black" : "hover:bg-theme-highlight-hover"} rounded-md p-1 text-center transition-colors hover:cursor-pointer`}
+          >
+            Profile
+          </div>
+          <div
+            onClick={() => setToggleReport(false)}
+            className={`${!toggleReport ? "bg-theme-main hover:bg-theme-hover border-2 border-black" : "hover:bg-theme-highlight-hover"} rounded-md p-1 text-center transition-colors hover:cursor-pointer`}
+          >
+            Groups V
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
