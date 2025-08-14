@@ -1,43 +1,43 @@
 export const EXPENSE_CATEGORIES = [
-  "Other",
-  "Groceries",
-  "Dining",
-  "Transportation",
-  "Investments",
-  "Gifts",
-  "Housing & Utilities",
-  "Health",
-  "Entertainment",
-  "Personal Care",
-  "Repairs",
-  "Personal Spending",
+  "other",
+  "groceries",
+  "dining",
+  "transportation",
+  "investments",
+  "gifts",
+  "housingUtilities",
+  "health",
+  "entertainment",
+  "personalCare",
+  "repairs",
+  "personalSpending",
 ] as const;
 
 export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
 
 export const EXPENSE_TAGS = [
-  "Food",
-  "Drinks",
-  "Vacation",
-  "Public Transport",
-  "Gas",
-  "Pharmacy",
-  "Games",
-  "Clothing",
-  "Electronics",
-  "Subscriptions",
+  "food",
+  "drinks",
+  "vacation",
+  "publicTransport",
+  "gas",
+  "pharmacy",
+  "games",
+  "clothing",
+  "electronics",
+  "subscriptions",
 ] as const;
 
 export type ExpenseTag = (typeof EXPENSE_TAGS)[number];
 
 export const EARNING_CATEGORIES = [
-  "Other",
-  "Salary",
-  "Meal Allowance",
-  "Investment Returns",
-  "Refunds",
-  "Gifts",
-  "Bonuses",
+  "other",
+  "salary",
+  "mealAllowance",
+  "investmentReturns",
+  "refunds",
+  "gifts",
+  "bonuses",
 ] as const;
 
 export type EarningCategory = (typeof EARNING_CATEGORIES)[number];

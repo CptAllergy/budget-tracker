@@ -18,7 +18,42 @@
     --color-positive-dark: #228b22;
     --color-positive-light: #00a86b;
     --color-negative-dark: #b22222;
-    --color-negative-light:#dc0f1d;
+    --color-negative-light: #dc0f1d;
+}
+
+@layer base {
+    :root {
+        --chart-other: oklch(0.65 0.15 50);
+        --chart-groceries: oklch(0.70 0.22 120);
+        --chart-dining: oklch(0.68 0.20 30);
+        --chart-transportation: oklch(0.60 0.18 260);
+        --chart-investments: oklch(0.65 0.25 95);
+        --chart-gifts: oklch(0.68 0.22 320);
+        --chart-housingUtilities: oklch(0.58 0.15 20);
+        --chart-health: oklch(0.75 0.30 135);
+        --chart-entertainment: oklch(0.70 0.20 290);
+        --chart-personalCare: oklch(0.65 0.15 10);
+        --chart-repairs: oklch(0.60 0.18 200);
+        --chart-personalSpending: oklch(0.65 0.20 60);
+    }
+}
+
+@layer base {
+    :root {
+        --chart-1: oklch(0.646 0.222 41.116);
+        --chart-2: oklch(0.6 0.118 184.704);
+        --chart-3: oklch(0.398 0.07 227.392);
+        --chart-4: oklch(0.828 0.189 84.429);
+        --chart-5: oklch(0.769 0.188 70.08);
+    }
+
+    .dark {
+        --chart-1: oklch(0.488 0.243 264.376);
+        --chart-2: oklch(0.696 0.17 162.48);
+        --chart-3: oklch(0.769 0.188 70.08);
+        --chart-4: oklch(0.627 0.265 303.9);
+        --chart-5: oklch(0.645 0.246 16.439);
+    }
 }
 
 /* Override default number input */

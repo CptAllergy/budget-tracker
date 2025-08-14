@@ -16,7 +16,6 @@ import {
   toggleStatusAlert,
   toggleStatusErrorAlert,
 } from "@/utils/toggleAlerts";
-import { Firestore } from "firebase/firestore";
 import { Dispatch, SetStateAction, useContext, useRef, useState } from "react";
 import { AlertContext } from "@/contexts/AlertContext";
 import { DropdownMenu } from "@/components/commons/menus/DropdownMenu";
@@ -30,18 +29,16 @@ const EarningsList = ({
   earnings,
   setEarnings,
   currentUser,
-  db,
 }: {
   earnings: EarningDTO[];
   setEarnings: Dispatch<SetStateAction<EarningDTO[]>>;
   currentUser?: UserDTO;
-  db: Firestore;
 }) => {
   const alertContext = useRef(useContext(AlertContext));
 
   const removeEarning = async (earning: EarningDTO) => {
     try {
-      await deleteEarningFirebase(db, earning, currentUser!, setEarnings);
+      await deleteEarningFirebase(earning, currentUser!, setEarnings);
 
       toggleStatusAlert(alertContext.current, "Earning deleted");
     } catch (error) {
@@ -52,7 +49,7 @@ const EarningsList = ({
 
   const updateEarning = async (earning: EarningDTO) => {
     try {
-      await updateEarningFirebase(db, earning, currentUser!, setEarnings);
+      await updateEarningFirebase(earning, currentUser!, setEarnings);
 
       toggleStatusAlert(alertContext.current, "Earning updated");
     } catch (error) {

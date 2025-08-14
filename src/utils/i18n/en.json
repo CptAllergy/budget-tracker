@@ -1,0 +1,41 @@
+{
+  "expenses": {
+    "categories": {
+      "other": "Other",
+      "groceries": "Groceries",
+      "dining": "Dining",
+      "transportation": "Transportation",
+      "investments": "Investments",
+      "gifts": "Gifts",
+      "housingUtilities": "Housing & Utilities",
+      "health": "Health",
+      "entertainment": "Entertainment",
+      "personalCare": "Personal Care",
+      "repairs": "Repairs",
+      "personalSpending": "Personal Spending"
+    },
+    "tags": {
+      "food": "Food",
+      "drinks": "Drinks",
+      "vacation": "Vacation",
+      "publicTransport": "Public Transport",
+      "gas": "Gas",
+      "pharmacy": "Pharmacy",
+      "games": "Games",
+      "clothing": "Clothing",
+      "electronics": "Electronics",
+      "subscriptions": "Subscriptions"
+    }
+  },
+  "earnings": {
+    "categories": {
+      "other": "Other",
+      "salary": "Salary",
+      "mealAllowance": "Meal Allowance",
+      "investmentReturns": "Investment Returns",
+      "refunds": "Refunds",
+      "gifts": "Gifts",
+      "bonuses": "Bonuses"
+    }
+  }
+}

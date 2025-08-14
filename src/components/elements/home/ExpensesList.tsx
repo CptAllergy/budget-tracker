@@ -2,16 +2,6 @@
 
 import { ExpenseDTO, UserDTO } from "@/types/DTO/dataTypes";
 import { useContext, useRef, useState } from "react";
-import { Firestore } from "firebase/firestore";
-import {
-  toggleStatusAlert,
-  toggleStatusErrorAlert,
-} from "@/utils/toggleAlerts";
-import { AlertContext } from "@/contexts/AlertContext";
-import {
-  deleteExpenseFirebase,
-  updateExpenseFirebase,
-} from "@/services/firebaseService";
 import { TransactionListLoading } from "@/components/loading/elements/home/LoadingHome";
 import { timestampToDate } from "@/utils/validations";
 import { ExpensesContext } from "@/contexts/ExpensesContext";
@@ -28,61 +18,42 @@ import { getCategoryIcon } from "@/utils/styles/transactionFilterStyles";
 import { ExpenseTag } from "@/types/transactionFilterTypes";
 import { DeleteDialog } from "@/components/commons/dialogs/DeleteDialog";
 import { EditDialog } from "@/components/commons/dialogs/EditDialog";
-import { useGetGroupName } from "@/utils/hooks";
+import { getExpenseGroupName } from "@/utils/utils";
+import {
+  useDeleteExpense,
+  useExpenseGroups,
+  useUpdateExpense,
+} from "@/utils/hooks/reactQuery";
+import { translate } from "@/services/translationService";
 
 const ExpensesList = ({
   expenses,
   currentUser,
-  db,
   isProfile,
 }: {
   expenses: ExpenseDTO[];
   currentUser?: UserDTO;
-  db: Firestore;
   isProfile?: boolean;
 }) => {
-  const alertContext = useRef(useContext(AlertContext));
   const expensesContext = useContext(ExpensesContext);
-  const expenseGroupsContext = useContext(ExpenseGroupsContext);
 
   const setExpenseDocs = useRef(expensesContext.setExpenseDocs);
-  const handleGroupChange = useRef(expenseGroupsContext.handleGroupChange);
-  const filterId = expenseGroupsContext.filterId;
+
+  const { mutateDeleteExpense } = useDeleteExpense(setExpenseDocs.current);
+  const { mutateUpdateExpense } = useUpdateExpense(setExpenseDocs.current);
 
   const removeExpense = async (expense: ExpenseDTO) => {
-    try {
-      await deleteExpenseFirebase(
-        db,
-        expense,
-        filterId!,
-        currentUser!,
-        handleGroupChange.current,
-        setExpenseDocs.current
-      );
-
-      toggleStatusAlert(alertContext.current, "Expense deleted");
-    } catch (error) {
-      toggleStatusErrorAlert(alertContext.current, "DELETE_FAILED", error);
-      throw "Error deleting expense";
-    }
+    mutateDeleteExpense({
+      expense,
+      currentUser: currentUser!,
+    });
   };
 
   const updateExpense = async (expense: ExpenseDTO) => {
-    try {
-      await updateExpenseFirebase(
-        db,
-        expense,
-        filterId!,
-        currentUser!,
-        handleGroupChange.current,
-        setExpenseDocs.current
-      );
-
-      toggleStatusAlert(alertContext.current, "Expense updated");
-    } catch (error) {
-      toggleStatusErrorAlert(alertContext.current, "UPDATE_FAILED", error);
-      throw "Error updating expense";
-    }
+    mutateUpdateExpense({
+      expense,
+      currentUser: currentUser!,
+    });
   };
 
   return (
@@ -180,7 +151,9 @@ const ExpenseTable = ({
   showEditDialog: (expense: ExpenseDTO) => void;
   isProfile?: boolean;
 }) => {
-  const { getGroupName } = useGetGroupName();
+  // TODO consider adding a loading state for the expense group names
+  const { expenseGroups, error, isLoading } = useExpenseGroups(currentUser);
+  const getGroupName = getExpenseGroupName(expenseGroups);
 
   return (
     <div className="overflow-hidden rounded-md border-2 border-black shadow-[5px_5px_0px_rgba(0,0,0,1)]">
@@ -259,7 +232,9 @@ const ExpenseTable = ({
               <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500">
                 <div className="flex gap-1">
                   <div> {getCategoryIcon(expense.category)}</div>
-                  <div> {expense.category}</div>
+                  <div>
+                    {translate(`expenses.categories.${expense.category}`)}
+                  </div>
                 </div>
               </td>
               <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500">
@@ -300,7 +275,9 @@ const ExpenseCards = ({
   showEditDialog: (expense: ExpenseDTO) => void;
   isProfile?: boolean;
 }) => {
-  const { getGroupName } = useGetGroupName();
+  // TODO consider adding a loading state for the expense group names
+  const { expenseGroups, error, isLoading } = useExpenseGroups(currentUser);
+  const getGroupName = getExpenseGroupName(expenseGroups);
 
   return (
     <div>
@@ -338,7 +315,7 @@ const ExpenseCards = ({
                     Category
                   </dt>
                   <dd className="mb-2 font-semibold text-black/70">
-                    {expense.category}
+                    {translate(`expenses.categories.${expense.category}`)}
                   </dd>
                   <dt className="mb-0.5 text-xs font-medium text-black/40">
                     Tags
@@ -388,7 +365,7 @@ const TagList = ({ tags, limit }: { tags?: ExpenseTag[]; limit?: number }) => {
           <div key={index} className="inline-flex">
             {(!limit || index < limit) && (
               <span className="mr-1 mb-1 inline-flex items-center rounded-md bg-gray-200 px-2 py-1 text-xs font-medium text-gray-700">
-                {tag}
+                {translate(`expenses.tags.${tag}`)}
               </span>
             )}
           </div>

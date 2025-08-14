@@ -9,61 +9,61 @@ export function getCategoryIcon(
 ): string {
   switch (transactionFilter) {
     // Transaction Categories
-    case "Other":
+    case "other":
       return "❓";
-    case "Groceries":
+    case "groceries":
       return "🛒";
-    case "Dining":
+    case "dining":
       return "🍽️";
-    case "Transportation":
+    case "transportation":
       return "🚗";
-    case "Investments":
+    case "investments":
       return "💹";
-    case "Gifts":
+    case "gifts":
       return "🎁";
-    case "Housing & Utilities":
+    case "housingUtilities":
       return "🏠";
-    case "Health":
+    case "health":
       return "🩺";
-    case "Entertainment":
+    case "entertainment":
       return "🎉";
-    case "Personal Care":
+    case "personalCare":
       return "💅";
-    case "Repairs":
+    case "repairs":
       return "🛠️";
-    case "Personal Spending":
+    case "personalSpending":
       return "💸";
     // Transaction Tags
-    case "Food":
+    case "food":
       return "🍔";
-    case "Drinks":
+    case "drinks":
       return "🥤";
-    case "Vacation":
+    case "vacation":
       return "🏖️";
-    case "Public Transport":
+    case "publicTransport":
       return "🚆";
-    case "Gas":
+    case "gas":
       return "⛽";
-    case "Pharmacy":
+    case "pharmacy":
       return "🏥";
-    case "Games":
+    case "games":
       return "🎮";
-    case "Clothing":
+    case "clothing":
       return "👗";
-    case "Electronics":
+    case "electronics":
       return "💻";
-    case "Subscriptions":
+    case "subscriptions":
       return "🔄";
     // Earning Categories
-    case "Salary":
+    case "salary":
       return "💼";
-    case "Meal Allowance":
+    case "mealAllowance":
       return "🥪";
-    case "Investment Returns":
+    case "investmentReturns":
       return "💰";
-    case "Refunds":
+    case "refunds":
       return "↩️";
-    case "Bonuses":
+    case "bonuses":
       return "💎";
     default:
       return "🚫"; // Default icon for unknown categories

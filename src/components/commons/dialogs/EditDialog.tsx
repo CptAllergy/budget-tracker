@@ -197,7 +197,7 @@ const useExpenseForm = (
         label: expense?.label,
         newDate: expense?.timestamp.toDate(),
         tags: expense?.tags ? expense.tags : [],
-        category: expense?.category ? expense.category : "Other",
+        category: expense?.category ? expense.category : "other",
       },
     });
 
@@ -211,7 +211,7 @@ const useExpenseForm = (
           label: expense.label,
           newDate: expense.timestamp.toDate(),
           tags: expense?.tags ? expense.tags : [],
-          category: expense?.category ? expense.category : "Other",
+          category: expense?.category ? expense.category : "other",
         });
       }, timeout);
     }
@@ -281,7 +281,7 @@ const useEarningForm = (
         amount: earning?.amount,
         label: earning?.label,
         newDate: earning?.timestamp.toDate(),
-        category: earning?.category ? earning.category : "Other",
+        category: earning?.category ? earning.category : "other",
       },
     });
 
@@ -294,7 +294,7 @@ const useEarningForm = (
           amount: earning.amount,
           label: earning.label,
           newDate: earning.timestamp.toDate(),
-          category: earning?.category ? earning.category : "Other",
+          category: earning?.category ? earning.category : "other",
         });
       }, timeout);
     }

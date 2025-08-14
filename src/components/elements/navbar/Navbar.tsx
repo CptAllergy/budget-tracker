@@ -18,6 +18,7 @@ import budgetTrackerCoinLogo from "../../../../public/assets/coin_budget_tracker
 import {
   LuBookmark,
   LuBookmarkCheck,
+  LuClipboardList,
   LuMenu,
   LuPlus,
   LuUser,
@@ -33,18 +34,17 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/commons/menus/DrawerMenu";
-import { UserDTO } from "@/types/DTO/dataTypes";
 import { ExpenseGroupsContext } from "@/contexts/ExpenseGroupsContext";
 import { AlertContext } from "@/contexts/AlertContext";
 import { toggleStatusErrorAlert } from "@/utils/toggleAlerts";
 import { usePathname } from "next/navigation";
+import { useCurrentUser, useExpenseGroups } from "@/utils/hooks/reactQuery";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const Navbar = ({
   setIsAddDialogOpen,
-  currentUser,
 }: {
   setIsAddDialogOpen?: Dispatch<SetStateAction<boolean>>;
-  currentUser?: UserDTO;
 }) => {
   const { data: session } = useSession();
   const [loading, setLoading] = useState<boolean>(true);
@@ -64,9 +64,7 @@ export const Navbar = ({
     <>
       <div className="bg-theme-main relative z-10 h-16 w-full border-b-2 border-black">
         <div className="absolute top-0 bottom-0 left-0 ml-2 flex items-center gap-3">
-          {session?.user && (
-            <NavbarGroupSelectorButton currentUser={currentUser} />
-          )}
+          {session?.user && <DrawerMenuButton />}
           <NavbarBudgetTrackerLogo />
         </div>
         <div className="absolute top-0 right-0 bottom-0 mt-1 mr-2 flex items-center md:mr-4">
@@ -83,11 +81,7 @@ export const Navbar = ({
   );
 };
 
-const NavbarGroupSelectorButton = ({
-  currentUser,
-}: {
-  currentUser?: UserDTO;
-}) => {
+const DrawerMenuButton = () => {
   return (
     <Drawer direction="left" snapPoints={undefined} fadeFromIndex={undefined}>
       <DrawerTrigger>
@@ -95,16 +89,12 @@ const NavbarGroupSelectorButton = ({
           <LuMenu size="24" className="stroke-[2.5]" />
         </div>
       </DrawerTrigger>
-      <NavbarGroupSelectorDrawer currentUser={currentUser} />
+      <DrawerMenu />
     </Drawer>
   );
 };
 
-const NavbarGroupSelectorDrawer = ({
-  currentUser,
-}: {
-  currentUser?: UserDTO;
-}) => {
+const DrawerMenu = () => {
   return (
     <DrawerContent
       aria-describedby={"Hello"}
@@ -112,7 +102,13 @@ const NavbarGroupSelectorDrawer = ({
     >
       <DrawerHeader className="flex flex-row items-center justify-between">
         <DrawerTitle className="-ml-1.5 text-base sm:ml-0">
-          Expense Groups
+          <div className="h-10 w-10">
+            <Image
+              quality={100}
+              src={budgetTrackerCoinLogo}
+              alt="Budget Tracker Logo"
+            />
+          </div>
         </DrawerTitle>
         <DrawerDescription className="sr-only">
           Choose Expense Groups
@@ -121,7 +117,7 @@ const NavbarGroupSelectorDrawer = ({
           <LuX className="size-4 [stroke-width:3]" />
         </DrawerClose>
       </DrawerHeader>
-      {currentUser && <GroupSelectorList currentUser={currentUser} />}
+      <NavigationList />
       <DrawerFooter></DrawerFooter>
     </DrawerContent>
   );
@@ -129,15 +125,13 @@ const NavbarGroupSelectorDrawer = ({
 
 // TODO let user pick a favourite group which will become the default for that user
 // TODO allow user to create new groups
-const GroupSelectorList = ({ currentUser }: { currentUser: UserDTO }) => {
+const NavigationList = () => {
   const alertContext = useRef(useContext(AlertContext));
   const expenseGroupsContext = useContext(ExpenseGroupsContext);
   const pathname = usePathname();
 
   const filterId = expenseGroupsContext.filterId;
   const handleFilterChange = useRef(expenseGroupsContext.handleFilterChange);
-
-  const expenseGroups = expenseGroupsContext.expenseGroups;
 
   const handleGroupClick = (groupId: string, groupName: string) => {
     try {
@@ -151,9 +145,12 @@ const GroupSelectorList = ({ currentUser }: { currentUser: UserDTO }) => {
     }
   };
 
-  const selectedProfileStyle = filterId?.userId
-    ? "bg-theme-main hover:bg-theme-hover"
-    : "bg-theme-highlight hover:bg-theme-highlight-hover";
+  const selectedPageStyle = (page: string) => {
+    return pathname.includes(page) && !filterId?.groupId
+      ? "bg-theme-main hover:bg-theme-hover"
+      : "bg-theme-highlight hover:bg-theme-highlight-hover";
+  };
+
   const selectedGroupStyle = (groupId: string) => {
     return filterId?.groupId && filterId.groupId === groupId
       ? "bg-theme-main hover:bg-theme-hover"
@@ -165,37 +162,84 @@ const GroupSelectorList = ({ currentUser }: { currentUser: UserDTO }) => {
       <div className="space-y-3">
         <Link
           href="/profile"
-          className={`${selectedProfileStyle} flex cursor-pointer items-center gap-2 rounded-md border-2 border-black p-1 text-sm/7 shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all sm:gap-3 sm:p-2 sm:text-base`}
+          className={`${selectedPageStyle("profile")} flex cursor-pointer items-center gap-2 rounded-md border-2 border-black p-1 text-sm/7 shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all sm:gap-3 sm:p-2 sm:text-base`}
         >
           <LuUser className="size-5 flex-shrink-0" />
           <div className="truncate font-semibold">Profile</div>
         </Link>
+        <Link
+          href="/reports"
+          className={`${selectedPageStyle("reports")} flex cursor-pointer items-center gap-2 rounded-md border-2 border-black p-1 text-sm/7 shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all sm:gap-3 sm:p-2 sm:text-base`}
+        >
+          <LuClipboardList className="size-5 flex-shrink-0" />
+          <div className="truncate font-semibold">Reports</div>
+        </Link>
         <hr className="my-4 border-t border-b border-black" />
-        {expenseGroups.length === 0 ? (
-          <div className="ml-2 text-sm font-semibold sm:text-base">
-            You don&#39;t have any groups
-          </div>
-        ) : (
-          expenseGroups.map((group) => (
-            <Link
-              key={group.id}
-              href={{ pathname: "/", query: { groupId: group.id } }}
-              onClick={() => handleGroupClick(group.id, group.name)}
-              className={`${selectedGroupStyle(group.id)} flex cursor-pointer items-center gap-2 rounded-md border-2 border-black p-1 text-sm/7 shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all sm:gap-3 sm:p-2 sm:text-base`}
-            >
-              {currentUser.groupId === group.id ? (
-                <LuBookmarkCheck size="20" className="size-5 flex-shrink-0" />
-              ) : (
-                <LuBookmark size="20" className="size-5 flex-shrink-0" />
-              )}
-              <div className="truncate font-semibold">{group.name}</div>
-            </Link>
-          ))
-        )}
+        <div className="ml-1 font-semibold">Expense Groups</div>
+        <ExpenseGroupList
+          handleGroupClick={handleGroupClick}
+          selectedGroupStyle={selectedGroupStyle}
+        />
       </div>
     </div>
   );
 };
+
+const ExpenseGroupList = ({
+  handleGroupClick,
+  selectedGroupStyle,
+}: {
+  handleGroupClick: (groupId: string, groupName: string) => void;
+  selectedGroupStyle: (groupId: string) => string;
+}) => {
+  const { currentUser } = useCurrentUser();
+  const { expenseGroups, error, isLoading } = useExpenseGroups(currentUser);
+
+  // TODO improve the loading animation
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center">loading groups...</div>
+    );
+  }
+
+  // TODO toggle the status error alert here instead
+  if (error) {
+    return (
+      <div className="ml-2 text-sm font-semibold sm:text-base">
+        Error loading groups: {error.message}
+      </div>
+    );
+  }
+
+  // TODO improve the way this looks a bit
+  if (expenseGroups?.length === 0) {
+    return (
+      <div className="ml-2 text-sm font-semibold sm:text-base">
+        You don&#39;t have any groups
+      </div>
+    );
+  }
+
+  return (
+    currentUser &&
+    expenseGroups?.map((group) => (
+      <Link
+        key={group.id}
+        href={{ pathname: "/", query: { groupId: group.id } }}
+        onClick={() => handleGroupClick(group.id, group.name)}
+        className={`${selectedGroupStyle(group.id)} flex cursor-pointer items-center gap-2 rounded-md border-2 border-black p-1 text-sm/7 shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all sm:gap-3 sm:p-2 sm:text-base`}
+      >
+        {currentUser.groupId === group.id ? (
+          <LuBookmarkCheck size="20" className="size-5 flex-shrink-0" />
+        ) : (
+          <LuBookmark size="20" className="size-5 flex-shrink-0" />
+        )}
+        <div className="truncate font-semibold">{group.name}</div>
+      </Link>
+    ))
+  );
+};
+
 const NavbarBudgetTrackerLogo = () => {
   return (
     <Link href="/" className="flex items-center space-x-1 sm:space-x-2">
@@ -236,6 +280,7 @@ const NavbarUserOptions = ({
 }: {
   setIsAddDialogOpen?: Dispatch<SetStateAction<boolean>>;
 }) => {
+  const queryClient = useQueryClient();
   return (
     <div className="flex items-center space-x-5">
       {setIsAddDialogOpen && (
@@ -251,7 +296,10 @@ const NavbarUserOptions = ({
       )}
       <button
         className="mr-5 font-bold text-white underline"
-        onClick={() => signOut()}
+        onClick={() => {
+          queryClient.clear();
+          void signOut();
+        }}
       >
         Sign Out
       </button>

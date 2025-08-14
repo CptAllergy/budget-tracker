@@ -24,7 +24,7 @@ const ProfileSummary = ({
 
   const investmentExpenses = useMemo(() => {
     return expenses
-      .filter((expense) => expense.category === "Investments")
+      .filter((expense) => expense.category === "investments")
       .reduce((total, expense) => total + expense.amount, 0);
   }, [expenses]);
 
@@ -70,7 +70,7 @@ const ProfileSummary = ({
                     <span
                       className={`${netBalance >= 0 ? "text-positive-dark" : "text-negative-dark"} underline underline-offset-3`}
                     >
-                      {netBalance >= 0 ? "+" : "-"}
+                      {netBalance >= 0 ? "+" : ""}
                       {netBalance.toFixed(2)}€
                     </span>
                     <span className="hidden md:inline">

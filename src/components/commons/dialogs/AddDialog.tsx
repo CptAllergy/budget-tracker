@@ -223,7 +223,7 @@ const useExpenseForm = (
     useForm<CreateExpenseDTO>({
       defaultValues: {
         tags: [],
-        category: "Other",
+        category: "other",
       },
     });
 
@@ -232,7 +232,7 @@ const useExpenseForm = (
     setTimeout(() => {
       reset({
         tags: [],
-        category: "Other",
+        category: "other",
       });
     }, 400);
   }, [reset, isDialogOpen]);
@@ -286,7 +286,7 @@ const useEarningForm = (
   const { register, handleSubmit, reset, formState, control } =
     useForm<CreateEarningDTO>({
       defaultValues: {
-        category: "Other",
+        category: "other",
       },
     });
 
@@ -294,7 +294,7 @@ const useEarningForm = (
     // Reset the form on a timeout to allow the dialog transition to finish
     setTimeout(() => {
       reset({
-        category: "Other",
+        category: "other",
       });
     }, 400);
   }, [reset, isDialogOpen]);

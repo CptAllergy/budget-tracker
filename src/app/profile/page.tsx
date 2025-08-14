@@ -22,18 +22,15 @@ import {
 } from "@/utils/toggleAlerts";
 import {
   getEarningsFirebase,
-  getExpenseGroupsFirebase,
   getExpensesFirebase,
   postEarningFirebase,
-  postExpenseFirebase,
 } from "@/services/firebaseService";
 import { ExpensesContext } from "@/contexts/ExpensesContext";
 import { LuPlus } from "react-icons/lu";
 import { ExpenseGroupsContext } from "@/contexts/ExpenseGroupsContext";
-import { useFirebaseSetup } from "@/utils/hooks";
-import { sortExpenseGroups } from "@/utils/sorters";
+import { useAddExpense, useCurrentUser } from "@/utils/hooks/reactQuery";
 import EarningsList from "@/components/elements/profile/EarningsList";
-import MonthNavigation from "@/components/elements/home/MonthNavigation";
+import { MonthNavigation } from "@/components/elements/home/MonthNavigation";
 import { AddDialog } from "@/components/commons/dialogs/AddDialog";
 import { MonthYearType } from "@/types/componentTypes";
 import { getCurrentMonthYear } from "@/utils/utils";
@@ -44,12 +41,9 @@ const Profile = () => {
   const expensesContext = useContext(ExpensesContext);
   const expenseGroupsContext = useContext(ExpenseGroupsContext);
 
-  const setExpenseGroups = useRef(expenseGroupsContext.setExpenseGroups);
-
   const setExpenseDocs = useRef(expensesContext.setExpenseDocs);
   const handleFilterChange = useRef(expenseGroupsContext.handleFilterChange);
 
-  const handleGroupChange = useRef(expenseGroupsContext.handleGroupChange);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [toggleExpenses, setToggleExpenses] = useState(true);
   const [earnings, setEarnings] = useState<EarningDTO[]>([]);
@@ -57,68 +51,50 @@ const Profile = () => {
     getCurrentMonthYear()
   );
 
-  const { db, currentUser, firebaseLoading } = useFirebaseSetup();
+  const { currentUser, isLoading } = useCurrentUser();
 
-  // Load expense groups
+  // Set filter to current user
   useEffect(() => {
     if (currentUser) {
-      try {
-        getExpenseGroupsFirebase(db, currentUser.id).then((groups) => {
-          const sortedGroups = sortExpenseGroups(groups, currentUser.groupId);
-          setExpenseGroups.current(sortedGroups);
-        });
-        handleFilterChange.current({ userId: currentUser.id });
-      } catch (error) {
-        toggleStatusErrorAlert(alertContext.current, "GENERIC", error);
-      }
+      handleFilterChange.current({ userId: currentUser.id });
     }
-  }, [currentUser, db]);
+  }, [currentUser]);
 
   // Load earnings
   useEffect(() => {
     if (currentUser?.id) {
-      getEarningsFirebase(db, setEarnings, currentUser.id, monthYear).then(
+      getEarningsFirebase(setEarnings, currentUser.id, monthYear).then(
         () => {}
       );
     }
-  }, [db, currentUser?.id, monthYear]);
+  }, [currentUser?.id, monthYear]);
 
   // Load expenses
   useEffect(() => {
     if (expenseGroupsContext.filterId) {
       void getExpensesFirebase(
-        db,
         setExpenseDocs.current,
         expenseGroupsContext.filterId,
         monthYear
       );
     }
-  }, [db, expenseGroupsContext.filterId, monthYear]);
+  }, [expenseGroupsContext.filterId, monthYear]);
+
+  const { mutateAddExpense } = useAddExpense(setExpenseDocs.current);
 
   const createExpense = async (newExpense: CreateExpenseDTO) => {
-    try {
-      await postExpenseFirebase(
-        db,
-        newExpense,
-        expenseGroupsContext.filterId!,
-        currentUser!,
-        handleGroupChange.current,
-        setExpenseDocs.current
-      );
-      // Navigate to page with new content
-      setToggleExpenses(true);
-      setMonthYear(getCurrentMonthYear());
+    mutateAddExpense({
+      newExpense,
+      currentUser: currentUser!,
+    });
 
-      toggleStatusAlert(alertContext.current, "New expense created");
-    } catch (error) {
-      toggleStatusErrorAlert(alertContext.current, "ADD_FAILED", error);
-      throw "Error adding new expense";
-    }
+    setToggleExpenses(true);
+    setMonthYear(getCurrentMonthYear());
   };
 
   const createEarning = async (newEarning: CreateEarningDTO) => {
     try {
-      await postEarningFirebase(db, newEarning, setEarnings);
+      await postEarningFirebase(newEarning, setEarnings);
       // Navigate to page with new content
       setToggleExpenses(false);
       setMonthYear(getCurrentMonthYear());
@@ -132,10 +108,7 @@ const Profile = () => {
 
   return (
     <div className="">
-      <Navbar
-        setIsAddDialogOpen={setIsAddDialogOpen}
-        currentUser={currentUser}
-      />
+      <Navbar setIsAddDialogOpen={setIsAddDialogOpen} />
       {currentUser && (
         <AddDialog
           isDialogOpen={isAddDialogOpen}
@@ -146,7 +119,7 @@ const Profile = () => {
         />
       )}
       <div className="fixed right-0 bottom-0 z-5 m-4 sm:hidden">
-        {!firebaseLoading && currentUser && (
+        {!isLoading && currentUser && (
           <button
             onClick={() => setIsAddDialogOpen(true)}
             className="bg-theme-secondary hover:bg-theme-secondary-hover rounded-md border-2 border-black p-1.5 text-white shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_rgba(0,0,0,1)]"
@@ -177,7 +150,6 @@ const Profile = () => {
               <ExpensesList
                 expenses={expensesContext.expenses}
                 currentUser={currentUser}
-                db={db}
                 isProfile={true}
               />
             ) : (
@@ -185,7 +157,6 @@ const Profile = () => {
                 earnings={earnings}
                 setEarnings={setEarnings}
                 currentUser={currentUser}
-                db={db}
               />
             )}
           </div>

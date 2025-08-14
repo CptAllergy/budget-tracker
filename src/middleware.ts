@@ -30,7 +30,7 @@ export default auth(async (req) => {
 });
 
 const visitorPages = ["/forbidden", "/preview"];
-const userPages = ["/", "/profile"];
+const userPages = ["/", "/profile", "/reports"];
 
 export const config = {
   matcher: ["/((?!api|_next/static|_next/image|icons/).*)"],
