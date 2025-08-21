@@ -75,7 +75,7 @@ export const useCurrentUser = () => {
         toggleStatusErrorAlert(alertContext.current, "GENERIC", error);
       }
     }
-  }, [error]);
+  }, [error, queryClient]);
 
   return { currentUser, isLoading };
 };
