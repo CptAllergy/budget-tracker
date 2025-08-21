@@ -42,6 +42,7 @@ export const AlertSnackbar = () => {
               <FaTerminal size={13} />
             </span>
             <span className="w-full">{alertMessage}</span>
+            {/*TODO this refresh text is broken, must fix*/}
             {isRefreshEnabled ? (
               <>
                 <span className="ml-1">. Please</span>

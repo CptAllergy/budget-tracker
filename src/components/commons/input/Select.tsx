@@ -38,6 +38,7 @@ const MultiSelectChip = ({
 };
 
 // TODO display icon for the categories, maybe the tags as well
+// TODO for this options needs to include both the category that is saved and the displayed value
 const SelectOptions = ({ options }: { options: readonly string[] }) => {
   return (
     <ListboxOptions
@@ -57,6 +58,7 @@ const SelectOptions = ({ options }: { options: readonly string[] }) => {
           >
             <LuCheck className="text-theme-secondary size-4 [stroke-width:3] opacity-0 transition-all group-data-selected:opacity-100" />
             <div className="text-sm/6 font-semibold text-black group-data-focus:text-white">
+              {/*TODO must translate this value*/}
               {option}
             </div>
           </ListboxOption>

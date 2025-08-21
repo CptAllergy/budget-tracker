@@ -3,13 +3,14 @@ import {
   deleteDoc,
   doc,
   DocumentSnapshot,
-  Firestore,
+  getAggregateFromServer,
   getDoc,
   getDocs,
   orderBy,
   query,
   runTransaction,
   setDoc,
+  sum,
   where,
 } from "firebase/firestore";
 import {
@@ -22,13 +23,12 @@ import {
   UserTotalDTO,
 } from "@/types/DTO/dataTypes";
 import { Dispatch, SetStateAction } from "react";
-import { ExpenseListType } from "@/types/componentTypes";
+import { ExpenseListType, MonthYearType } from "@/types/componentTypes";
+import { db } from "@/utils/firebase/config";
 
-export async function getCurrentUserFirebase(
-  db: Firestore,
-  userId: string,
-  setCurrentUser: Dispatch<SetStateAction<UserDTO>>
-) {
+// TODO change these function to return the data instead of setting the state directly, so that they can be used with react query. This can be done incrementally by first just returning
+// TODO test getting data for other users, make sure permission are denied
+export async function getCurrentUserFirebase(userId: string) {
   const docRef = doc(db, "users", userId);
   const docSnap = await getDoc(docRef);
 
@@ -36,11 +36,10 @@ export async function getCurrentUserFirebase(
     throw new Error("User document does not exist");
   }
 
-  const currentUser = { id: docSnap.id, ...docSnap.data() } as UserDTO;
-  setCurrentUser(currentUser);
+  return { id: docSnap.id, ...docSnap.data() } as UserDTO;
 }
 
-export async function getExpenseGroupsFirebase(db: Firestore, userId: string) {
+export async function getExpenseGroupsFirebase(userId: string) {
   const queryExpenseGroups = query(
     collection(db, "groups"),
     where("members", "array-contains", userId)
@@ -68,12 +67,11 @@ export async function getExpenseGroupsFirebase(db: Firestore, userId: string) {
 }
 
 export async function getExpensesFirebase(
-  db: Firestore,
   setExpenseDocs: (
     updater: (prevDocs: DocumentSnapshot[]) => DocumentSnapshot[]
   ) => void,
   filterId: ExpenseListType,
-  monthYear?: { month: number; year: number }
+  monthYear?: MonthYearType
 ) {
   const { firstDay, lastDay } = getMonthYearLimits(monthYear);
 
@@ -91,16 +89,60 @@ export async function getExpensesFirebase(
 
   const querySnapshot = await getDocs(queryExpenses);
   setExpenseDocs(() => querySnapshot.docs);
+
+  return querySnapshot.docs.map((doc) => {
+    return { id: doc.id, ...doc.data() } as ExpenseDTO;
+  });
 }
 
-export async function postExpenseFirebase(
-  db: Firestore,
-  newExpense: CreateExpenseDTO,
+export async function getExpensesMonthlySumFirebase(
   filterId: ExpenseListType,
+  monthYear: MonthYearType
+) {
+  const { firstDay, lastDay } = getMonthYearLimits(monthYear);
+
+  const filter = filterId.userId
+    ? where("userId", "==", filterId.userId)
+    : where("groupId", "==", filterId.groupId);
+
+  const queryExpenses = query(
+    collection(db, "expenses"),
+    where("timestamp", ">=", firstDay),
+    where("timestamp", "<=", lastDay),
+    filter
+  );
+
+  const snapshot = await getAggregateFromServer(queryExpenses, {
+    totalAmount: sum("amount"),
+  });
+
+  return snapshot.data().totalAmount;
+}
+
+export async function getEarningsMonthlySumFirebase(
+  userId: string,
+  monthYear: MonthYearType
+) {
+  const { firstDay, lastDay } = getMonthYearLimits(monthYear);
+
+  const queryEarnings = query(
+    collection(db, "earnings"),
+    where("timestamp", ">=", firstDay),
+    where("timestamp", "<=", lastDay),
+    where("userId", "==", userId)
+  );
+
+  const snapshot = await getAggregateFromServer(queryEarnings, {
+    totalAmount: sum("amount"),
+  });
+
+  return snapshot.data().totalAmount;
+}
+
+// TODO can replace currentUser with userId from expense
+export async function postExpenseFirebase(
+  newExpense: CreateExpenseDTO,
   currentUser: UserDTO,
-  handleGroupChange: (
-    updater: (prevDocs: ExpenseGroupDTO) => ExpenseGroupDTO
-  ) => void,
   setExpenseDocs: (
     updater: (prevDocs: DocumentSnapshot[]) => DocumentSnapshot[]
   ) => void
@@ -133,29 +175,19 @@ export async function postExpenseFirebase(
     return newUserTotal;
   });
 
-  // Update the total for the current user
-  updateCurrentUserTotalState(
-    newUserTotal,
-    currentUser.id,
-    filterId,
-    handleGroupChange
-  );
-
   // Update the reference list
   const expenseDoc = await getDoc(expenseRef);
   setExpenseDocs((prevDocs) => {
     return [expenseDoc, ...prevDocs];
   });
+
+  return newUserTotal;
 }
 
+// TODO can replace currentUser with userId from expense
 export async function deleteExpenseFirebase(
-  db: Firestore,
   expense: ExpenseDTO,
-  filterId: ExpenseListType,
   currentUser: UserDTO,
-  handleGroupChange: (
-    updater: (prevDocs: ExpenseGroupDTO) => ExpenseGroupDTO
-  ) => void,
   setExpenseDocs: (
     updater: (prevDocs: DocumentSnapshot[]) => DocumentSnapshot[]
   ) => void
@@ -196,23 +228,13 @@ export async function deleteExpenseFirebase(
     return prevDocs.filter((value) => value.id !== expense.id);
   });
 
-  // Update the total for the current user
-  updateCurrentUserTotalState(
-    newUserTotal,
-    currentUser.id,
-    filterId,
-    handleGroupChange
-  );
+  return newUserTotal;
 }
 
+// TODO can replace currentUser with userId from expense
 export async function updateExpenseFirebase(
-  db: Firestore,
   expenseUpdated: ExpenseDTO,
-  filterId: ExpenseListType,
   currentUser: UserDTO,
-  handleGroupChange: (
-    updater: (prevDocs: ExpenseGroupDTO) => ExpenseGroupDTO
-  ) => void,
   setExpenseDocs: (
     updater: (prevDocs: DocumentSnapshot[]) => DocumentSnapshot[]
   ) => void
@@ -267,14 +289,6 @@ export async function updateExpenseFirebase(
     }
   );
 
-  // Update the total for the current user
-  updateCurrentUserTotalState(
-    newUserTotal,
-    currentUser.id,
-    filterId,
-    handleGroupChange
-  );
-
   // Replace the expense document in the state
   const expenseDoc = await getDoc(expenseRef);
   setExpenseDocs((prevDocs) => {
@@ -295,10 +309,11 @@ export async function updateExpenseFirebase(
       return filteredList;
     }
   });
+
+  return newUserTotal;
 }
 
 export async function getEarningsFirebase(
-  db: Firestore,
   setEarnings: Dispatch<SetStateAction<EarningDTO[]>>,
   userId: string,
   monthYear?: { month: number; year: number }
@@ -318,10 +333,10 @@ export async function getEarningsFirebase(
     return { id: doc.id, ...doc.data() } as EarningDTO;
   });
   setEarnings(earnings);
+  return earnings;
 }
 
 export async function postEarningFirebase(
-  db: Firestore,
   newEarning: CreateEarningDTO,
   setEarnings: Dispatch<SetStateAction<EarningDTO[]>>
 ) {
@@ -339,7 +354,6 @@ export async function postEarningFirebase(
 }
 
 export async function deleteEarningFirebase(
-  db: Firestore,
   earning: EarningDTO,
   currentUser: UserDTO,
   setEarnings: Dispatch<SetStateAction<EarningDTO[]>>
@@ -360,7 +374,6 @@ export async function deleteEarningFirebase(
 }
 
 export async function updateEarningFirebase(
-  db: Firestore,
   earningUpdated: EarningDTO,
   currentUser: UserDTO,
   setEarnings: Dispatch<SetStateAction<EarningDTO[]>>
@@ -409,34 +422,7 @@ export async function updateEarningFirebase(
   });
 }
 
-function updateCurrentUserTotalState(
-  newUserTotal: number | null,
-  currentUserId: string,
-  filterId: ExpenseListType,
-  handleGroupChange: (
-    updater: (prevDocs: ExpenseGroupDTO) => ExpenseGroupDTO
-  ) => void
-) {
-  if (newUserTotal != null && filterId.groupId != null) {
-    // Update the total for the current user
-    handleGroupChange((prevState) => {
-      const prevTotal = prevState.totals.find(
-        (total) => total.id === currentUserId
-      );
-      const newTotal: UserTotalDTO = { ...prevTotal!, total: newUserTotal };
-      const newTotals: UserTotalDTO[] = [
-        ...prevState.totals.filter((total) => total.id !== currentUserId),
-        newTotal,
-      ];
-      return {
-        ...prevState,
-        totals: newTotals,
-      };
-    });
-  }
-}
-
-function getMonthYearLimits(monthYear?: { month: number; year: number }): {
+function getMonthYearLimits(monthYear?: MonthYearType): {
   firstDay: Date;
   lastDay: Date;
 } {
@@ -444,6 +430,7 @@ function getMonthYearLimits(monthYear?: { month: number; year: number }): {
 
   // Only set the month and year if they are provided, otherwise use the current date
   if (monthYear) {
+    date.setDate(1);
     date.setMonth(monthYear.month);
     date.setFullYear(monthYear.year);
   }

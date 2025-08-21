@@ -26,3 +26,23 @@ export type MonthYearType = {
   month: number;
   year: number;
 };
+
+export type YearType = {
+  year: number;
+};
+
+export type MonthlyExpenseTotal = {
+  month: number;
+  totalExpenses: number;
+};
+
+export type MonthlyEarningTotal = {
+  month: number;
+  totalEarnings: number;
+};
+
+export type MonthlyTransactionTotal = {
+  month: number;
+  totalExpenses: number;
+  totalEarnings: number;
+};

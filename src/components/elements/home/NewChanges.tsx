@@ -1,17 +1,14 @@
 "use client";
 
 import { Dispatch, SetStateAction, useEffect } from "react";
-import { Firestore } from "firebase/firestore";
 import { HiRefresh } from "react-icons/hi";
 
 const NewChanges = ({
   isChangeFound,
   setIsChangeFound,
-  db,
 }: {
   isChangeFound: boolean;
   setIsChangeFound: Dispatch<SetStateAction<boolean>>;
-  db: Firestore;
 }) => {
   // TODO refactor to check the group, instead of the second user
   useEffect(() => {
@@ -32,7 +29,7 @@ const NewChanges = ({
     return () => {
       clearTimeout(timer);
     };
-  }, [db, setIsChangeFound]);
+  }, [setIsChangeFound]);
 
   const refreshButtonStyle = isChangeFound
     ? "bg-theme-main animate-pulse"

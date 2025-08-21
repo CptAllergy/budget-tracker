@@ -14,7 +14,6 @@ import {
   CreateEarningDTO,
   CreateExpenseDTO,
   ExpenseGroupDTO,
-  UserDTO,
 } from "@/types/DTO/dataTypes";
 import ExpensesList from "@/components/elements/home/ExpensesList";
 import { AlertContext } from "@/contexts/AlertContext";
@@ -23,45 +22,41 @@ import {
   toggleStatusErrorAlert,
 } from "@/utils/toggleAlerts";
 import {
-  getExpenseGroupsFirebase,
   getExpensesFirebase,
   postEarningFirebase,
-  postExpenseFirebase,
 } from "@/services/firebaseService";
 import NewChanges from "@/components/elements/home/NewChanges";
 import { ExpensesContext } from "@/contexts/ExpensesContext";
 import { LuPlus } from "react-icons/lu";
 import { ExpenseGroupsContext } from "@/contexts/ExpenseGroupsContext";
-import { sortExpenseGroups } from "@/utils/sorters";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useFirebaseSetup } from "@/utils/hooks";
-import MonthNavigation from "@/components/elements/home/MonthNavigation";
+import {
+  useAddExpense,
+  useCurrentUser,
+  useExpenseGroups,
+} from "@/utils/hooks/reactQuery";
+import { MonthNavigation } from "@/components/elements/home/MonthNavigation";
 import { AddDialog } from "@/components/commons/dialogs/AddDialog";
 import { MonthYearType } from "@/types/componentTypes";
 import { getCurrentMonthYear } from "@/utils/utils";
-import { Firestore } from "firebase/firestore";
 import Totals from "@/components/elements/home/Totals";
 
+// TODO replace all useEffect request with react query
+// TODO test if requesting data from different id than real currentUser throws the expected error
 // TODO check where unnecessary re-renders are occurring
-// TODO consider looking into a state manager so changes to context dont cause re-renders (use react query to fetch data, try using react query for new features before replacing existing ones)
 // TODO add stats page (monthly, yearly)
 // TODO add settings menu where user can change color of earning and expenses (red, green or grey, for a negative or neutral value)
+// TODO Add translations
+// TODO Bug: changing from a group to reports keeps the group button highlighted
 const Home = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const { db, currentUser, firebaseLoading } = useFirebaseSetup();
   return (
     <div className="">
-      <Navbar
-        setIsAddDialogOpen={setIsAddDialogOpen}
-        currentUser={currentUser}
-      />
+      <Navbar setIsAddDialogOpen={setIsAddDialogOpen} />
       <Suspense>
         <PageContents
-          db={db}
           isAddDialogOpen={isAddDialogOpen}
           setIsAddDialogOpen={setIsAddDialogOpen}
-          currentUser={currentUser}
-          firebaseLoading={firebaseLoading}
         />
       </Suspense>
     </div>
@@ -69,17 +64,11 @@ const Home = () => {
 };
 
 const PageContents = ({
-  db,
   isAddDialogOpen,
   setIsAddDialogOpen,
-  currentUser,
-  firebaseLoading,
 }: {
-  db: Firestore;
   isAddDialogOpen: boolean;
   setIsAddDialogOpen: Dispatch<SetStateAction<boolean>>;
-  currentUser: UserDTO | undefined;
-  firebaseLoading: boolean;
 }) => {
   const alertContext = useRef(useContext(AlertContext));
   const expensesContext = useContext(ExpensesContext);
@@ -87,10 +76,6 @@ const PageContents = ({
 
   const setExpenseDocs = useRef(expensesContext.setExpenseDocs);
   const handleFilterChange = useRef(expenseGroupsContext.handleFilterChange);
-
-  const setExpenseGroups = useRef(expenseGroupsContext.setExpenseGroups);
-
-  const handleGroupChange = useRef(expenseGroupsContext.handleGroupChange);
 
   // Used to detect new changes
   const [isChangeFound, setIsChangeFound] = useState<boolean>(false);
@@ -101,6 +86,9 @@ const PageContents = ({
 
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  const { currentUser, isLoading: firebaseLoading } = useCurrentUser();
+  const { expenseGroups, error, isLoading } = useExpenseGroups(currentUser);
 
   // Runs after sign in to either redirect to profile page or set group
   // TODO sometimes there is a flicker when changing from profile to home page
@@ -129,54 +117,37 @@ const PageContents = ({
       }
     };
 
-    if (currentUser) {
-      getExpenseGroupsFirebase(db, currentUser.id)
-        .then((groups) => {
-          const sortedGroups = sortExpenseGroups(groups, currentUser.groupId);
-          setExpenseGroups.current(sortedGroups);
-          selectDefaultPage(sortedGroups);
-        })
-        .catch((error) =>
-          toggleStatusErrorAlert(alertContext.current, "GENERIC", error)
-        );
+    if (currentUser && expenseGroups) {
+      selectDefaultPage(expenseGroups);
     }
-  }, [currentUser, db, router, searchParams]);
+  }, [currentUser, expenseGroups, router, searchParams]);
 
   // Load expenses
   useEffect(() => {
     if (expenseGroupsContext.filterId) {
       void getExpensesFirebase(
-        db,
         setExpenseDocs.current,
         expenseGroupsContext.filterId,
         monthYear
       );
     }
-  }, [db, expenseGroupsContext.filterId, monthYear]);
+  }, [expenseGroupsContext.filterId, monthYear]);
+
+  const { mutateAddExpense } = useAddExpense(setExpenseDocs.current);
 
   const createExpense = async (newExpense: CreateExpenseDTO) => {
-    try {
-      await postExpenseFirebase(
-        db,
-        newExpense,
-        expenseGroupsContext.filterId!,
-        currentUser!,
-        handleGroupChange.current,
-        setExpenseDocs.current
-      );
-      // Navigate to page with new content
-      setMonthYear(getCurrentMonthYear());
+    mutateAddExpense({
+      newExpense,
+      currentUser: currentUser!,
+    });
 
-      toggleStatusAlert(alertContext.current, "New expense created");
-    } catch (error) {
-      toggleStatusErrorAlert(alertContext.current, "ADD_FAILED", error);
-      throw "Error adding new expense";
-    }
+    // Navigate to page with new content
+    setMonthYear(getCurrentMonthYear());
   };
 
   const createEarning = async (newEarning: CreateEarningDTO) => {
     try {
-      await postEarningFirebase(db, newEarning, () => {});
+      await postEarningFirebase(newEarning, () => {});
 
       toggleStatusAlert(
         alertContext.current,
@@ -203,7 +174,6 @@ const PageContents = ({
         <NewChanges
           isChangeFound={isChangeFound}
           setIsChangeFound={setIsChangeFound}
-          db={db}
         />
       </div>
       <div className="fixed right-0 bottom-0 z-5 m-4 sm:hidden">
@@ -216,7 +186,7 @@ const PageContents = ({
           </button>
         )}
       </div>
-      <div className="mx-3 -mt-12">
+      <div className="mx-1.5 -mt-12">
         <section className="mx-4 flex flex-col items-center">
           <Totals />
         </section>
@@ -229,7 +199,6 @@ const PageContents = ({
             <ExpensesList
               expenses={expensesContext.expenses}
               currentUser={currentUser}
-              db={db}
             />
           </div>
         </section>

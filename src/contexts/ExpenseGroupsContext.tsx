@@ -1,36 +1,22 @@
 "use client";
 
-import React, {
-  createContext,
-  Dispatch,
-  SetStateAction,
-  useState,
-} from "react";
+import React, { createContext, useState } from "react";
 import { ExpenseGroupDTO } from "@/types/DTO/dataTypes";
 import { ExpenseListType } from "@/types/componentTypes";
 
 export type ExpenseGroupsContextType = {
-  expenseGroups: ExpenseGroupDTO[];
-  setExpenseGroups: Dispatch<SetStateAction<ExpenseGroupDTO[]>>;
   currentGroup?: ExpenseGroupDTO;
   filterId?: ExpenseListType;
   handleFilterChange: (
     newFilterId: ExpenseListType,
     newExpenseGroups?: ExpenseGroupDTO[]
   ) => void;
-  // This function updates both the current group and the matching element in the group list
-  handleGroupChange: (
-    updater: (prevDocs: ExpenseGroupDTO) => ExpenseGroupDTO
-  ) => void;
 };
 
 export const ExpenseGroupsContext = createContext<ExpenseGroupsContextType>({
-  expenseGroups: [],
-  setExpenseGroups: () => {},
   currentGroup: undefined,
   filterId: undefined,
   handleFilterChange: () => {},
-  handleGroupChange: () => {},
 });
 
 type ProviderProps = {
@@ -38,18 +24,12 @@ type ProviderProps = {
 };
 
 export const ExpenseGroupsContextProvider = ({ children }: ProviderProps) => {
-  const [expenseGroups, setExpenseGroups] = useState<ExpenseGroupDTO[]>([]);
-
-  const { filterId, currentGroup, handleFilterChange, handleGroupChange } =
-    useCurrentGroupState(expenseGroups, setExpenseGroups);
+  const { filterId, currentGroup, handleFilterChange } = useCurrentGroupState();
 
   const contextValue = {
-    expenseGroups,
-    setExpenseGroups,
     currentGroup,
     filterId,
     handleFilterChange,
-    handleGroupChange,
   };
 
   return (
@@ -59,33 +39,18 @@ export const ExpenseGroupsContextProvider = ({ children }: ProviderProps) => {
   );
 };
 
-const useCurrentGroupState = (
-  expenseGroups: ExpenseGroupDTO[],
-  setExpenseGroups: Dispatch<SetStateAction<ExpenseGroupDTO[]>>
-) => {
+const useCurrentGroupState = () => {
   const [filterId, setFilterId] = useState<ExpenseListType>();
   const [currentGroup, setCurrentGroup] = useState<ExpenseGroupDTO>();
 
-  const handleGroupChange = (
-    updater: (prevDoc: ExpenseGroupDTO) => ExpenseGroupDTO
-  ) => {
-    setCurrentGroup((prevState) => {
-      const newGroup = updater(prevState!);
-      setExpenseGroups((prevState) => {
-        const updatedGroupIndex = prevState.findIndex(
-          (group) => group.id === newGroup.id
-        );
-        return prevState.toSpliced(updatedGroupIndex, 1, newGroup);
-      });
-      return newGroup;
-    });
-  };
-
+  // This function updates the filterId and sets the current group based on the new filterId
+  // TODO handleFilterChange can throw an error, so it should be used with try-catch
+  // TODO This isn't even working anymore. The currentGroup only changes because the useEffect on the main page detects when the searchParams change
   const handleFilterChange = (
     newFilterId: ExpenseListType,
     newExpenseGroups?: ExpenseGroupDTO[]
   ) => {
-    const groups = newExpenseGroups ? newExpenseGroups : expenseGroups;
+    const groups = newExpenseGroups ? newExpenseGroups : [];
 
     if (newFilterId?.groupId && groups.length > 0) {
       // Match current group with new id
@@ -93,7 +58,7 @@ const useCurrentGroupState = (
         (group) => group.id === newFilterId?.groupId
       );
       if (!filteredGroup) {
-        throw "No group found for selected filter";
+        throw Error("No group found for selected filter");
       }
       setCurrentGroup(filteredGroup);
     } else {
@@ -107,6 +72,5 @@ const useCurrentGroupState = (
     filterId,
     currentGroup,
     handleFilterChange,
-    handleGroupChange,
   };
 };

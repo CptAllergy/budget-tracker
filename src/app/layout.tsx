@@ -8,21 +8,24 @@ import { ReactNode } from "react";
 import { dmSans } from "@/styles/fonts";
 import { ExpensesContextProvider } from "@/contexts/ExpensesContext";
 import { ExpenseGroupsContextProvider } from "@/contexts/ExpenseGroupsContext";
+import QueryProvider from "@/contexts/QueryContext";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={dmSans.className}>
       <body className="absolute inset-0 -z-10 h-full w-full bg-orange-400 bg-[radial-gradient(#000000_1px,transparent_1px)] [background-size:20px_20px]">
-        <SessionProvider>
-          <AlertContextProvider>
-            <ExpensesContextProvider>
-              <ExpenseGroupsContextProvider>
-                <AlertSnackbar />
-                {children}
-              </ExpenseGroupsContextProvider>
-            </ExpensesContextProvider>
-          </AlertContextProvider>
-        </SessionProvider>
+        <QueryProvider>
+          <SessionProvider>
+            <AlertContextProvider>
+              <ExpensesContextProvider>
+                <ExpenseGroupsContextProvider>
+                  <AlertSnackbar />
+                  {children}
+                </ExpenseGroupsContextProvider>
+              </ExpensesContextProvider>
+            </AlertContextProvider>
+          </SessionProvider>
+        </QueryProvider>
       </body>
     </html>
   );
