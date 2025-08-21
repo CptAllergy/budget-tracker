@@ -7,22 +7,26 @@ import {
   useEarnings,
   useExpenseGroups,
   useExpenses,
+  useMonthlyEarningTotal,
   useMonthlyExpenseTotal,
 } from "@/utils/hooks/reactQuery";
 import {
   ExpenseListType,
-  MonthlyEarningTotal,
   MonthlyTransactionTotal,
   MonthYearType,
 } from "@/types/componentTypes";
 import {
   ChartConfig,
   ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import {
   CartesianGrid,
+  Dot,
+  DotProps,
   Label,
   Line,
   LineChart,
@@ -34,17 +38,27 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { TrendingUp } from "lucide-react";
 import { ExpenseDTO, ExpenseGroupDTO, UserDTO } from "@/types/DTO/dataTypes";
 import { EXPENSE_CATEGORIES } from "@/types/transactionFilterTypes";
 import { YearNavigation } from "@/components/elements/home/MonthNavigation";
-import { rancho } from "@/styles/fonts";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { LuChevronDown } from "react-icons/lu";
+import { format } from "date-fns";
 
-// TODO make reports page look good
+import "ldrs/react/Ring2.css";
+import { Ring2 } from "ldrs/react";
+
 // TODO add a bar graph alternative to the pie chart, should make some months easier to read
 // TODO add a flag to include or remove investments from the pie chart
 const Reports = () => {
@@ -80,22 +94,18 @@ const ReportsContent = () => {
     return <div>Loading...</div>;
   }
 
-  // TODO change the filterId selection to a tabs/dropdown combo
   return (
     <div>
-      <div className="mx-3 mt-12">
+      <div className="mx-1.5 mt-12">
         {isSuccess && (
           <>
-            <section className="mx-4 flex flex-col items-center">
-              <ReportsHeader
-                currentUser={currentUser!}
-                expenseGroups={expenseGroups!}
-                setFilterId={setFilterId}
-              />
-            </section>
             <section className="mt-4 md:mt-10">
               <div className="mx-1 mt-5 mb-5">
-                <ReportTabs toggleReport={true} setToggleReport={() => {}} />
+                <FilterSelector
+                  currentUser={currentUser!}
+                  expenseGroups={expenseGroups!}
+                  setFilterId={setFilterId}
+                />
                 <YearNavigation
                   year={year}
                   setYear={setYear}
@@ -103,12 +113,29 @@ const ReportsContent = () => {
                 />
                 <div className="mx-auto flex max-w-6xl flex-col">
                   <div className="inline-block min-w-full px-3 py-1 align-middle md:py-2">
-                    <div className="bg-theme-highlight grid grid-cols-2 gap-1 rounded-md border-2 border-black p-2 text-base font-semibold">
+                    <div className="bg-theme-highlight grid grid-cols-1 rounded-md border-2 border-black text-base font-semibold md:grid-cols-2">
                       <YearlyExpenseChart
                         filterId={filterId}
                         year={year}
+                        monthYear={monthYear}
                         setMonthYear={setMonthYear}
                       />
+                      {filterId?.groupId && (
+                        <ExpenseGroupReports
+                          filterId={filterId}
+                          monthYear={monthYear}
+                          selectedYear={year}
+                          setMonthYear={setMonthYear}
+                        />
+                      )}
+                      {filterId?.userId && (
+                        <ProfileReports
+                          filterId={filterId}
+                          monthYear={monthYear}
+                          selectedYear={year}
+                          setMonthYear={setMonthYear}
+                        />
+                      )}
                     </div>
                   </div>
                 </div>
@@ -116,53 +143,7 @@ const ReportsContent = () => {
             </section>
           </>
         )}
-
-        {filterId?.groupId && (
-          <ExpenseGroupReports filterId={filterId} monthYear={monthYear} />
-        )}
-        {filterId?.userId && (
-          <ProfileReports filterId={filterId} monthYear={monthYear} />
-        )}
       </div>
-    </div>
-  );
-};
-
-const ReportsHeader = ({
-  currentUser,
-  expenseGroups,
-  setFilterId,
-}: {
-  currentUser: UserDTO;
-  expenseGroups: ExpenseGroupDTO[];
-  setFilterId: Dispatch<SetStateAction<ExpenseListType | undefined>>;
-}) => {
-  return (
-    <div
-      className={`${rancho.className} bg-theme-secondary w-full max-w-4xl rounded-md border-2 border-black py-2 text-center text-2xl shadow-[5px_5px_0px_rgba(0,0,0,1)] md:text-2xl`}
-    >
-      <>
-        <div
-          className="bg-white hover:cursor-pointer hover:bg-gray-300"
-          onClick={() => setFilterId({ userId: currentUser.id })}
-        >
-          Profile
-        </div>
-        {expenseGroups.map((expenseGroup) => (
-          <div
-            key={expenseGroup.id}
-            className="bg-white hover:cursor-pointer hover:bg-gray-300"
-            onClick={() =>
-              setFilterId({
-                groupId: expenseGroup.id,
-                groupName: expenseGroup.name,
-              })
-            }
-          >
-            {expenseGroup.name}
-          </div>
-        ))}
-      </>
     </div>
   );
 };
@@ -170,92 +151,101 @@ const ReportsHeader = ({
 const ExpenseGroupReports = ({
   filterId,
   monthYear,
+  selectedYear,
+  setMonthYear,
 }: {
   filterId?: ExpenseListType;
   monthYear?: MonthYearType;
+  selectedYear: number;
+  setMonthYear: Dispatch<SetStateAction<MonthYearType | undefined>>;
 }) => {
-  const { expenses, isLoading: isLoadingExpenses } = useExpenses(
-    filterId,
-    monthYear
-  );
+  const {
+    expenses,
+    isLoading: isLoadingExpenses,
+    isPlaceholderData,
+    isEnabled,
+  } = useExpenses(filterId, monthYear, true);
 
-  if (isLoadingExpenses) {
+  if (isLoadingExpenses && !isPlaceholderData) {
     return <div>Loading expenses...</div>;
   }
 
-  if (expenses?.length === 0) {
-    return <div>No expenses found for the selected period.</div>;
-  }
-
   return (
-    <div className="mx-20 mt-12">
-      <DonutPieChart expenses={expenses ?? []} />
-    </div>
+    <DonutPieChart
+      expenses={expenses && isEnabled ? expenses : []}
+      monthYear={monthYear}
+      setMonthYear={setMonthYear}
+      selectedYear={selectedYear}
+    />
   );
 };
 
+// TODO add earnings report
 const ProfileReports = ({
   filterId,
   monthYear,
+  selectedYear,
+  setMonthYear,
 }: {
   filterId?: ExpenseListType;
   monthYear?: MonthYearType;
+  selectedYear: number;
+  setMonthYear: Dispatch<SetStateAction<MonthYearType | undefined>>;
 }) => {
   const { earnings, isLoading: isLoadingEarnings } = useEarnings(
     filterId?.userId,
     monthYear
   );
 
-  const { expenses, isLoading: isLoadingExpenses } = useExpenses(
-    filterId,
-    monthYear
-  );
+  const {
+    expenses,
+    isLoading: isLoadingExpenses,
+    isPlaceholderData,
+    isEnabled,
+  } = useExpenses(filterId, monthYear, true);
 
-  if (isLoadingEarnings) {
+  if (isLoadingEarnings && !isPlaceholderData) {
     return <div>Loading earnings...</div>;
   }
 
-  if (expenses?.length === 0) {
-    return <div>No expenses found for the selected period.</div>;
-  }
-
   return (
-    <div className="mx-20 mt-12">
-      <DonutPieChart expenses={expenses ?? []} />
-    </div>
+    <DonutPieChart
+      expenses={expenses && isEnabled ? expenses : []}
+      monthYear={monthYear}
+      selectedYear={selectedYear}
+      setMonthYear={setMonthYear}
+    />
   );
 };
 
 const YearlyExpenseChart = ({
   filterId,
   year,
+  monthYear,
   setMonthYear,
 }: {
   filterId?: ExpenseListType;
   year: number;
+  monthYear?: MonthYearType;
   setMonthYear: Dispatch<SetStateAction<MonthYearType | undefined>>;
 }) => {
-  const { monthlyExpenseTotals, isLoading } = useMonthlyExpenseTotal(
-    year,
-    filterId
-  );
+  const {
+    monthlyExpenseTotals,
+    isLoading: isLoadingExpenses,
+    isFetching: isFetchingExpenses,
+  } = useMonthlyExpenseTotal(year, filterId);
 
-  const testEarnings: MonthlyEarningTotal[] = [
-    { month: 0, totalEarnings: 1000 },
-    { month: 1, totalEarnings: 1200 },
-    { month: 2, totalEarnings: 800 },
-    { month: 3, totalEarnings: 1500 },
-    { month: 4, totalEarnings: 900 },
-    { month: 5, totalEarnings: 1100 },
-    { month: 6, totalEarnings: 1300 },
-    { month: 7, totalEarnings: 1400 },
-    { month: 8, totalEarnings: 1600 },
-    { month: 9, totalEarnings: 1700 },
-    { month: 10, totalEarnings: 1800 },
-    { month: 11, totalEarnings: 1900 },
-  ];
+  const {
+    monthlyEarningTotals,
+    isLoading: isLoadingEarnings,
+    isFetching: isFetchingEarnings,
+    isEnabled: isEnabledEarnings,
+  } = useMonthlyEarningTotal(year, filterId?.userId);
 
-  if (isLoading) {
+  if (
+    (isLoadingExpenses || isLoadingEarnings) &&
+    (!monthlyExpenseTotals || !monthlyEarningTotals)
+  ) {
     return <div>Loading monthly expenses...</div>;
   }
 
@@ -265,11 +255,14 @@ const YearlyExpenseChart = ({
 
   const testTotals: MonthlyTransactionTotal[] = monthlyExpenseTotals.map(
     (expenseTotal, index) => {
-      const earningsTotal = testEarnings[index]?.totalEarnings;
+      const totalEarning =
+        monthlyEarningTotals && isEnabledEarnings
+          ? monthlyEarningTotals[index].totalEarnings
+          : 0;
       return {
         month: expenseTotal.month,
         totalExpenses: expenseTotal.totalExpenses,
-        totalEarnings: earningsTotal,
+        totalEarnings: totalEarning,
       };
     }
   );
@@ -285,12 +278,49 @@ const YearlyExpenseChart = ({
     },
   } satisfies ChartConfig;
 
+  interface CustomDotProps extends DotProps {
+    payload?: any;
+  }
+
+  const SelectedDot = (props: CustomDotProps) => {
+    const { cx, cy, stroke, payload } = props;
+
+    const dotMonth: number | undefined = payload?.month;
+
+    if (dotMonth != null && dotMonth === monthYear?.month) {
+      return (
+        <Dot
+          cx={cx}
+          cy={cy}
+          r={3}
+          fill={stroke}
+          stroke={stroke}
+          strokeWidth={2}
+        />
+      );
+    }
+
+    return false;
+  };
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Area Chart - Gradient</CardTitle>
-        <CardDescription>
-          Showing total visitors for the last 6 months
+    <Card className="bg-theme-highlight border-0 shadow-none outline-none">
+      <CardHeader className="px-4 md:px-6">
+        <CardTitle>Year Chart</CardTitle>
+        <CardDescription className="relative">
+          {year}
+          {(isFetchingExpenses || isFetchingEarnings) && (
+            <div className="absolute right-5">
+              <Ring2
+                size="30"
+                stroke="5"
+                strokeLength="0.25"
+                bgOpacity="0.1"
+                speed="0.9"
+                color="gray"
+              />
+            </div>
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -310,9 +340,6 @@ const YearlyExpenseChart = ({
                 chartEvent.activePayload.length > 0
               ) {
                 const clickedPoint = chartEvent.activeLabel;
-                console.log("Clicked data point:", clickedPoint);
-
-                // Example: navigate somewhere or open a modal
                 setMonthYear({ year: year, month: Number(clickedPoint) });
               }
             }}
@@ -323,7 +350,7 @@ const YearlyExpenseChart = ({
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              tickFormatter={(value) => value}
+              tickFormatter={(value) => format(new Date(year, value, 1), "LLL")}
             />
             <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
             <Line
@@ -331,35 +358,34 @@ const YearlyExpenseChart = ({
               type="monotone"
               stroke="var(--color-totalExpenses)"
               strokeWidth={2}
-              dot={false}
+              dot={<SelectedDot />}
             />
             <Line
               dataKey="totalEarnings"
               type="monotone"
               stroke="var(--color-totalEarnings)"
               strokeWidth={2}
-              dot={false}
+              dot={<SelectedDot />}
             />
+            <ChartLegend content={<ChartLegendContent />} />
           </LineChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter>
-        <div className="flex w-full items-start gap-2 text-sm">
-          <div className="grid gap-2">
-            <div className="flex items-center gap-2 leading-none font-medium">
-              Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-            </div>
-            <div className="text-muted-foreground flex items-center gap-2 leading-none">
-              January - June 2024
-            </div>
-          </div>
-        </div>
-      </CardFooter>
     </Card>
   );
 };
 
-const DonutPieChart = ({ expenses }: { expenses: ExpenseDTO[] }) => {
+const DonutPieChart = ({
+  expenses,
+  monthYear,
+  selectedYear,
+  setMonthYear,
+}: {
+  expenses: ExpenseDTO[];
+  monthYear?: MonthYearType;
+  selectedYear: number;
+  setMonthYear: Dispatch<SetStateAction<MonthYearType | undefined>>;
+}) => {
   type ExpenseChartData = {
     category: string;
     amount: number;
@@ -402,7 +428,7 @@ const DonutPieChart = ({ expenses }: { expenses: ExpenseDTO[] }) => {
       // Sort categories alphabetically so that the chart animation is consistent
       chartData.sort((a, b) => a.category.localeCompare(b.category));
 
-      // TODO might want to make this filter optional
+      // TODO might want to make this filter optional since it can take up so much space
       return chartData.filter((data) => data.category !== "investments");
     };
 
@@ -411,7 +437,7 @@ const DonutPieChart = ({ expenses }: { expenses: ExpenseDTO[] }) => {
 
   const chartConfig = {
     amount: {
-      label: "AMOUNT!! what is this even??",
+      label: "Amount",
     },
     other: {
       label: "Other",
@@ -467,98 +493,173 @@ const DonutPieChart = ({ expenses }: { expenses: ExpenseDTO[] }) => {
     return chartData.reduce((acc, curr) => acc + curr.amount, 0);
   }, [chartData]);
 
+  const formatNumber = (num: number) => {
+    return new Intl.NumberFormat("en", {
+      notation: "compact",
+      maximumFractionDigits: 1,
+    }).format(num);
+  };
+
+  const months = Array.from({ length: 12 }, (_, i) => i);
+
   return (
-    <Card className="flex flex-col">
-      <CardHeader className="items-center pb-0">
-        <CardTitle>Pie Chart - Donut with Text</CardTitle>
-        <CardDescription>January - June 2024</CardDescription>
+    <Card className="bg-theme-highlight flex flex-col border-0 shadow-none outline-none">
+      <CardHeader className="items-center px-4 pb-0 md:px-6">
+        <CardTitle>Month breakdown</CardTitle>
+        <CardDescription>
+          <div className="flex items-center gap-1">
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger
+                asChild
+                className={`bg-theme-highlight hover:bg-theme-highlight-hover rounded-md border-2 border-black p-1 text-center transition-colors outline-none hover:cursor-pointer`}
+              >
+                <button className="flex items-center justify-center gap-1 px-2">
+                  <span>
+                    {monthYear
+                      ? `${format(new Date(monthYear.year, monthYear.month, 1), "LLLL")}`
+                      : "Select Month"}
+                  </span>
+                  <LuChevronDown />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-36">
+                <DropdownMenuRadioGroup value={monthYear?.month.toString()}>
+                  {months.map((month) => (
+                    <DropdownMenuRadioItem
+                      key={month}
+                      value={month.toString()}
+                      onClick={() =>
+                        setMonthYear({
+                          month: month,
+                          year: selectedYear,
+                        })
+                      }
+                    >
+                      {format(new Date(selectedYear, month, 1), "LLLL")}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {selectedYear}
+          </div>
+        </CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-0">
-        <ChartContainer
-          config={chartConfig}
-          className="mx-auto aspect-square max-h-[250px]"
-        >
-          {/*TODO setting key to a different value will reload the component and add the animation we want*/}
-          <PieChart key={1}>
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent hideLabel />}
-            />
-            <Pie
-              data={chartData}
-              dataKey="amount"
-              nameKey="category"
-              innerRadius={60}
-              strokeWidth={5}
-            >
-              <Label
-                content={({ viewBox }) => {
-                  if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                    return (
-                      <text
-                        x={viewBox.cx}
-                        y={viewBox.cy}
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                      >
-                        <tspan
+        {expenses.length > 0 ? (
+          <ChartContainer
+            config={chartConfig}
+            className="mx-auto aspect-square max-h-[250px]"
+          >
+            <PieChart>
+              <ChartTooltip
+                cursor={false}
+                content={<ChartTooltipContent hideLabel />}
+              />
+              <Pie
+                data={chartData}
+                dataKey="amount"
+                nameKey="category"
+                innerRadius={60}
+                strokeWidth={5}
+              >
+                <Label
+                  content={({ viewBox }) => {
+                    if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                      return (
+                        <text
                           x={viewBox.cx}
                           y={viewBox.cy}
-                          className="fill-foreground text-3xl font-bold"
+                          textAnchor="middle"
+                          dominantBaseline="middle"
                         >
-                          {Number(totalAmount.toFixed(0)).toLocaleString()}
-                        </tspan>
-                        <tspan
-                          x={viewBox.cx}
-                          y={(viewBox.cy || 0) + 24}
-                          className="fill-muted-foreground"
-                        >
-                          € Spent
-                        </tspan>
-                      </text>
-                    );
-                  }
-                }}
-              />
-            </Pie>
-          </PieChart>
-        </ChartContainer>
+                          <tspan
+                            x={viewBox.cx}
+                            y={viewBox.cy}
+                            className="fill-foreground text-3xl font-bold"
+                          >
+                            {formatNumber(totalAmount)}
+                          </tspan>
+                          <tspan
+                            x={viewBox.cx}
+                            y={(viewBox.cy || 0) + 24}
+                            className="fill-muted-foreground"
+                          >
+                            € Spent
+                          </tspan>
+                        </text>
+                      );
+                    }
+                  }}
+                />
+              </Pie>
+            </PieChart>
+          </ChartContainer>
+        ) : (
+          monthYear?.month != null && (
+            <p className="text-sm">No expenses found</p>
+          )
+        )}
       </CardContent>
-      <CardFooter className="flex-col gap-2 text-sm">
-        <div className="flex items-center gap-2 leading-none font-medium">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-        </div>
-        <div className="text-muted-foreground leading-none">
-          Showing total visitors for the last 6 months
-        </div>
-      </CardFooter>
     </Card>
   );
 };
 
-const ReportTabs = ({
-  toggleReport,
-  setToggleReport,
+const FilterSelector = ({
+  currentUser,
+  expenseGroups,
+  setFilterId,
 }: {
-  toggleReport: boolean;
-  setToggleReport: Dispatch<SetStateAction<boolean>>;
+  currentUser: UserDTO;
+  expenseGroups: ExpenseGroupDTO[];
+  setFilterId: Dispatch<SetStateAction<ExpenseListType | undefined>>;
 }) => {
+  const [filterName, setFilterName] = useState("profile");
+
   return (
     <div className="mx-auto flex max-w-6xl flex-col">
       <div className="inline-block min-w-full px-3 py-1 align-middle md:py-2">
-        <div className="bg-theme-highlight grid grid-cols-2 gap-1 rounded-md border-2 border-black p-2 text-base font-semibold">
-          <div
-            onClick={() => setToggleReport(true)}
-            className={`${toggleReport ? "bg-theme-main hover:bg-theme-hover border-2 border-black" : "hover:bg-theme-highlight-hover"} rounded-md p-1 text-center transition-colors hover:cursor-pointer`}
-          >
-            Profile
-          </div>
-          <div
-            onClick={() => setToggleReport(false)}
-            className={`${!toggleReport ? "bg-theme-main hover:bg-theme-hover border-2 border-black" : "hover:bg-theme-highlight-hover"} rounded-md p-1 text-center transition-colors hover:cursor-pointer`}
-          >
-            Groups V
-          </div>
+        <div className="bg-theme-highlight rounded-md border-2 border-black p-2 text-base font-semibold">
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger
+              asChild
+              className={`bg-theme-main hover:bg-theme-hover w-full rounded-md border-2 border-black p-1 text-center transition-colors outline-none hover:cursor-pointer`}
+            >
+              <button className="flex items-center justify-center gap-1 px-2">
+                <span className="first-letter:uppercase">{filterName}</span>
+                <LuChevronDown />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56">
+              <DropdownMenuLabel>Report Filter</DropdownMenuLabel>
+              <DropdownMenuRadioGroup
+                value={filterName}
+                onValueChange={setFilterName}
+              >
+                <DropdownMenuRadioItem
+                  value="profile"
+                  onClick={() => setFilterId({ userId: currentUser.id })}
+                >
+                  Profile
+                </DropdownMenuRadioItem>
+                <DropdownMenuSeparator />
+                {expenseGroups.map((expenseGroup) => (
+                  <DropdownMenuRadioItem
+                    key={expenseGroup.id}
+                    value={expenseGroup.name}
+                    onClick={() =>
+                      setFilterId({
+                        groupId: expenseGroup.id,
+                        groupName: expenseGroup.name,
+                      })
+                    }
+                  >
+                    {expenseGroup.name}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </div>

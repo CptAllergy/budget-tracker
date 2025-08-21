@@ -128,7 +128,7 @@ const Profile = () => {
           </button>
         )}
       </div>
-      <div className="mx-3 mt-12">
+      <div className="mx-1.5 mt-12">
         <section className="mx-4 flex flex-col items-center">
           <ProfileSummary
             currentUser={currentUser}

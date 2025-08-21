@@ -21,6 +21,7 @@
     --color-negative-light: #dc0f1d;
 }
 
+/*TODO pick these colors correctly*/
 @layer base {
     :root {
         --chart-other: oklch(0.65 0.15 50);

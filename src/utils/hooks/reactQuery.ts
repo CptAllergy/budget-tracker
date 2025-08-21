@@ -8,7 +8,8 @@ import {
 import {
   deleteExpenseFirebase,
   getCurrentUserFirebase,
-  getEarningsFirebase, getEarningsMonthlySumFirebase,
+  getEarningsFirebase,
+  getEarningsMonthlySumFirebase,
   getExpenseGroupsFirebase,
   getExpensesFirebase,
   getExpensesMonthlySumFirebase,
@@ -26,6 +27,7 @@ import { FirebaseError } from "@firebase/util";
 import { sortExpenseGroups } from "@/utils/sorters";
 import {
   ExpenseListType,
+  MonthlyEarningTotal,
   MonthlyExpenseTotal,
   MonthYearType,
   YearType,
@@ -293,7 +295,8 @@ export const useUpdateExpense = (
 
 export const useExpenses = (
   filterId?: ExpenseListType,
-  monthYear?: MonthYearType
+  monthYear?: MonthYearType,
+  showPlaceholderData: boolean = false
 ) => {
   const alertContext = useRef(useContext(AlertContext));
 
@@ -301,12 +304,16 @@ export const useExpenses = (
     data: expenses,
     error,
     isLoading,
+    isFetching,
+    isPlaceholderData,
+    isEnabled,
   } = useQuery({
     queryKey: ["expenses", filterId, monthYear],
     queryFn: async () => {
       return await getExpensesFirebase(() => {}, filterId!, monthYear);
     },
     enabled: !!filterId && !!monthYear,
+    placeholderData: showPlaceholderData ? (prev) => prev : undefined,
     staleTime: 1000 * 60 * 10, // 10 minutes
   });
 
@@ -316,10 +323,14 @@ export const useExpenses = (
     }
   }, [error]);
 
-  return { expenses, isLoading };
+  return { expenses, isLoading, isFetching, isPlaceholderData, isEnabled };
 };
 
-export const useEarnings = (userId?: string, monthYear?: MonthYearType) => {
+export const useEarnings = (
+  userId?: string,
+  monthYear?: MonthYearType,
+  showPlaceholderData: boolean = false
+) => {
   const alertContext = useRef(useContext(AlertContext));
 
   const {
@@ -327,11 +338,12 @@ export const useEarnings = (userId?: string, monthYear?: MonthYearType) => {
     error,
     isLoading,
   } = useQuery({
-    queryKey: ["earnings", monthYear],
+    queryKey: ["earnings", userId, monthYear],
     queryFn: async () => {
       return await getEarningsFirebase(() => {}, userId!, monthYear);
     },
-    enabled: !!monthYear,
+    enabled: !!monthYear && !!userId,
+    placeholderData: showPlaceholderData ? (prev) => prev : undefined,
     staleTime: 1000 * 60 * 30, // 30 minutes
   });
 
@@ -354,6 +366,7 @@ export const useMonthlyExpenseTotal = (
     data: monthlyExpenseTotals,
     error,
     isLoading,
+    isFetching,
   } = useQuery({
     queryKey: ["yearExpenses", filterId, year],
     queryFn: async () => {
@@ -369,6 +382,7 @@ export const useMonthlyExpenseTotal = (
       return results;
     },
     enabled: !!filterId,
+    placeholderData: (prev) => prev,
     staleTime: 1000 * 60 * 30, // 30 minutes
   });
 
@@ -378,34 +392,34 @@ export const useMonthlyExpenseTotal = (
     }
   }, [error]);
 
-  return { monthlyExpenseTotals, isLoading };
+  return { monthlyExpenseTotals, isLoading, isFetching };
 };
 
-export const useMonthlyEarningTotal = (
-  year: number,
-  filterId?: ExpenseListType
-) => {
+export const useMonthlyEarningTotal = (year: number, userId?: string) => {
   const alertContext = useRef(useContext(AlertContext));
 
   const {
-    data: monthlyExpenseTotals,
+    data: monthlyEarningTotals,
     error,
     isLoading,
+    isFetching,
+    isEnabled,
   } = useQuery({
-    queryKey: ["yearEarnings", filterId, year],
+    queryKey: ["yearEarnings", userId, year],
     queryFn: async () => {
-      const results: MonthlyExpenseTotal[] = [];
+      const results: MonthlyEarningTotal[] = [];
 
       for (let month = 0; month < 12; month++) {
-        const sum = await getEarningsMonthlySumFirebase(filterId!, {
+        const sum = await getEarningsMonthlySumFirebase(userId!, {
           month,
           year,
         });
-        results.push({ month, totalExpenses: sum ?? -1 });
+        results.push({ month, totalEarnings: sum ?? -1 });
       }
       return results;
     },
-    enabled: !!filterId,
+    enabled: !!userId,
+    placeholderData: (prev) => prev,
     staleTime: 1000 * 60 * 30, // 30 minutes
   });
 
@@ -415,5 +429,5 @@ export const useMonthlyEarningTotal = (
     }
   }, [error]);
 
-  return { monthlyExpenseTotals, isLoading };
+  return { monthlyEarningTotals, isLoading, isFetching, isEnabled };
 };

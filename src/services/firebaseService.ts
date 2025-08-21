@@ -120,23 +120,19 @@ export async function getExpensesMonthlySumFirebase(
 }
 
 export async function getEarningsMonthlySumFirebase(
-  filterId: ExpenseListType,
+  userId: string,
   monthYear: MonthYearType
 ) {
   const { firstDay, lastDay } = getMonthYearLimits(monthYear);
 
-  const filter = filterId.userId
-    ? where("userId", "==", filterId.userId)
-    : where("groupId", "==", filterId.groupId);
-
-  const queryExpenses = query(
+  const queryEarnings = query(
     collection(db, "earnings"),
     where("timestamp", ">=", firstDay),
     where("timestamp", "<=", lastDay),
-    filter
+    where("userId", "==", userId)
   );
 
-  const snapshot = await getAggregateFromServer(queryExpenses, {
+  const snapshot = await getAggregateFromServer(queryEarnings, {
     totalAmount: sum("amount"),
   });
 
