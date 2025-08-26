@@ -1,13 +1,11 @@
 "use client";
 
 import { ExpenseDTO, UserDTO } from "@/types/DTO/dataTypes";
-import { useContext, useRef, useState } from "react";
+import { useState } from "react";
 import { TransactionListLoading } from "@/components/loading/elements/home/LoadingHome";
 import { timestampToDate } from "@/utils/validations";
-import { ExpensesContext } from "@/contexts/ExpensesContext";
 import { HiMiniEllipsisHorizontal } from "react-icons/hi2";
 import { DropdownMenu } from "@/components/commons/menus/DropdownMenu";
-import { ExpenseGroupsContext } from "@/contexts/ExpenseGroupsContext";
 import {
   Accordion,
   AccordionContent,
@@ -19,41 +17,31 @@ import { ExpenseTag } from "@/types/transactionFilterTypes";
 import { DeleteDialog } from "@/components/commons/dialogs/DeleteDialog";
 import { EditDialog } from "@/components/commons/dialogs/EditDialog";
 import { getExpenseGroupName } from "@/utils/utils";
+import { useExpenseGroups } from "@/utils/hooks/reactQuery";
+import { translate } from "@/services/translationService";
 import {
   useDeleteExpense,
-  useExpenseGroups,
   useUpdateExpense,
-} from "@/utils/hooks/reactQuery";
-import { translate } from "@/services/translationService";
+} from "@/utils/hooks/reactQueryExpenses";
 
 const ExpensesList = ({
   expenses,
   currentUser,
   isProfile,
 }: {
-  expenses: ExpenseDTO[];
+  expenses?: ExpenseDTO[];
   currentUser?: UserDTO;
   isProfile?: boolean;
 }) => {
-  const expensesContext = useContext(ExpensesContext);
-
-  const setExpenseDocs = useRef(expensesContext.setExpenseDocs);
-
-  const { mutateDeleteExpense } = useDeleteExpense(setExpenseDocs.current);
-  const { mutateUpdateExpense } = useUpdateExpense(setExpenseDocs.current);
+  const { mutateDeleteExpense } = useDeleteExpense();
+  const { mutateUpdateExpense } = useUpdateExpense();
 
   const removeExpense = async (expense: ExpenseDTO) => {
-    mutateDeleteExpense({
-      expense,
-      currentUser: currentUser!,
-    });
+    mutateDeleteExpense({ expense });
   };
 
   const updateExpense = async (expense: ExpenseDTO) => {
-    mutateUpdateExpense({
-      expense,
-      currentUser: currentUser!,
-    });
+    mutateUpdateExpense({ expense });
   };
 
   return (

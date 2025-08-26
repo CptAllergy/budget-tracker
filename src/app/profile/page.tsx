@@ -1,109 +1,64 @@
 "use client";
 
-import {
-  Dispatch,
-  SetStateAction,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Navbar } from "@/components/elements/navbar/Navbar";
-import {
-  CreateEarningDTO,
-  CreateExpenseDTO,
-  EarningDTO,
-} from "@/types/DTO/dataTypes";
+import { CreateEarningDTO, CreateExpenseDTO } from "@/types/DTO/dataTypes";
 import ExpensesList from "@/components/elements/home/ExpensesList";
-import { AlertContext } from "@/contexts/AlertContext";
-import {
-  toggleStatusAlert,
-  toggleStatusErrorAlert,
-} from "@/utils/toggleAlerts";
-import {
-  getEarningsFirebase,
-  getExpensesFirebase,
-  postEarningFirebase,
-} from "@/services/firebaseService";
-import { ExpensesContext } from "@/contexts/ExpensesContext";
 import { LuPlus } from "react-icons/lu";
-import { ExpenseGroupsContext } from "@/contexts/ExpenseGroupsContext";
-import { useAddExpense, useCurrentUser } from "@/utils/hooks/reactQuery";
+import { useCurrentUser } from "@/utils/hooks/reactQuery";
 import EarningsList from "@/components/elements/profile/EarningsList";
 import { MonthNavigation } from "@/components/elements/home/MonthNavigation";
 import { AddDialog } from "@/components/commons/dialogs/AddDialog";
-import { MonthYearType } from "@/types/componentTypes";
+import { ExpenseListType, MonthYearType } from "@/types/componentTypes";
 import { getCurrentMonthYear } from "@/utils/utils";
 import ProfileSummary from "@/components/elements/profile/ProfileSummary";
+import { useAddExpense, useExpenses } from "@/utils/hooks/reactQueryExpenses";
+import { useAddEarning, useEarnings } from "@/utils/hooks/reactQueryEarnings";
 
 const Profile = () => {
-  const alertContext = useRef(useContext(AlertContext));
-  const expensesContext = useContext(ExpensesContext);
-  const expenseGroupsContext = useContext(ExpenseGroupsContext);
-
-  const setExpenseDocs = useRef(expensesContext.setExpenseDocs);
-  const handleFilterChange = useRef(expenseGroupsContext.handleFilterChange);
-
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [toggleExpenses, setToggleExpenses] = useState(true);
-  const [earnings, setEarnings] = useState<EarningDTO[]>([]);
   const [monthYear, setMonthYear] = useState<MonthYearType>(
     getCurrentMonthYear()
   );
+  const [filterId, setFilterId] = useState<ExpenseListType>();
 
   const { currentUser, isLoading } = useCurrentUser();
 
   // Set filter to current user
   useEffect(() => {
     if (currentUser) {
-      handleFilterChange.current({ userId: currentUser.id });
+      setFilterId({ userId: currentUser.id });
     }
   }, [currentUser]);
 
-  // Load earnings
-  useEffect(() => {
-    if (currentUser?.id) {
-      getEarningsFirebase(setEarnings, currentUser.id, monthYear).then(
-        () => {}
-      );
-    }
-  }, [currentUser?.id, monthYear]);
+  const { earnings, isLoading: isLoadingEarnings } = useEarnings(
+    filterId?.userId,
+    monthYear
+  );
 
-  // Load expenses
-  useEffect(() => {
-    if (expenseGroupsContext.filterId) {
-      void getExpensesFirebase(
-        setExpenseDocs.current,
-        expenseGroupsContext.filterId,
-        monthYear
-      );
-    }
-  }, [expenseGroupsContext.filterId, monthYear]);
+  const {
+    expenses,
+    isLoading: isLoadingExpenses,
+    isPlaceholderData,
+    isEnabled,
+  } = useExpenses(filterId, monthYear);
 
-  const { mutateAddExpense } = useAddExpense(setExpenseDocs.current);
+  const { mutateAddExpense } = useAddExpense();
+  const { mutateAddEarning } = useAddEarning();
 
   const createExpense = async (newExpense: CreateExpenseDTO) => {
-    mutateAddExpense({
-      newExpense,
-      currentUser: currentUser!,
-    });
+    mutateAddExpense({ newExpense });
 
     setToggleExpenses(true);
     setMonthYear(getCurrentMonthYear());
   };
 
   const createEarning = async (newEarning: CreateEarningDTO) => {
-    try {
-      await postEarningFirebase(newEarning, setEarnings);
-      // Navigate to page with new content
-      setToggleExpenses(false);
-      setMonthYear(getCurrentMonthYear());
+    mutateAddEarning({ newEarning });
 
-      toggleStatusAlert(alertContext.current, "New earning created");
-    } catch (error) {
-      toggleStatusErrorAlert(alertContext.current, "ADD_FAILED", error);
-      throw "Error adding new earning";
-    }
+    setToggleExpenses(false);
+    setMonthYear(getCurrentMonthYear());
   };
 
   return (
@@ -116,6 +71,7 @@ const Profile = () => {
           user={currentUser}
           createExpense={createExpense}
           createEarning={createEarning}
+          filterId={filterId}
         />
       )}
       <div className="fixed right-0 bottom-0 z-5 m-4 sm:hidden">
@@ -132,8 +88,8 @@ const Profile = () => {
         <section className="mx-4 flex flex-col items-center">
           <ProfileSummary
             currentUser={currentUser}
-            expenses={expensesContext.expenses}
-            earnings={earnings}
+            expenses={expenses ?? []}
+            earnings={earnings ?? []}
           />
         </section>
         <section className="mt-4 md:mt-10">
@@ -148,14 +104,13 @@ const Profile = () => {
             />
             {toggleExpenses ? (
               <ExpensesList
-                expenses={expensesContext.expenses}
+                expenses={expenses}
                 currentUser={currentUser}
                 isProfile={true}
               />
             ) : (
               <EarningsList
-                earnings={earnings}
-                setEarnings={setEarnings}
+                earnings={earnings ?? []}
                 currentUser={currentUser}
               />
             )}

@@ -2,14 +2,7 @@
 
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
 import { Navbar } from "@/components/elements/navbar/Navbar";
-import {
-  useCurrentUser,
-  useEarnings,
-  useExpenseGroups,
-  useExpenses,
-  useMonthlyEarningTotal,
-  useMonthlyExpenseTotal,
-} from "@/utils/hooks/reactQuery";
+import { useCurrentUser, useExpenseGroups } from "@/utils/hooks/reactQuery";
 import {
   ExpenseListType,
   MonthlyTransactionTotal,
@@ -58,6 +51,14 @@ import { format } from "date-fns";
 
 import "ldrs/react/Ring2.css";
 import { Ring2 } from "ldrs/react";
+import {
+  useExpenses,
+  useMonthlyExpenseTotal,
+} from "@/utils/hooks/reactQueryExpenses";
+import {
+  useEarnings,
+  useMonthlyEarningTotal,
+} from "@/utils/hooks/reactQueryEarnings";
 
 // TODO add a bar graph alternative to the pie chart, should make some months easier to read
 // TODO add a flag to include or remove investments from the pie chart

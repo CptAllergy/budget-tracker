@@ -13,7 +13,6 @@ import {
   UserDTO,
 } from "@/types/DTO/dataTypes";
 import { AlertContext, AlertContextType } from "@/contexts/AlertContext";
-import { ExpenseGroupsContext } from "@/contexts/ExpenseGroupsContext";
 import {
   Control,
   FormState,
@@ -48,18 +47,21 @@ const AddDialog = ({
   user,
   createExpense,
   createEarning,
+  filterId,
 }: {
   isDialogOpen: boolean;
   setIsDialogOpen: Dispatch<SetStateAction<boolean>>;
   user: UserDTO;
   createExpense: (expense: CreateExpenseDTO) => void;
   createEarning: (earning: CreateEarningDTO) => void;
+  filterId: ExpenseListType | undefined;
 }) => {
   const [isExpense, setIsExpense] = useState<boolean>(true);
 
   const alertContext = useRef(useContext(AlertContext));
-  const expenseGroupsContext = useContext(ExpenseGroupsContext);
-  const filterId = expenseGroupsContext.filterId;
+  // TODO remove
+  // const expenseGroupsContext = useContext(ExpenseGroupsContext);
+  // const filterId = expenseGroupsContext.filterId;
 
   const groupName = filterId?.groupName ? filterId.groupName : NO_EXPENSE_GROUP;
 

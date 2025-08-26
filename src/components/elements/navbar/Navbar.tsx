@@ -1,13 +1,6 @@
 "use client";
 
-import React, {
-  Dispatch,
-  SetStateAction,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
 import Link from "next/link";
 import { LoadingRoundedButton } from "@/components/loading/buttons/LoadingRoundedButton";
 import { signOut, useSession } from "next-auth/react";
@@ -34,18 +27,17 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/commons/menus/DrawerMenu";
-import { ExpenseGroupsContext } from "@/contexts/ExpenseGroupsContext";
-import { AlertContext } from "@/contexts/AlertContext";
-import { toggleStatusErrorAlert } from "@/utils/toggleAlerts";
 import { usePathname } from "next/navigation";
 import { useCurrentUser, useExpenseGroups } from "@/utils/hooks/reactQuery";
 import { useQueryClient } from "@tanstack/react-query";
+import { ExpenseListType, SetState } from "@/types/componentTypes";
 
-export const Navbar = ({
-  setIsAddDialogOpen,
-}: {
-  setIsAddDialogOpen?: Dispatch<SetStateAction<boolean>>;
-}) => {
+type NavbarProps = {
+  setIsAddDialogOpen?: SetState<boolean>;
+  filterId?: ExpenseListType;
+};
+
+export const Navbar = ({ setIsAddDialogOpen, filterId }: NavbarProps) => {
   const { data: session } = useSession();
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -64,7 +56,7 @@ export const Navbar = ({
     <>
       <div className="bg-theme-main relative z-10 h-16 w-full border-b-2 border-black">
         <div className="absolute top-0 bottom-0 left-0 ml-2 flex items-center gap-3">
-          {session?.user && <DrawerMenuButton />}
+          {session?.user && <DrawerMenuButton filterId={filterId} />}
           <NavbarBudgetTrackerLogo />
         </div>
         <div className="absolute top-0 right-0 bottom-0 mt-1 mr-2 flex items-center md:mr-4">
@@ -81,7 +73,7 @@ export const Navbar = ({
   );
 };
 
-const DrawerMenuButton = () => {
+const DrawerMenuButton = ({ filterId }: { filterId?: ExpenseListType }) => {
   return (
     <Drawer direction="left" snapPoints={undefined} fadeFromIndex={undefined}>
       <DrawerTrigger>
@@ -89,12 +81,12 @@ const DrawerMenuButton = () => {
           <LuMenu size="24" className="stroke-[2.5]" />
         </div>
       </DrawerTrigger>
-      <DrawerMenu />
+      <DrawerMenu filterId={filterId} />
     </Drawer>
   );
 };
 
-const DrawerMenu = () => {
+const DrawerMenu = ({ filterId }: { filterId?: ExpenseListType }) => {
   return (
     <DrawerContent
       aria-describedby={"Hello"}
@@ -117,7 +109,7 @@ const DrawerMenu = () => {
           <LuX className="size-4 [stroke-width:3]" />
         </DrawerClose>
       </DrawerHeader>
-      <NavigationList />
+      <NavigationList filterId={filterId} />
       <DrawerFooter></DrawerFooter>
     </DrawerContent>
   );
@@ -125,36 +117,24 @@ const DrawerMenu = () => {
 
 // TODO let user pick a favourite group which will become the default for that user
 // TODO allow user to create new groups
-const NavigationList = () => {
-  const alertContext = useRef(useContext(AlertContext));
-  const expenseGroupsContext = useContext(ExpenseGroupsContext);
+// TODO instantly update the selected option when it's clicked
+const NavigationList = ({ filterId }: { filterId?: ExpenseListType }) => {
   const pathname = usePathname();
 
-  const filterId = expenseGroupsContext.filterId;
-  const handleFilterChange = useRef(expenseGroupsContext.handleFilterChange);
-
-  const handleGroupClick = (groupId: string, groupName: string) => {
-    try {
-      if (pathname.includes("profile")) {
-        // Changing the filter when moving from profile to group can cause a flicker, this avoids that
-        return;
-      }
-      handleFilterChange.current({ groupId: groupId, groupName: groupName });
-    } catch (error) {
-      toggleStatusErrorAlert(alertContext.current, "GENERIC", error);
-    }
-  };
-
   const selectedPageStyle = (page: string) => {
-    return pathname.includes(page) && !filterId?.groupId
+    return pathname.includes(page) //&& !filterId?.groupId
       ? "bg-theme-main hover:bg-theme-hover"
       : "bg-theme-highlight hover:bg-theme-highlight-hover";
   };
 
   const selectedGroupStyle = (groupId: string) => {
-    return filterId?.groupId && filterId.groupId === groupId
-      ? "bg-theme-main hover:bg-theme-hover"
-      : "bg-theme-highlight hover:bg-theme-highlight-hover";
+    if (filterId) {
+      return filterId?.groupId && filterId.groupId === groupId
+        ? "bg-theme-main hover:bg-theme-hover"
+        : "bg-theme-highlight hover:bg-theme-highlight-hover";
+    } else {
+      return "bg-theme-highlight hover:bg-theme-highlight-hover";
+    }
   };
 
   return (
@@ -176,20 +156,15 @@ const NavigationList = () => {
         </Link>
         <hr className="my-4 border-t border-b border-black" />
         <div className="ml-1 font-semibold">Expense Groups</div>
-        <ExpenseGroupList
-          handleGroupClick={handleGroupClick}
-          selectedGroupStyle={selectedGroupStyle}
-        />
+        <ExpenseGroupList selectedGroupStyle={selectedGroupStyle} />
       </div>
     </div>
   );
 };
 
 const ExpenseGroupList = ({
-  handleGroupClick,
   selectedGroupStyle,
 }: {
-  handleGroupClick: (groupId: string, groupName: string) => void;
   selectedGroupStyle: (groupId: string) => string;
 }) => {
   const { currentUser } = useCurrentUser();
@@ -226,7 +201,6 @@ const ExpenseGroupList = ({
       <Link
         key={group.id}
         href={{ pathname: "/", query: { groupId: group.id } }}
-        onClick={() => handleGroupClick(group.id, group.name)}
         className={`${selectedGroupStyle(group.id)} flex cursor-pointer items-center gap-2 rounded-md border-2 border-black p-1 text-sm/7 shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all sm:gap-3 sm:p-2 sm:text-base`}
       >
         {currentUser.groupId === group.id ? (

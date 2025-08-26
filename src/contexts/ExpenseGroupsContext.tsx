@@ -4,6 +4,7 @@ import React, { createContext, useState } from "react";
 import { ExpenseGroupDTO } from "@/types/DTO/dataTypes";
 import { ExpenseListType } from "@/types/componentTypes";
 
+// TODO remove this file or think about adapting it to something better, some other way to manage application state
 export type ExpenseGroupsContextType = {
   currentGroup?: ExpenseGroupDTO;
   filterId?: ExpenseListType;

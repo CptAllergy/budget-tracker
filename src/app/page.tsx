@@ -17,46 +17,40 @@ import {
 } from "@/types/DTO/dataTypes";
 import ExpensesList from "@/components/elements/home/ExpensesList";
 import { AlertContext } from "@/contexts/AlertContext";
-import {
-  toggleStatusAlert,
-  toggleStatusErrorAlert,
-} from "@/utils/toggleAlerts";
-import {
-  getExpensesFirebase,
-  postEarningFirebase,
-} from "@/services/firebaseService";
+import { toggleStatusErrorAlert } from "@/utils/toggleAlerts";
 import NewChanges from "@/components/elements/home/NewChanges";
-import { ExpensesContext } from "@/contexts/ExpensesContext";
 import { LuPlus } from "react-icons/lu";
-import { ExpenseGroupsContext } from "@/contexts/ExpenseGroupsContext";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  useAddExpense,
-  useCurrentUser,
-  useExpenseGroups,
-} from "@/utils/hooks/reactQuery";
+import { useCurrentUser, useExpenseGroups } from "@/utils/hooks/reactQuery";
 import { MonthNavigation } from "@/components/elements/home/MonthNavigation";
 import { AddDialog } from "@/components/commons/dialogs/AddDialog";
-import { MonthYearType } from "@/types/componentTypes";
+import {
+  ExpenseListType,
+  MonthYearType,
+  SetState,
+} from "@/types/componentTypes";
 import { getCurrentMonthYear } from "@/utils/utils";
 import Totals from "@/components/elements/home/Totals";
+import { useAddExpense, useExpenses } from "@/utils/hooks/reactQueryExpenses";
+import { useAddEarning } from "@/utils/hooks/reactQueryEarnings";
 
-// TODO replace all useEffect request with react query
 // TODO test if requesting data from different id than real currentUser throws the expected error
 // TODO check where unnecessary re-renders are occurring
-// TODO add stats page (monthly, yearly)
 // TODO add settings menu where user can change color of earning and expenses (red, green or grey, for a negative or neutral value)
 // TODO Add translations
-// TODO Bug: changing from a group to reports keeps the group button highlighted
+// TODO go over the whole props passing chain and check if any improper defaults are being used
 const Home = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [filterId, setFilterId] = useState<ExpenseListType>();
+
   return (
     <div className="">
-      <Navbar setIsAddDialogOpen={setIsAddDialogOpen} />
+      <Navbar setIsAddDialogOpen={setIsAddDialogOpen} filterId={filterId} />
       <Suspense>
         <PageContents
           isAddDialogOpen={isAddDialogOpen}
           setIsAddDialogOpen={setIsAddDialogOpen}
+          filterIdState={[filterId, setFilterId]}
         />
       </Suspense>
     </div>
@@ -66,16 +60,17 @@ const Home = () => {
 const PageContents = ({
   isAddDialogOpen,
   setIsAddDialogOpen,
+  filterIdState,
 }: {
   isAddDialogOpen: boolean;
   setIsAddDialogOpen: Dispatch<SetStateAction<boolean>>;
+  filterIdState: [
+    ExpenseListType | undefined,
+    SetState<ExpenseListType | undefined>,
+  ];
 }) => {
   const alertContext = useRef(useContext(AlertContext));
-  const expensesContext = useContext(ExpensesContext);
-  const expenseGroupsContext = useContext(ExpenseGroupsContext);
-
-  const setExpenseDocs = useRef(expensesContext.setExpenseDocs);
-  const handleFilterChange = useRef(expenseGroupsContext.handleFilterChange);
+  const [filterId, setFilterId] = filterIdState;
 
   // Used to detect new changes
   const [isChangeFound, setIsChangeFound] = useState<boolean>(false);
@@ -83,6 +78,7 @@ const PageContents = ({
   const [monthYear, setMonthYear] = useState<MonthYearType>(
     getCurrentMonthYear()
   );
+  const [currentGroup, setCurrentGroup] = useState<ExpenseGroupDTO>();
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -104,13 +100,11 @@ const PageContents = ({
 
         try {
           // If groupId is not provided or not found, use the first group (favourite group)
-          handleFilterChange.current(
-            {
-              groupId: groupParam ? groupParam.id : groups[0].id,
-              groupName: groupParam ? groupParam.name : groups[0].name,
-            },
-            groups
-          );
+          setFilterId({
+            groupId: groupParam ? groupParam.id : groups[0].id,
+            groupName: groupParam ? groupParam.name : groups[0].name,
+          });
+          setCurrentGroup(groupParam ?? groups[0]);
         } catch (error) {
           toggleStatusErrorAlert(alertContext.current, "GENERIC", error);
         }
@@ -120,43 +114,27 @@ const PageContents = ({
     if (currentUser && expenseGroups) {
       selectDefaultPage(expenseGroups);
     }
-  }, [currentUser, expenseGroups, router, searchParams]);
+  }, [currentUser, expenseGroups, router, searchParams, setFilterId]);
 
-  // Load expenses
-  useEffect(() => {
-    if (expenseGroupsContext.filterId) {
-      void getExpensesFirebase(
-        setExpenseDocs.current,
-        expenseGroupsContext.filterId,
-        monthYear
-      );
-    }
-  }, [expenseGroupsContext.filterId, monthYear]);
+  const {
+    expenses,
+    isLoading: isLoadingExpenses,
+    isPlaceholderData,
+    isEnabled,
+  } = useExpenses(filterId, monthYear);
 
-  const { mutateAddExpense } = useAddExpense(setExpenseDocs.current);
+  const { mutateAddExpense } = useAddExpense();
+  const { mutateAddEarning } = useAddEarning();
 
   const createExpense = async (newExpense: CreateExpenseDTO) => {
-    mutateAddExpense({
-      newExpense,
-      currentUser: currentUser!,
-    });
+    mutateAddExpense({ newExpense });
 
     // Navigate to page with new content
     setMonthYear(getCurrentMonthYear());
   };
 
   const createEarning = async (newEarning: CreateEarningDTO) => {
-    try {
-      await postEarningFirebase(newEarning, () => {});
-
-      toggleStatusAlert(
-        alertContext.current,
-        "New earning added to your profile"
-      );
-    } catch (error) {
-      toggleStatusErrorAlert(alertContext.current, "ADD_FAILED", error);
-      throw "Error adding new earning";
-    }
+    mutateAddEarning({ newEarning });
   };
 
   return (
@@ -168,6 +146,7 @@ const PageContents = ({
           user={currentUser}
           createExpense={createExpense}
           createEarning={createEarning}
+          filterId={filterId}
         />
       )}
       <div className="right sticky top-0 z-10 ml-auto flex w-max justify-end">
@@ -188,7 +167,7 @@ const PageContents = ({
       </div>
       <div className="mx-1.5 -mt-12">
         <section className="mx-4 flex flex-col items-center">
-          <Totals />
+          <Totals currentGroup={currentGroup} />
         </section>
         <section className="mt-4 md:mt-10">
           <div className="mx-1 mt-5 mb-5">
@@ -196,10 +175,7 @@ const PageContents = ({
               monthYear={monthYear}
               setMonthYear={setMonthYear}
             />
-            <ExpensesList
-              expenses={expensesContext.expenses}
-              currentUser={currentUser}
-            />
+            <ExpensesList expenses={expenses} currentUser={currentUser} />
           </div>
         </section>
       </div>
