@@ -2,16 +2,17 @@
 
 import { useContext, useEffect, useRef, useState } from "react";
 import { rancho } from "@/styles/fonts";
-import { ExpenseGroupsContext } from "@/contexts/ExpenseGroupsContext";
 import { AlertContext } from "@/contexts/AlertContext";
 import { toggleStatusErrorAlert } from "@/utils/toggleAlerts";
 import { TotalsLoading } from "@/components/loading/elements/home/LoadingHome";
+import { ExpenseGroupDTO } from "@/types/DTO/dataTypes";
 
-const Totals = () => {
+const Totals = ({
+  currentGroup,
+}: {
+  currentGroup?: ExpenseGroupDTO | undefined;
+}) => {
   const alertContext = useRef(useContext(AlertContext));
-  const expenseGroupsContext = useContext(ExpenseGroupsContext);
-
-  const { currentGroup } = expenseGroupsContext;
 
   const [sender, setSender] = useState("");
   const [receiver, setReceiver] = useState("");

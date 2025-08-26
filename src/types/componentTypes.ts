@@ -1,8 +1,7 @@
 import { Url } from "next/dist/shared/lib/router/router";
 import { FormState } from "react-hook-form";
 import { CreateEarningDTO, CreateExpenseDTO } from "@/types/DTO/dataTypes";
-
-import type { JSX } from "react";
+import { Dispatch, JSX, SetStateAction } from "react";
 
 export type DropdownMenuItemType = {
   label: string;
@@ -10,6 +9,8 @@ export type DropdownMenuItemType = {
   onClick?: () => void;
   href?: Url;
 };
+
+export type SetState<T> = Dispatch<SetStateAction<T>>;
 
 type FormInputs = "label" | "amount" | "newDate";
 

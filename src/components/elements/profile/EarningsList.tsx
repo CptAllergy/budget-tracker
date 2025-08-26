@@ -8,54 +8,34 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/commons/Accordion";
-import {
-  deleteEarningFirebase,
-  updateEarningFirebase,
-} from "@/services/firebaseService";
-import {
-  toggleStatusAlert,
-  toggleStatusErrorAlert,
-} from "@/utils/toggleAlerts";
-import { Dispatch, SetStateAction, useContext, useRef, useState } from "react";
-import { AlertContext } from "@/contexts/AlertContext";
+import { useState } from "react";
 import { DropdownMenu } from "@/components/commons/menus/DropdownMenu";
 import { HiMiniEllipsisHorizontal } from "react-icons/hi2";
 
 import { DeleteDialog } from "@/components/commons/dialogs/DeleteDialog";
 import { EditDialog } from "@/components/commons/dialogs/EditDialog";
 import { getCategoryIcon } from "@/utils/styles/transactionFilterStyles";
+import {
+  useDeleteEarning,
+  useUpdateEarning,
+} from "@/utils/hooks/reactQueryEarnings";
 
 const EarningsList = ({
   earnings,
-  setEarnings,
   currentUser,
 }: {
   earnings: EarningDTO[];
-  setEarnings: Dispatch<SetStateAction<EarningDTO[]>>;
   currentUser?: UserDTO;
 }) => {
-  const alertContext = useRef(useContext(AlertContext));
+  const { mutateDeleteEarning } = useDeleteEarning();
+  const { mutateUpdateEarning } = useUpdateEarning();
 
   const removeEarning = async (earning: EarningDTO) => {
-    try {
-      await deleteEarningFirebase(earning, currentUser!, setEarnings);
-
-      toggleStatusAlert(alertContext.current, "Earning deleted");
-    } catch (error) {
-      toggleStatusErrorAlert(alertContext.current, "DELETE_FAILED", error);
-      throw "Error deleting earning";
-    }
+    mutateDeleteEarning({ earning });
   };
 
   const updateEarning = async (earning: EarningDTO) => {
-    try {
-      await updateEarningFirebase(earning, currentUser!, setEarnings);
-
-      toggleStatusAlert(alertContext.current, "Earning updated");
-    } catch (error) {
-      toggleStatusErrorAlert(alertContext.current, "UPDATE_FAILED", error);
-      throw "Error updating earning";
-    }
+    mutateUpdateEarning({ earning });
   };
   return (
     <div>

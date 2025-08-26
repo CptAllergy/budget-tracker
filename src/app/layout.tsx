@@ -6,7 +6,6 @@ import { Metadata } from "next";
 import { ReactNode } from "react";
 
 import { dmSans } from "@/styles/fonts";
-import { ExpensesContextProvider } from "@/contexts/ExpensesContext";
 import { ExpenseGroupsContextProvider } from "@/contexts/ExpenseGroupsContext";
 import QueryProvider from "@/contexts/QueryContext";
 
@@ -17,12 +16,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <QueryProvider>
           <SessionProvider>
             <AlertContextProvider>
-              <ExpensesContextProvider>
-                <ExpenseGroupsContextProvider>
-                  <AlertSnackbar />
-                  {children}
-                </ExpenseGroupsContextProvider>
-              </ExpensesContextProvider>
+              <ExpenseGroupsContextProvider>
+                <AlertSnackbar />
+                {children}
+              </ExpenseGroupsContextProvider>
             </AlertContextProvider>
           </SessionProvider>
         </QueryProvider>

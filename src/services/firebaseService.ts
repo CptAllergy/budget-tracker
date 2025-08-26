@@ -67,9 +67,6 @@ export async function getExpenseGroupsFirebase(userId: string) {
 }
 
 export async function getExpensesFirebase(
-  setExpenseDocs: (
-    updater: (prevDocs: DocumentSnapshot[]) => DocumentSnapshot[]
-  ) => void,
   filterId: ExpenseListType,
   monthYear?: MonthYearType
 ) {
@@ -88,7 +85,6 @@ export async function getExpensesFirebase(
   );
 
   const querySnapshot = await getDocs(queryExpenses);
-  setExpenseDocs(() => querySnapshot.docs);
 
   return querySnapshot.docs.map((doc) => {
     return { id: doc.id, ...doc.data() } as ExpenseDTO;
@@ -139,16 +135,9 @@ export async function getEarningsMonthlySumFirebase(
   return snapshot.data().totalAmount;
 }
 
-// TODO can replace currentUser with userId from expense
-export async function postExpenseFirebase(
-  newExpense: CreateExpenseDTO,
-  currentUser: UserDTO,
-  setExpenseDocs: (
-    updater: (prevDocs: DocumentSnapshot[]) => DocumentSnapshot[]
-  ) => void
-) {
+export async function postExpenseFirebase(newExpense: CreateExpenseDTO) {
   const totalRef = newExpense.groupId
-    ? doc(db, "groups", newExpense.groupId, "totals", currentUser.id)
+    ? doc(db, "groups", newExpense.groupId, "totals", newExpense.userId)
     : null;
   const expenseRef = doc(collection(db, "expenses"));
 
@@ -176,28 +165,20 @@ export async function postExpenseFirebase(
   });
 
   // Update the reference list
+  // TODO This is the new document, use this to update react query cache instead
   const expenseDoc = await getDoc(expenseRef);
-  setExpenseDocs((prevDocs) => {
-    return [expenseDoc, ...prevDocs];
-  });
+  // TODO move this logic to react query cache update
+  // setExpenseDocs((prevDocs) => {
+  //   return [expenseDoc, ...prevDocs];
+  // });
 
   return newUserTotal;
 }
 
-// TODO can replace currentUser with userId from expense
-export async function deleteExpenseFirebase(
-  expense: ExpenseDTO,
-  currentUser: UserDTO,
-  setExpenseDocs: (
-    updater: (prevDocs: DocumentSnapshot[]) => DocumentSnapshot[]
-  ) => void
-) {
-  if (expense.userId !== currentUser.id) {
-    throw "Current user does not match expense owner";
-  }
-
+// TODO try deleting an expense from a different userId to see if the security rules work
+export async function deleteExpenseFirebase(expense: ExpenseDTO) {
   const totalRef = expense.groupId
-    ? doc(db, "groups", expense.groupId, "totals", currentUser.id)
+    ? doc(db, "groups", expense.groupId, "totals", expense.userId)
     : null;
   const expenseRef = doc(db, "expenses", expense.id);
 
@@ -224,27 +205,18 @@ export async function deleteExpenseFirebase(
   });
 
   // Delete reference document from the state
-  setExpenseDocs((prevDocs) => {
-    return prevDocs.filter((value) => value.id !== expense.id);
-  });
+  // TODO move this logic to react query cache update
+  // setExpenseDocs((prevDocs) => {
+  //   return prevDocs.filter((value) => value.id !== expense.id);
+  // });
 
   return newUserTotal;
 }
 
-// TODO can replace currentUser with userId from expense
-export async function updateExpenseFirebase(
-  expenseUpdated: ExpenseDTO,
-  currentUser: UserDTO,
-  setExpenseDocs: (
-    updater: (prevDocs: DocumentSnapshot[]) => DocumentSnapshot[]
-  ) => void
-) {
-  if (expenseUpdated.userId !== currentUser.id) {
-    throw "Current user does not match expense owner";
-  }
-
+// TODO try updating an expense from a different userId to see if the security rules work
+export async function updateExpenseFirebase(expenseUpdated: ExpenseDTO) {
   const totalRef = expenseUpdated.groupId
-    ? doc(db, "groups", expenseUpdated.groupId, "totals", currentUser.id)
+    ? doc(db, "groups", expenseUpdated.groupId, "totals", expenseUpdated.userId)
     : null;
   const expenseRef = doc(db, "expenses", expenseUpdated.id);
 
@@ -290,27 +262,29 @@ export async function updateExpenseFirebase(
   );
 
   // Replace the expense document in the state
+  // TODO this is the new document, use this to update react query cache instead
   const expenseDoc = await getDoc(expenseRef);
-  setExpenseDocs((prevDocs) => {
-    const filteredList = prevDocs.filter((value) => value.id !== expenseDoc.id);
+  // TODO move this logic to react query cache update
+  // setExpenseDocs((prevDocs) => {
+  //   const filteredList = prevDocs.filter((value) => value.id !== expenseDoc.id);
+  //
+  //   const isSameMonth =
+  //     prevTimestamp.toDate().getMonth() ===
+  //       expenseDoc.data()?.timestamp.toDate().getMonth() &&
+  //     prevTimestamp.toDate().getFullYear() ===
+  //       expenseDoc.data()?.timestamp.toDate().getFullYear();
+  //
+  //   // Sort by timestamp
+  //   if (isSameMonth) {
+  //     return [expenseDoc, ...filteredList].sort((a, b) =>
+  //       a.data()?.timestamp < b.data()?.timestamp ? 1 : -1
+  //     );
+  //   } else {
+  //     return filteredList;
+  //   }
+  // });
 
-    const isSameMonth =
-      prevTimestamp.toDate().getMonth() ===
-        expenseDoc.data()?.timestamp.toDate().getMonth() &&
-      prevTimestamp.toDate().getFullYear() ===
-        expenseDoc.data()?.timestamp.toDate().getFullYear();
-
-    // Sort by timestamp
-    if (isSameMonth) {
-      return [expenseDoc, ...filteredList].sort((a, b) =>
-        a.data()?.timestamp < b.data()?.timestamp ? 1 : -1
-      );
-    } else {
-      return filteredList;
-    }
-  });
-
-  return newUserTotal;
+  return { newUserTotal, prevTimestamp };
 }
 
 export async function getEarningsFirebase(
@@ -336,10 +310,7 @@ export async function getEarningsFirebase(
   return earnings;
 }
 
-export async function postEarningFirebase(
-  newEarning: CreateEarningDTO,
-  setEarnings: Dispatch<SetStateAction<EarningDTO[]>>
-) {
+export async function postEarningFirebase(newEarning: CreateEarningDTO) {
   const earningRef = doc(collection(db, "earnings"));
 
   // Add earning document
@@ -348,40 +319,27 @@ export async function postEarningFirebase(
   // Update earnings list
   const earningDoc = await getDoc(earningRef);
   const earning = { id: earningDoc.id, ...earningDoc.data() } as EarningDTO;
-  setEarnings((prevDocs) => {
-    return [earning, ...prevDocs];
-  });
+  // TODO move this logic to react query cache update
+  // setEarnings((prevDocs) => {
+  //   return [earning, ...prevDocs];
+  // });
+
+  return earning;
 }
 
-export async function deleteEarningFirebase(
-  earning: EarningDTO,
-  currentUser: UserDTO,
-  setEarnings: Dispatch<SetStateAction<EarningDTO[]>>
-) {
-  if (earning.userId !== currentUser.id) {
-    throw "Current user does not match earning owner";
-  }
-
+export async function deleteEarningFirebase(earning: EarningDTO) {
   const earningRef = doc(db, "earnings", earning.id);
 
   // Delete transaction document
   await deleteDoc(earningRef);
 
   // Delete reference document from the state
-  setEarnings((prevDocs) => {
-    return prevDocs.filter((value) => value.id !== earning.id);
-  });
+  // setEarnings((prevDocs) => {
+  //   return prevDocs.filter((value) => value.id !== earning.id);
+  // });
 }
 
-export async function updateEarningFirebase(
-  earningUpdated: EarningDTO,
-  currentUser: UserDTO,
-  setEarnings: Dispatch<SetStateAction<EarningDTO[]>>
-) {
-  if (earningUpdated.userId !== currentUser.id) {
-    throw "Current user does not match earning owner";
-  }
-
+export async function updateEarningFirebase(earningUpdated: EarningDTO) {
   const earningRef = doc(db, "earnings", earningUpdated.id);
 
   // These Firestore operations must run inside an atomic transaction
@@ -402,24 +360,26 @@ export async function updateEarningFirebase(
   // Replace earning in the state
   const earningDoc = await getDoc(earningRef);
   const earning = { id: earningDoc.id, ...earningDoc.data() } as EarningDTO;
-  setEarnings((prevDocs) => {
-    const filteredList = prevDocs.filter((value) => value.id !== earning.id);
+  // setEarnings((prevDocs) => {
+  //   const filteredList = prevDocs.filter((value) => value.id !== earning.id);
+  //
+  //   const isSameMonth =
+  //     prevTimestamp.toDate().getMonth() ===
+  //       earning.timestamp.toDate().getMonth() &&
+  //     prevTimestamp.toDate().getFullYear() ===
+  //       earning.timestamp.toDate().getFullYear();
+  //
+  //   // Sort by timestamp
+  //   if (isSameMonth) {
+  //     return [earning, ...filteredList].sort((a, b) =>
+  //       a.timestamp < b.timestamp ? 1 : -1
+  //     );
+  //   } else {
+  //     return filteredList;
+  //   }
+  // });
 
-    const isSameMonth =
-      prevTimestamp.toDate().getMonth() ===
-        earning.timestamp.toDate().getMonth() &&
-      prevTimestamp.toDate().getFullYear() ===
-        earning.timestamp.toDate().getFullYear();
-
-    // Sort by timestamp
-    if (isSameMonth) {
-      return [earning, ...filteredList].sort((a, b) =>
-        a.timestamp < b.timestamp ? 1 : -1
-      );
-    } else {
-      return filteredList;
-    }
-  });
+  return { prevTimestamp, earning };
 }
 
 function getMonthYearLimits(monthYear?: MonthYearType): {
