@@ -3,4 +3,6 @@ export type CustomErrorCode =
   | "ADD_FAILED"
   | "UPDATE_FAILED"
   | "DELETE_FAILED"
+  | "EARNINGS_FAILED"
+  | "EXPENSES_FAILED"
   | "GENERIC";

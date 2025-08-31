@@ -1,7 +1,12 @@
 import { MonthlyEarningTotal, MonthYearType } from "@/types/componentTypes";
 import { useContext, useEffect, useRef } from "react";
 import { AlertContext } from "@/contexts/AlertContext";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  QueryClient,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import {
   deleteEarningFirebase,
   getEarningsFirebase,
@@ -14,6 +19,7 @@ import {
   toggleStatusErrorAlert,
 } from "@/utils/toggleAlerts";
 import { CreateEarningDTO, EarningDTO } from "@/types/DTO/dataTypes";
+import { Timestamp } from "firebase/firestore";
 
 export const useEarnings = (
   userId?: string,
@@ -38,38 +44,50 @@ export const useEarnings = (
 
   useEffect(() => {
     if (error) {
-      toggleStatusErrorAlert(alertContext.current, "GENERIC", error);
+      toggleStatusErrorAlert(alertContext.current, "EARNINGS_FAILED", error);
     }
   }, [error]);
 
   return { earnings, isLoading };
 };
 
-// TODO second test setQueryData to update cache without refetching
 export const useAddEarning = () => {
   const queryClient = useQueryClient();
   const alertContext = useRef(useContext(AlertContext));
 
-  type AddEarningVars = {
-    newEarning: CreateEarningDTO;
-  };
-
   const { mutate: mutateAddEarning, error } = useMutation({
-    mutationFn: async ({ newEarning }: AddEarningVars) => {
-      const savedEarning = await postEarningFirebase(newEarning);
-      return { savedEarning };
+    mutationFn: async ({ newEarning }: { newEarning: CreateEarningDTO }) => {
+      const { createdEarning } = await postEarningFirebase(newEarning);
+      return { createdEarning };
     },
-    onSuccess: ({ savedEarning }) => {
-      // TODO this works, but instead of invalidating the query, I should update the cache directly
+    onSuccess: ({ createdEarning }) => {
       const monthYear: MonthYearType = {
-        month: savedEarning.timestamp.toDate().getMonth(),
-        year: savedEarning.timestamp.toDate().getFullYear(),
+        month: createdEarning.timestamp.toDate().getMonth(),
+        year: createdEarning.timestamp.toDate().getFullYear(),
       };
 
-      // TODO check out this warning
-      queryClient.invalidateQueries({
-        queryKey: ["earnings", { monthYear }],
-      });
+      queryClient.setQueryData<EarningDTO[]>(
+        ["earnings", { monthYear, userId: createdEarning.userId }],
+        (oldData) => {
+          return oldData && [createdEarning, ...oldData];
+        }
+      );
+
+      queryClient.setQueryData<MonthlyEarningTotal[]>(
+        ["yearEarnings", { year: monthYear.year }],
+        (oldData) => {
+          const monthData = oldData?.find(
+            (data) => data.month === monthYear.month
+          );
+          if (monthData && oldData) {
+            monthData.totalEarnings += createdEarning.amount;
+            return oldData.map((m) =>
+              m.month === monthData.month ? monthData : m
+            );
+          }
+        }
+      );
+
       toggleStatusAlert(alertContext.current, "New earning created");
     },
   });
@@ -83,31 +101,43 @@ export const useAddEarning = () => {
   return { mutateAddEarning };
 };
 
-// TODO second test setQueryData to update cache without refetching
 export const useDeleteEarning = () => {
   const queryClient = useQueryClient();
   const alertContext = useRef(useContext(AlertContext));
 
-  type DeleteEarningVars = {
-    earning: EarningDTO;
-  };
-
   const { mutate: mutateDeleteEarning, error } = useMutation({
-    mutationFn: async ({ earning }: DeleteEarningVars) => {
+    mutationFn: async ({ earning }: { earning: EarningDTO }) => {
       await deleteEarningFirebase(earning);
       return { earning };
     },
     onSuccess: ({ earning }) => {
-      // TODO this works, but instead of invalidating the query, I should update the cache directly
       const monthYear: MonthYearType = {
         month: earning.timestamp.toDate().getMonth(),
         year: earning.timestamp.toDate().getFullYear(),
       };
 
-      // TODO check out this warning
-      queryClient.invalidateQueries({
-        queryKey: ["earnings", { monthYear }],
-      });
+      queryClient.setQueryData<EarningDTO[]>(
+        ["earnings", { monthYear, userId: earning.userId }],
+        (oldData) => {
+          return oldData?.filter((e) => e.id !== earning.id);
+        }
+      );
+
+      queryClient.setQueryData<MonthlyEarningTotal[]>(
+        ["yearEarnings", { year: monthYear.year }],
+        (oldData) => {
+          const monthData = oldData?.find(
+            (data) => data.month === monthYear.month
+          );
+          if (monthData && oldData) {
+            monthData.totalEarnings -= earning.amount;
+            return oldData.map((m) =>
+              m.month === monthData.month ? monthData : m
+            );
+          }
+        }
+      );
+
       toggleStatusAlert(alertContext.current, "Earning deleted");
     },
   });
@@ -121,39 +151,26 @@ export const useDeleteEarning = () => {
   return { mutateDeleteEarning };
 };
 
-// TODO second test setQueryData to update cache without refetching
 export const useUpdateEarning = () => {
   const queryClient = useQueryClient();
   const alertContext = useRef(useContext(AlertContext));
 
-  type UpdateEarningVars = {
-    earning: EarningDTO;
-  };
-
   const { mutate: mutateUpdateEarning, error } = useMutation({
-    mutationFn: async ({ earning }: UpdateEarningVars) => {
-      const { prevTimestamp, earning: savedEarning } =
+    mutationFn: async ({ earning }: { earning: EarningDTO }) => {
+      const { prevAmount, prevTimestamp } =
         await updateEarningFirebase(earning);
-      return { prevTimestamp, savedEarning };
+      return { prevAmount, prevTimestamp, earning };
     },
-    onSuccess: ({ prevTimestamp, savedEarning }) => {
-      // TODO this works, but instead of invalidating the query, I should update the cache directly
-      const newMonthYear: MonthYearType = {
-        month: savedEarning.timestamp.toDate().getMonth(),
-        year: savedEarning.timestamp.toDate().getFullYear(),
-      };
-      const prevMonthYear: MonthYearType = {
-        month: prevTimestamp.toDate().getMonth(),
-        year: prevTimestamp.toDate().getFullYear(),
-      };
+    onSuccess: ({ prevAmount, prevTimestamp, earning }) => {
+      updateEarningInCache(queryClient, earning, prevTimestamp);
 
-      // TODO check out this warning
-      queryClient.invalidateQueries({
-        queryKey: ["earnings", { monthYear: newMonthYear }],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["earnings", { monthYear: prevMonthYear }],
-      });
+      updateMonthlyEarningTotalInCache(
+        queryClient,
+        earning,
+        prevAmount,
+        prevTimestamp
+      );
+
       toggleStatusAlert(alertContext.current, "Earning updated");
     },
   });
@@ -177,7 +194,7 @@ export const useMonthlyEarningTotal = (year: number, userId?: string) => {
     isFetching,
     isEnabled,
   } = useQuery({
-    queryKey: ["yearEarnings", { year, userId }],
+    queryKey: ["yearEarnings", { year }],
     queryFn: async () => {
       const results: MonthlyEarningTotal[] = [];
 
@@ -197,9 +214,127 @@ export const useMonthlyEarningTotal = (year: number, userId?: string) => {
 
   useEffect(() => {
     if (error) {
-      toggleStatusErrorAlert(alertContext.current, "GENERIC", error);
+      toggleStatusErrorAlert(alertContext.current, "EARNINGS_FAILED", error);
     }
   }, [error]);
 
   return { monthlyEarningTotals, isLoading, isFetching, isEnabled };
 };
+
+function updateEarningInCache(
+  queryClient: QueryClient,
+  earning: EarningDTO,
+  prevTimestamp: Timestamp
+) {
+  const newMonthYear: MonthYearType = {
+    month: earning.timestamp.toDate().getMonth(),
+    year: earning.timestamp.toDate().getFullYear(),
+  };
+  const prevMonthYear: MonthYearType = {
+    month: prevTimestamp.toDate().getMonth(),
+    year: prevTimestamp.toDate().getFullYear(),
+  };
+
+  const isSameMonth =
+    newMonthYear.month === prevMonthYear.month &&
+    newMonthYear.year === prevMonthYear.year;
+
+  queryClient.setQueryData<EarningDTO[]>(
+    ["earnings", { monthYear: prevMonthYear, userId: earning.userId }],
+    (oldData) => {
+      if (isSameMonth) {
+        // If the earning is still in the same month, update it in place
+        return oldData
+          ?.map((e) => (e.id === earning.id ? earning : e))
+          .sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1));
+      } else {
+        // If the earning has moved to a different month, remove it from the prev month
+        return oldData?.filter((e) => e.id !== earning.id);
+      }
+    }
+  );
+
+  if (!isSameMonth) {
+    // Only update the new month if the month has changed
+    queryClient.setQueryData<EarningDTO[]>(
+      ["earnings", { monthYear: newMonthYear, userId: earning.userId }],
+      (oldData) => {
+        return (
+          oldData &&
+          [earning, ...oldData].sort((a, b) =>
+            a.timestamp < b.timestamp ? 1 : -1
+          )
+        );
+      }
+    );
+  }
+}
+
+function updateMonthlyEarningTotalInCache(
+  queryClient: QueryClient,
+  earning: EarningDTO,
+  prevAmount: number,
+  prevTimestamp: Timestamp
+) {
+  const newMonthYear: MonthYearType = {
+    month: earning.timestamp.toDate().getMonth(),
+    year: earning.timestamp.toDate().getFullYear(),
+  };
+  const prevMonthYear: MonthYearType = {
+    month: prevTimestamp.toDate().getMonth(),
+    year: prevTimestamp.toDate().getFullYear(),
+  };
+
+  const isSameMonth =
+    newMonthYear.month === prevMonthYear.month &&
+    newMonthYear.year === prevMonthYear.year;
+
+  queryClient.setQueryData<MonthlyEarningTotal[]>(
+    ["yearEarnings", { year: prevMonthYear.year }],
+    (oldData) => {
+      const monthData = oldData?.find(
+        (data) => data.month === prevMonthYear.month
+      );
+
+      if (!monthData || !oldData) {
+        return;
+      }
+
+      if (isSameMonth) {
+        // If the earning is still in the same month, update the total by the difference between the new and prev amount
+        monthData.totalEarnings += earning.amount - prevAmount;
+        return oldData.map((m) =>
+          m.month === monthData.month ? monthData : m
+        );
+      } else {
+        // If the earning has moved to a different month, subtract the prev amount from the prev month
+        monthData.totalEarnings -= prevAmount;
+        return oldData.map((m) =>
+          m.month === monthData.month ? monthData : m
+        );
+      }
+    }
+  );
+
+  if (!isSameMonth) {
+    // Only update the new month if the month has changed
+    queryClient.setQueryData<MonthlyEarningTotal[]>(
+      ["yearEarnings", { year: newMonthYear.year }],
+      (oldData) => {
+        const monthData = oldData?.find(
+          (data) => data.month === newMonthYear.month
+        );
+
+        if (!monthData || !oldData) {
+          return;
+        }
+
+        // If the earning has moved to a different month, add the new amount to the new month
+        monthData.totalEarnings += earning.amount;
+        return oldData.map((m) =>
+          m.month === monthData.month ? monthData : m
+        );
+      }
+    );
+  }
+}

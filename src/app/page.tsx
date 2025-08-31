@@ -17,7 +17,6 @@ import {
 } from "@/types/DTO/dataTypes";
 import ExpensesList from "@/components/elements/home/ExpensesList";
 import { AlertContext } from "@/contexts/AlertContext";
-import { toggleStatusErrorAlert } from "@/utils/toggleAlerts";
 import NewChanges from "@/components/elements/home/NewChanges";
 import { LuPlus } from "react-icons/lu";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -34,9 +33,7 @@ import Totals from "@/components/elements/home/Totals";
 import { useAddExpense, useExpenses } from "@/utils/hooks/reactQueryExpenses";
 import { useAddEarning } from "@/utils/hooks/reactQueryEarnings";
 
-// TODO test if requesting data from different id than real currentUser throws the expected error
-// TODO check where unnecessary re-renders are occurring
-// TODO add settings menu where user can change color of earning and expenses (red, green or grey, for a negative or neutral value)
+// TODO add settings menu where currentUser can change color of earning and expenses (red, green or grey, for a negative or neutral value)
 // TODO Add translations
 // TODO go over the whole props passing chain and check if any improper defaults are being used
 const Home = () => {
@@ -44,8 +41,8 @@ const Home = () => {
   const [filterId, setFilterId] = useState<ExpenseListType>();
 
   return (
-    <div className="">
-      <Navbar setIsAddDialogOpen={setIsAddDialogOpen} filterId={filterId} />
+    <div>
+      <Navbar setIsAddDialogOpen={setIsAddDialogOpen} />
       <Suspense>
         <PageContents
           isAddDialogOpen={isAddDialogOpen}
@@ -78,7 +75,6 @@ const PageContents = ({
   const [monthYear, setMonthYear] = useState<MonthYearType>(
     getCurrentMonthYear()
   );
-  const [currentGroup, setCurrentGroup] = useState<ExpenseGroupDTO>();
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -87,7 +83,6 @@ const PageContents = ({
   const { expenseGroups, error, isLoading } = useExpenseGroups(currentUser);
 
   // Runs after sign in to either redirect to profile page or set group
-  // TODO sometimes there is a flicker when changing from profile to home page
   useEffect(() => {
     const selectDefaultPage = (groups: ExpenseGroupDTO[]) => {
       if (!groups || groups.length === 0) {
@@ -98,16 +93,10 @@ const PageContents = ({
         const groupIdParam = searchParams.get("groupId");
         const groupParam = groups.find((group) => group.id === groupIdParam);
 
-        try {
-          // If groupId is not provided or not found, use the first group (favourite group)
-          setFilterId({
-            groupId: groupParam ? groupParam.id : groups[0].id,
-            groupName: groupParam ? groupParam.name : groups[0].name,
-          });
-          setCurrentGroup(groupParam ?? groups[0]);
-        } catch (error) {
-          toggleStatusErrorAlert(alertContext.current, "GENERIC", error);
-        }
+        // If groupId is not provided or not found, use the first group (favourite group)
+        setFilterId({
+          groupId: groupParam ? groupParam.id : groups[0].id,
+        });
       }
     };
 
@@ -143,7 +132,7 @@ const PageContents = ({
         <AddDialog
           isDialogOpen={isAddDialogOpen}
           setIsDialogOpen={setIsAddDialogOpen}
-          user={currentUser}
+          currentUser={currentUser}
           createExpense={createExpense}
           createEarning={createEarning}
           filterId={filterId}
@@ -167,7 +156,7 @@ const PageContents = ({
       </div>
       <div className="mx-1.5 -mt-12">
         <section className="mx-4 flex flex-col items-center">
-          <Totals currentGroup={currentGroup} />
+          <Totals groupId={filterId?.groupId} />
         </section>
         <section className="mt-4 md:mt-10">
           <div className="mx-1 mt-5 mb-5">

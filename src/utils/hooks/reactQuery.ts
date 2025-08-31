@@ -14,10 +14,9 @@ import { toggleStatusErrorAlert } from "@/utils/toggleAlerts";
 import { AlertContext } from "@/contexts/AlertContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { FirebaseError } from "@firebase/util";
-import { sortExpenseGroups } from "@/utils/sorters";
 
-// TODO improve all generic error messages
-// TODO in mutation hooks don't return the given transaction value, actually use the updated value from firebase for query invalidation/updates
+import { sortExpenseGroups } from "@/utils/utils";
+
 export const useCurrentUser = () => {
   const { data: session } = useSession();
   const queryClient = useQueryClient();
@@ -72,7 +71,7 @@ export const useExpenseGroups = (currentUser?: UserDTO) => {
     isSuccess,
     isError,
   } = useQuery({
-    queryKey: ["groups", currentUser?.id],
+    queryKey: ["groups"],
     queryFn: async () => {
       const expenseGroups = await getExpenseGroupsFirebase(currentUser!.id);
       return sortExpenseGroups(expenseGroups, currentUser!.groupId);
@@ -89,50 +88,3 @@ export const useExpenseGroups = (currentUser?: UserDTO) => {
 
   return { expenseGroups, error, isLoading, isError, isSuccess };
 };
-
-// TODO this function could maybe be adapted to use the useMutation hook
-// This function updates both the current group and the matching element in the group list
-// const handleGroupChange = (
-//   updater: (prevDoc: ExpenseGroupDTO) => ExpenseGroupDTO
-// ) => {
-//   setCurrentGroup((prevState) => {
-//     const newGroup = updater(prevState!);
-//     // TODO MUST MUTATE REACT QUERY STATE
-//     setExpenseGroups((prevState) => {
-//       const updatedGroupIndex = prevState.findIndex(
-//         (group) => group.id === newGroup.id
-//       );
-//       return prevState.toSpliced(updatedGroupIndex, 1, newGroup);
-//     });
-//     return newGroup;
-//   });
-// };
-
-// TODO this should be used from a mutation, handleGroupChange should be removed
-// TODO use this logic if it helps
-// function updateCurrentUserTotalState(
-//   newUserTotal: number | null,
-//   currentUserId: string,
-//   filterId: ExpenseListType,
-//   handleGroupChange: (
-//     updater: (prevDocs: ExpenseGroupDTO) => ExpenseGroupDTO
-//   ) => void
-// ) {
-//   if (newUserTotal != null && filterId.groupId != null) {
-//     // Update the total for the current user
-//     handleGroupChange((prevState) => {
-//       const prevTotal = prevState.totals.find(
-//         (total) => total.id === currentUserId
-//       );
-//       const newTotal: UserTotalDTO = { ...prevTotal!, total: newUserTotal };
-//       const newTotals: UserTotalDTO[] = [
-//         ...prevState.totals.filter((total) => total.id !== currentUserId),
-//         newTotal,
-//       ];
-//       return {
-//         ...prevState,
-//         totals: newTotals,
-//       };
-//     });
-//   }
-// }

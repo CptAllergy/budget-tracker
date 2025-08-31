@@ -24,14 +24,27 @@ export const toggleStatusErrorAlert = (
     }
     case "DELETE_FAILED": {
       setAlertMessage("Unexpected error while deleting");
+      setRefreshEnabled(false);
       break;
     }
     case "ADD_FAILED": {
       setAlertMessage("Unexpected error while creating");
+      setRefreshEnabled(false);
       break;
     }
     case "UPDATE_FAILED": {
       setAlertMessage("Unexpected error while updating");
+      setRefreshEnabled(false);
+      break;
+    }
+    case "EARNINGS_FAILED": {
+      setAlertMessage("Unexpected error while loading earnings");
+      setRefreshEnabled(false);
+      break;
+    }
+    case "EXPENSES_FAILED": {
+      setAlertMessage("Unexpected error while loading expenses");
+      setRefreshEnabled(false);
       break;
     }
     default: {

@@ -9,7 +9,6 @@ import {
 import {
   CreateEarningDTO,
   CreateExpenseDTO,
-  NO_EXPENSE_GROUP,
   UserDTO,
 } from "@/types/DTO/dataTypes";
 import { AlertContext, AlertContextType } from "@/contexts/AlertContext";
@@ -40,30 +39,32 @@ import {
 } from "@/types/transactionFilterTypes";
 import { Timestamp } from "firebase/firestore";
 import { DialogComponent } from "@/components/commons/dialogs/ActionDialog";
+import { useExpenseGroups } from "@/utils/hooks/reactQuery";
+import { getExpenseGroupName } from "@/utils/utils";
 
 const AddDialog = ({
   isDialogOpen,
   setIsDialogOpen,
-  user,
+  currentUser,
   createExpense,
   createEarning,
   filterId,
 }: {
   isDialogOpen: boolean;
   setIsDialogOpen: Dispatch<SetStateAction<boolean>>;
-  user: UserDTO;
+  currentUser: UserDTO;
   createExpense: (expense: CreateExpenseDTO) => void;
   createEarning: (earning: CreateEarningDTO) => void;
   filterId: ExpenseListType | undefined;
 }) => {
+  const alertContext = useRef(useContext(AlertContext));
+
   const [isExpense, setIsExpense] = useState<boolean>(true);
 
-  const alertContext = useRef(useContext(AlertContext));
-  // TODO remove
-  // const expenseGroupsContext = useContext(ExpenseGroupsContext);
-  // const filterId = expenseGroupsContext.filterId;
-
-  const groupName = filterId?.groupName ? filterId.groupName : NO_EXPENSE_GROUP;
+  // TODO add some animation
+  const { expenseGroups, error, isLoading } = useExpenseGroups(currentUser);
+  const getGroupName = getExpenseGroupName(expenseGroups);
+  const groupName = getGroupName(filterId?.groupId ?? null);
 
   const {
     handleSubmit: handleSubmitExpense,
@@ -74,7 +75,7 @@ const AddDialog = ({
   } = useExpenseForm(
     isDialogOpen,
     setIsDialogOpen,
-    user,
+    currentUser,
     createExpense,
     alertContext.current,
     filterId
@@ -89,7 +90,7 @@ const AddDialog = ({
   } = useEarningForm(
     isDialogOpen,
     setIsDialogOpen,
-    user,
+    currentUser,
     createEarning,
     alertContext.current
   );

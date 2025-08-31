@@ -23,6 +23,8 @@ export function getCategoryIcon(
       return "🎁";
     case "housingUtilities":
       return "🏠";
+    case "homeGoods":
+      return "🛋️";
     case "health":
       return "🩺";
     case "entertainment":

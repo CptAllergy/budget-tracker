@@ -25,7 +25,7 @@ const Profile = () => {
 
   const { currentUser, isLoading } = useCurrentUser();
 
-  // Set filter to current user
+  // Set filter to current currentUser
   useEffect(() => {
     if (currentUser) {
       setFilterId({ userId: currentUser.id });
@@ -68,7 +68,7 @@ const Profile = () => {
         <AddDialog
           isDialogOpen={isAddDialogOpen}
           setIsDialogOpen={setIsAddDialogOpen}
-          user={currentUser}
+          currentUser={currentUser}
           createExpense={createExpense}
           createEarning={createEarning}
           filterId={filterId}

@@ -10,7 +10,7 @@ const NewChanges = ({
   isChangeFound: boolean;
   setIsChangeFound: Dispatch<SetStateAction<boolean>>;
 }) => {
-  // TODO refactor to check the group, instead of the second user
+  // TODO refactor to check the group, instead of the second currentUser
   useEffect(() => {
     const checkGroupUpdates = async () => {
       // const latestSecondUser = await getUserByIdFirebase(db, secondUser.id);

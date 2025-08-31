@@ -1,4 +1,4 @@
-import { clsx, type ClassValue } from "clsx";
+import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { MonthYearType } from "@/types/componentTypes";
 import { ExpenseGroupDTO, NO_EXPENSE_GROUP } from "@/types/DTO/dataTypes";
@@ -21,4 +21,25 @@ export function getExpenseGroupName(expenseGroups?: ExpenseGroupDTO[]) {
     const group = expenseGroups.find((group) => group.id === groupId);
     return group ? group.name : NO_EXPENSE_GROUP;
   };
+}
+
+export function sortExpenseGroups(
+  groups: ExpenseGroupDTO[],
+  favouriteGroup?: string
+) {
+  // Sort groups by name
+  const sortedGroups = [...groups].sort((a, b) => a.name.localeCompare(b.name));
+
+  // Move the favourite group to the top if it exists
+  if (favouriteGroup) {
+    const favouriteIndex = sortedGroups.findIndex(
+      (group) => group.id === favouriteGroup
+    );
+    if (favouriteIndex !== -1) {
+      const [favouriteGroup] = sortedGroups.splice(favouriteIndex, 1);
+      sortedGroups.unshift(favouriteGroup);
+    }
+  }
+
+  return sortedGroups;
 }

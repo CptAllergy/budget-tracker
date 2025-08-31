@@ -11,6 +11,7 @@ declare module "next-auth" {
   }
 }
 
+// TODO maybe log into firebase here
 export const { handlers, auth } = NextAuth({
   providers: [Google],
   callbacks: {

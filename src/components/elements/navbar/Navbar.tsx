@@ -9,6 +9,7 @@ import { spaceGrotesk } from "@/styles/fonts";
 import Image from "next/image";
 import budgetTrackerCoinLogo from "../../../../public/assets/coin_budget_tracker.png";
 import {
+  LuArrowUpRight,
   LuBookmark,
   LuBookmarkCheck,
   LuClipboardList,
@@ -27,27 +28,26 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/commons/menus/DrawerMenu";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useCurrentUser, useExpenseGroups } from "@/utils/hooks/reactQuery";
 import { useQueryClient } from "@tanstack/react-query";
-import { ExpenseListType, SetState } from "@/types/componentTypes";
+import { SetState } from "@/types/componentTypes";
 
 type NavbarProps = {
   setIsAddDialogOpen?: SetState<boolean>;
-  filterId?: ExpenseListType;
 };
 
-export const Navbar = ({ setIsAddDialogOpen, filterId }: NavbarProps) => {
+export const Navbar = ({ setIsAddDialogOpen }: NavbarProps) => {
   const { data: session } = useSession();
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     if (session?.user) {
-      // session loaded and user is logged in
+      // session loaded and currentUser is logged in
       setLoading(false);
     }
     if (session === null) {
-      // session loaded but no user
+      // session loaded but no currentUser
       setLoading(false);
     }
   }, [session]);
@@ -56,7 +56,7 @@ export const Navbar = ({ setIsAddDialogOpen, filterId }: NavbarProps) => {
     <>
       <div className="bg-theme-main relative z-10 h-16 w-full border-b-2 border-black">
         <div className="absolute top-0 bottom-0 left-0 ml-2 flex items-center gap-3">
-          {session?.user && <DrawerMenuButton filterId={filterId} />}
+          {session?.user && <DrawerMenuButton />}
           <NavbarBudgetTrackerLogo />
         </div>
         <div className="absolute top-0 right-0 bottom-0 mt-1 mr-2 flex items-center md:mr-4">
@@ -73,7 +73,7 @@ export const Navbar = ({ setIsAddDialogOpen, filterId }: NavbarProps) => {
   );
 };
 
-const DrawerMenuButton = ({ filterId }: { filterId?: ExpenseListType }) => {
+const DrawerMenuButton = () => {
   return (
     <Drawer direction="left" snapPoints={undefined} fadeFromIndex={undefined}>
       <DrawerTrigger>
@@ -81,12 +81,12 @@ const DrawerMenuButton = ({ filterId }: { filterId?: ExpenseListType }) => {
           <LuMenu size="24" className="stroke-[2.5]" />
         </div>
       </DrawerTrigger>
-      <DrawerMenu filterId={filterId} />
+      <DrawerMenu />
     </Drawer>
   );
 };
 
-const DrawerMenu = ({ filterId }: { filterId?: ExpenseListType }) => {
+const DrawerMenu = () => {
   return (
     <DrawerContent
       aria-describedby={"Hello"}
@@ -109,32 +109,33 @@ const DrawerMenu = ({ filterId }: { filterId?: ExpenseListType }) => {
           <LuX className="size-4 [stroke-width:3]" />
         </DrawerClose>
       </DrawerHeader>
-      <NavigationList filterId={filterId} />
+      <NavigationList />
       <DrawerFooter></DrawerFooter>
     </DrawerContent>
   );
 };
 
-// TODO let user pick a favourite group which will become the default for that user
-// TODO allow user to create new groups
+// TODO let currentUser pick a favourite group which will become the default for that currentUser
+// TODO allow currentUser to create new groups
 // TODO instantly update the selected option when it's clicked
-const NavigationList = ({ filterId }: { filterId?: ExpenseListType }) => {
+const NavigationList = () => {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const { currentUser } = useCurrentUser();
 
   const selectedPageStyle = (page: string) => {
-    return pathname.includes(page) //&& !filterId?.groupId
+    return pathname === page
       ? "bg-theme-main hover:bg-theme-hover"
       : "bg-theme-highlight hover:bg-theme-highlight-hover";
   };
 
   const selectedGroupStyle = (groupId: string) => {
-    if (filterId) {
-      return filterId?.groupId && filterId.groupId === groupId
-        ? "bg-theme-main hover:bg-theme-hover"
-        : "bg-theme-highlight hover:bg-theme-highlight-hover";
-    } else {
-      return "bg-theme-highlight hover:bg-theme-highlight-hover";
-    }
+    const selectedGroupId = searchParams.get("groupId") ?? currentUser?.groupId;
+
+    return pathname === "/" && selectedGroupId === groupId
+      ? "bg-theme-main hover:bg-theme-hover"
+      : "bg-theme-highlight hover:bg-theme-highlight-hover";
   };
 
   return (
@@ -142,17 +143,19 @@ const NavigationList = ({ filterId }: { filterId?: ExpenseListType }) => {
       <div className="space-y-3">
         <Link
           href="/profile"
-          className={`${selectedPageStyle("profile")} flex cursor-pointer items-center gap-2 rounded-md border-2 border-black p-1 text-sm/7 shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all sm:gap-3 sm:p-2 sm:text-base`}
+          className={`${selectedPageStyle("/profile")} group flex cursor-pointer items-center gap-2 rounded-md border-2 border-black p-1 text-sm/7 shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all sm:gap-3 sm:p-2 sm:text-base`}
         >
           <LuUser className="size-5 flex-shrink-0" />
-          <div className="truncate font-semibold">Profile</div>
+          <p className="truncate font-semibold">Profile</p>
+          <LuArrowUpRight className="ml-auto size-5 flex-shrink-0 text-gray-800 group-hover:block sm:hidden" />
         </Link>
         <Link
           href="/reports"
-          className={`${selectedPageStyle("reports")} flex cursor-pointer items-center gap-2 rounded-md border-2 border-black p-1 text-sm/7 shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all sm:gap-3 sm:p-2 sm:text-base`}
+          className={`${selectedPageStyle("/reports")} group flex cursor-pointer items-center gap-2 rounded-md border-2 border-black p-1 text-sm/7 shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all sm:gap-3 sm:p-2 sm:text-base`}
         >
           <LuClipboardList className="size-5 flex-shrink-0" />
-          <div className="truncate font-semibold">Reports</div>
+          <p className="truncate font-semibold">Reports</p>
+          <LuArrowUpRight className="ml-auto size-5 flex-shrink-0 text-gray-800 group-hover:block sm:hidden" />
         </Link>
         <hr className="my-4 border-t border-b border-black" />
         <div className="ml-1 font-semibold">Expense Groups</div>

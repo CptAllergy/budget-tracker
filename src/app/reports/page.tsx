@@ -84,7 +84,7 @@ const ReportsContent = () => {
     isSuccess,
   } = useExpenseGroups(currentUser);
 
-  // Set filter to current user
+  // Set filter to current currentUser
   useEffect(() => {
     if (currentUser) {
       setFilterId({ userId: currentUser.id });
@@ -468,6 +468,10 @@ const DonutPieChart = ({
       label: "Housing & Utilities",
       color: "var(--chart-housingUtilities)",
     },
+    homeGoods: {
+      label: "Home Goods",
+      color: "var(--chart-homeGoods)",
+    },
     health: {
       label: "Health",
       color: "var(--chart-health)",
@@ -643,7 +647,7 @@ const FilterSelector = ({
                 >
                   Profile
                 </DropdownMenuRadioItem>
-                <DropdownMenuSeparator />
+                {expenseGroups.length > 0 && <DropdownMenuSeparator />}
                 {expenseGroups.map((expenseGroup) => (
                   <DropdownMenuRadioItem
                     key={expenseGroup.id}
@@ -651,7 +655,6 @@ const FilterSelector = ({
                     onClick={() =>
                       setFilterId({
                         groupId: expenseGroup.id,
-                        groupName: expenseGroup.name,
                       })
                     }
                   >

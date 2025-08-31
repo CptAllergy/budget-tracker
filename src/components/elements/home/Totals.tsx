@@ -6,17 +6,26 @@ import { AlertContext } from "@/contexts/AlertContext";
 import { toggleStatusErrorAlert } from "@/utils/toggleAlerts";
 import { TotalsLoading } from "@/components/loading/elements/home/LoadingHome";
 import { ExpenseGroupDTO } from "@/types/DTO/dataTypes";
+import { useCurrentUser, useExpenseGroups } from "@/utils/hooks/reactQuery";
 
-const Totals = ({
-  currentGroup,
-}: {
-  currentGroup?: ExpenseGroupDTO | undefined;
-}) => {
+const Totals = ({ groupId }: { groupId?: string }) => {
   const alertContext = useRef(useContext(AlertContext));
 
   const [sender, setSender] = useState("");
   const [receiver, setReceiver] = useState("");
   const [balance, setBalance] = useState(0);
+  const [currentGroup, setCurrentGroup] = useState<ExpenseGroupDTO>();
+
+  // TODO improve the state of this class
+  const { currentUser } = useCurrentUser();
+  const { expenseGroups, error, isLoading } = useExpenseGroups(currentUser);
+
+  useEffect(() => {
+    if (expenseGroups) {
+      const group = expenseGroups.find((group) => group.id === groupId);
+      setCurrentGroup(group);
+    }
+  }, [expenseGroups, groupId]);
 
   // TODO refactor this logic to work for any number of users
   useEffect(() => {

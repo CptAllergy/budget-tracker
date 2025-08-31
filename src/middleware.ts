@@ -4,6 +4,8 @@ import { NextResponse } from "next/server";
 export default auth(async (req) => {
   const authorizedUsers = await getAuthorizedUsers();
 
+  // console.log(req?.auth?.currentUser);
+
   if (!authorizedUsers) {
     if (req.nextUrl.pathname !== "/error") {
       const newUrl = new URL("/error", req.nextUrl.origin);
@@ -39,6 +41,7 @@ export const config = {
 /**
  * Returns the authorized users from Firestore, returns undefined if an error is encountered
  */
+// TODO Now that I think about it, this is not very secure, anyone can fetch this list from the client side, change it so that currentUser can only see himself
 async function getAuthorizedUsers(): Promise<string[] | undefined> {
   const authorizedUsersResponse = await fetch(
     "https://firestore.googleapis.com/v1/projects/budget-tracker-f7d03/databases/(default)/documents/authorized"

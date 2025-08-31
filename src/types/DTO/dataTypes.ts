@@ -33,7 +33,6 @@ export type UserDTO = {
   id: string;
   groupId: string;
   name: string;
-  email: string;
 };
 
 export type UserTotalDTO = {

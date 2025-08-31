@@ -2,7 +2,6 @@ import {
   collection,
   deleteDoc,
   doc,
-  DocumentSnapshot,
   getAggregateFromServer,
   getDoc,
   getDocs,
@@ -26,8 +25,6 @@ import { Dispatch, SetStateAction } from "react";
 import { ExpenseListType, MonthYearType } from "@/types/componentTypes";
 import { db } from "@/utils/firebase/config";
 
-// TODO change these function to return the data instead of setting the state directly, so that they can be used with react query. This can be done incrementally by first just returning
-// TODO test getting data for other users, make sure permission are denied
 export async function getCurrentUserFirebase(userId: string) {
   const docRef = doc(db, "users", userId);
   const docSnap = await getDoc(docRef);
@@ -44,6 +41,7 @@ export async function getExpenseGroupsFirebase(userId: string) {
     collection(db, "groups"),
     where("members", "array-contains", userId)
   );
+
   const querySnapshot = await getDocs(queryExpenseGroups);
   return await Promise.all(
     querySnapshot.docs.map(async (doc) => {
@@ -57,6 +55,7 @@ export async function getExpenseGroupsFirebase(userId: string) {
           ...total.data(),
         } as UserTotalDTO;
       });
+
       return {
         id: doc.id,
         ...doc.data(),
@@ -115,26 +114,6 @@ export async function getExpensesMonthlySumFirebase(
   return snapshot.data().totalAmount;
 }
 
-export async function getEarningsMonthlySumFirebase(
-  userId: string,
-  monthYear: MonthYearType
-) {
-  const { firstDay, lastDay } = getMonthYearLimits(monthYear);
-
-  const queryEarnings = query(
-    collection(db, "earnings"),
-    where("timestamp", ">=", firstDay),
-    where("timestamp", "<=", lastDay),
-    where("userId", "==", userId)
-  );
-
-  const snapshot = await getAggregateFromServer(queryEarnings, {
-    totalAmount: sum("amount"),
-  });
-
-  return snapshot.data().totalAmount;
-}
-
 export async function postExpenseFirebase(newExpense: CreateExpenseDTO) {
   const totalRef = newExpense.groupId
     ? doc(db, "groups", newExpense.groupId, "totals", newExpense.userId)
@@ -152,7 +131,7 @@ export async function postExpenseFirebase(newExpense: CreateExpenseDTO) {
       const userTotal = userTotalDoc.data() as UserTotalDTO;
       newUserTotal = userTotal.total + newExpense.amount;
 
-      // Increase user total
+      // Increase currentUser total
       fbTransaction.update(totalRef, {
         total: newUserTotal,
       });
@@ -164,18 +143,10 @@ export async function postExpenseFirebase(newExpense: CreateExpenseDTO) {
     return newUserTotal;
   });
 
-  // Update the reference list
-  // TODO This is the new document, use this to update react query cache instead
-  const expenseDoc = await getDoc(expenseRef);
-  // TODO move this logic to react query cache update
-  // setExpenseDocs((prevDocs) => {
-  //   return [expenseDoc, ...prevDocs];
-  // });
-
-  return newUserTotal;
+  const createdExpense = { id: expenseRef.id, ...newExpense } as ExpenseDTO;
+  return { newUserTotal, createdExpense };
 }
 
-// TODO try deleting an expense from a different userId to see if the security rules work
 export async function deleteExpenseFirebase(expense: ExpenseDTO) {
   const totalRef = expense.groupId
     ? doc(db, "groups", expense.groupId, "totals", expense.userId)
@@ -192,7 +163,7 @@ export async function deleteExpenseFirebase(expense: ExpenseDTO) {
       }
       const userTotal = userTotalDoc.data() as UserTotalDTO;
       newUserTotal = userTotal.total - Number(expense.amount);
-      // Update user total document by the deleted expense
+      // Update currentUser total document by the deleted expense
       fbTransaction.update(totalRef, {
         total: newUserTotal,
       });
@@ -204,24 +175,17 @@ export async function deleteExpenseFirebase(expense: ExpenseDTO) {
     return newUserTotal;
   });
 
-  // Delete reference document from the state
-  // TODO move this logic to react query cache update
-  // setExpenseDocs((prevDocs) => {
-  //   return prevDocs.filter((value) => value.id !== expense.id);
-  // });
-
-  return newUserTotal;
+  return { newUserTotal };
 }
 
-// TODO try updating an expense from a different userId to see if the security rules work
-export async function updateExpenseFirebase(expenseUpdated: ExpenseDTO) {
-  const totalRef = expenseUpdated.groupId
-    ? doc(db, "groups", expenseUpdated.groupId, "totals", expenseUpdated.userId)
+export async function updateExpenseFirebase(updateExpense: ExpenseDTO) {
+  const totalRef = updateExpense.groupId
+    ? doc(db, "groups", updateExpense.groupId, "totals", updateExpense.userId)
     : null;
-  const expenseRef = doc(db, "expenses", expenseUpdated.id);
+  const expenseRef = doc(db, "expenses", updateExpense.id);
 
   // These Firestore operations must run inside an atomic transaction
-  const { newUserTotal, prevTimestamp } = await runTransaction(
+  const { newUserTotal, prevAmount, prevTimestamp } = await runTransaction(
     db,
     async (fbTransaction) => {
       const expenseDoc = await fbTransaction.get(expenseRef);
@@ -234,10 +198,10 @@ export async function updateExpenseFirebase(expenseUpdated: ExpenseDTO) {
           throw "Document does not exist!";
         }
         const userTotal = userTotalDoc.data() as UserTotalDTO;
-        // Update user total document by the updated amount, if it changed
+        // Update currentUser total document by the updated amount, if it changed
 
-        if (expenseOld.amount !== expenseUpdated.amount) {
-          const difference = expenseUpdated.amount - expenseOld.amount;
+        if (expenseOld.amount !== updateExpense.amount) {
+          const difference = updateExpense.amount - expenseOld.amount;
 
           newUserTotal = userTotal.total + difference;
           fbTransaction.update(totalRef, {
@@ -247,44 +211,22 @@ export async function updateExpenseFirebase(expenseUpdated: ExpenseDTO) {
       }
 
       fbTransaction.update(expenseRef, {
-        amount: expenseUpdated.amount,
-        label: expenseUpdated.label,
-        timestamp: expenseUpdated.timestamp,
-        tags: expenseUpdated.tags,
-        category: expenseUpdated.category,
+        amount: updateExpense.amount,
+        label: updateExpense.label,
+        timestamp: updateExpense.timestamp,
+        tags: updateExpense.tags,
+        category: updateExpense.category,
       });
 
       return {
         newUserTotal: newUserTotal,
+        prevAmount: expenseOld.amount,
         prevTimestamp: expenseOld.timestamp,
       };
     }
   );
 
-  // Replace the expense document in the state
-  // TODO this is the new document, use this to update react query cache instead
-  const expenseDoc = await getDoc(expenseRef);
-  // TODO move this logic to react query cache update
-  // setExpenseDocs((prevDocs) => {
-  //   const filteredList = prevDocs.filter((value) => value.id !== expenseDoc.id);
-  //
-  //   const isSameMonth =
-  //     prevTimestamp.toDate().getMonth() ===
-  //       expenseDoc.data()?.timestamp.toDate().getMonth() &&
-  //     prevTimestamp.toDate().getFullYear() ===
-  //       expenseDoc.data()?.timestamp.toDate().getFullYear();
-  //
-  //   // Sort by timestamp
-  //   if (isSameMonth) {
-  //     return [expenseDoc, ...filteredList].sort((a, b) =>
-  //       a.data()?.timestamp < b.data()?.timestamp ? 1 : -1
-  //     );
-  //   } else {
-  //     return filteredList;
-  //   }
-  // });
-
-  return { newUserTotal, prevTimestamp };
+  return { newUserTotal, prevAmount, prevTimestamp };
 }
 
 export async function getEarningsFirebase(
@@ -310,76 +252,64 @@ export async function getEarningsFirebase(
   return earnings;
 }
 
+export async function getEarningsMonthlySumFirebase(
+  userId: string,
+  monthYear: MonthYearType
+) {
+  const { firstDay, lastDay } = getMonthYearLimits(monthYear);
+
+  const queryEarnings = query(
+    collection(db, "earnings"),
+    where("timestamp", ">=", firstDay),
+    where("timestamp", "<=", lastDay),
+    where("userId", "==", userId)
+  );
+
+  const snapshot = await getAggregateFromServer(queryEarnings, {
+    totalAmount: sum("amount"),
+  });
+
+  return snapshot.data().totalAmount;
+}
+
 export async function postEarningFirebase(newEarning: CreateEarningDTO) {
   const earningRef = doc(collection(db, "earnings"));
-
   // Add earning document
   await setDoc(earningRef, newEarning);
 
-  // Update earnings list
-  const earningDoc = await getDoc(earningRef);
-  const earning = { id: earningDoc.id, ...earningDoc.data() } as EarningDTO;
-  // TODO move this logic to react query cache update
-  // setEarnings((prevDocs) => {
-  //   return [earning, ...prevDocs];
-  // });
-
-  return earning;
+  return { createdEarning: { id: earningRef.id, ...newEarning } as EarningDTO };
 }
 
 export async function deleteEarningFirebase(earning: EarningDTO) {
   const earningRef = doc(db, "earnings", earning.id);
-
-  // Delete transaction document
   await deleteDoc(earningRef);
-
-  // Delete reference document from the state
-  // setEarnings((prevDocs) => {
-  //   return prevDocs.filter((value) => value.id !== earning.id);
-  // });
 }
 
 export async function updateEarningFirebase(earningUpdated: EarningDTO) {
   const earningRef = doc(db, "earnings", earningUpdated.id);
 
-  // These Firestore operations must run inside an atomic transaction
-  const prevTimestamp = await runTransaction(db, async (fbTransaction) => {
-    const earningDoc = await fbTransaction.get(earningRef);
-    const earningOld = earningDoc.data() as EarningDTO;
+  // Uses a transaction to ensure previous timestamp value
+  const { prevAmount, prevTimestamp } = await runTransaction(
+    db,
+    async (fbTransaction) => {
+      const earningDoc = await fbTransaction.get(earningRef);
+      const earningOld = earningDoc.data() as EarningDTO;
 
-    fbTransaction.update(earningRef, {
-      amount: earningUpdated.amount,
-      label: earningUpdated.label,
-      timestamp: earningUpdated.timestamp,
-      category: earningUpdated.category,
-    });
+      fbTransaction.update(earningRef, {
+        amount: earningUpdated.amount,
+        label: earningUpdated.label,
+        timestamp: earningUpdated.timestamp,
+        category: earningUpdated.category,
+      });
 
-    return earningOld.timestamp;
-  });
+      return {
+        prevAmount: earningOld.amount,
+        prevTimestamp: earningOld.timestamp,
+      };
+    }
+  );
 
-  // Replace earning in the state
-  const earningDoc = await getDoc(earningRef);
-  const earning = { id: earningDoc.id, ...earningDoc.data() } as EarningDTO;
-  // setEarnings((prevDocs) => {
-  //   const filteredList = prevDocs.filter((value) => value.id !== earning.id);
-  //
-  //   const isSameMonth =
-  //     prevTimestamp.toDate().getMonth() ===
-  //       earning.timestamp.toDate().getMonth() &&
-  //     prevTimestamp.toDate().getFullYear() ===
-  //       earning.timestamp.toDate().getFullYear();
-  //
-  //   // Sort by timestamp
-  //   if (isSameMonth) {
-  //     return [earning, ...filteredList].sort((a, b) =>
-  //       a.timestamp < b.timestamp ? 1 : -1
-  //     );
-  //   } else {
-  //     return filteredList;
-  //   }
-  // });
-
-  return { prevTimestamp, earning };
+  return { prevAmount, prevTimestamp };
 }
 
 function getMonthYearLimits(monthYear?: MonthYearType): {

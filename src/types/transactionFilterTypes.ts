@@ -6,6 +6,7 @@ export const EXPENSE_CATEGORIES = [
   "investments",
   "gifts",
   "housingUtilities",
+  "homeGoods",
   "health",
   "entertainment",
   "personalCare",
