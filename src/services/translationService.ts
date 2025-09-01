@@ -1,6 +1,8 @@
 import en from "@/utils/i18n/en.json";
 
-export function translate(translationKey: string): string | undefined {
+export function translate(translationKey?: string): string | undefined {
+  if (!translationKey) return undefined;
+
   const keys = translationKey.split(".");
   let current: any = en;
 

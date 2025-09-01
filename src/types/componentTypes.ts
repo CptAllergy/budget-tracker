@@ -19,16 +19,17 @@ export type FormInputType = {
   formState: FormState<CreateExpenseDTO | CreateEarningDTO>;
 };
 
+export type SelectOptionType = {
+  label: string;
+  value: string;
+};
+
 export type ExpenseListType =
   | { groupId: string; userId?: never }
   | { userId: string; groupId?: never };
 
 export type MonthYearType = {
   month: number;
-  year: number;
-};
-
-export type YearType = {
   year: number;
 };
 

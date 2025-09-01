@@ -41,20 +41,22 @@ export const AlertSnackbar = () => {
             <span className="pr-3">
               <FaTerminal size={13} />
             </span>
-            <span className="w-full">{alertMessage}</span>
-            {/*TODO this refresh text is broken, must fix*/}
-            {isRefreshEnabled ? (
-              <>
-                <span className="ml-1">. Please</span>
-                <span
-                  onClick={() => window.location.reload()}
-                  className="mr-1 ml-1 cursor-pointer text-blue-400 hover:text-blue-300 hover:underline"
-                >
-                  refresh
-                </span>
-                <span>the page.</span>
-              </>
-            ) : (
+            <p className="w-full">
+              {alertMessage}
+              {isRefreshEnabled && (
+                <>
+                  . Please
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="text-theme-main hover:text-theme-hover mr-1 ml-1 cursor-pointer hover:underline"
+                  >
+                    refresh
+                  </button>
+                  the page
+                </>
+              )}
+            </p>
+            {!isRefreshEnabled && (
               <span
                 onClick={() => setAlertEnabled(false)}
                 className="hover:bg-opacity-50 ml-2 cursor-pointer rounded-xl p-0.5 text-black hover:bg-gray-600 hover:text-gray-800"
