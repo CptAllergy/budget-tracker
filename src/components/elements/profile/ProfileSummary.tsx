@@ -4,6 +4,7 @@ import { rancho } from "@/styles/fonts";
 import { TotalsLoading } from "@/components/loading/elements/home/LoadingHome";
 import { EarningDTO, ExpenseDTO, UserDTO } from "@/types/DTO/dataTypes";
 import { useMemo } from "react";
+import { useTranslate } from "@/utils/hooks/useTranslation";
 
 const ProfileSummary = ({
   currentUser,
@@ -14,6 +15,7 @@ const ProfileSummary = ({
   expenses: ExpenseDTO[];
   earnings: EarningDTO[];
 }) => {
+  const { t } = useTranslate();
   const totalEarnings = useMemo(() => {
     return earnings.reduce((total, earning) => total + earning.amount, 0);
   }, [earnings]);
@@ -44,7 +46,7 @@ const ProfileSummary = ({
           className={`${rancho.className} bg-theme-secondary w-full max-w-4xl rounded-md border-2 border-black py-2 text-center text-2xl shadow-[5px_5px_0px_rgba(0,0,0,1)] md:text-2xl`}
         >
           <h3 className="mx-2 mb-2 flex justify-between text-xl md:mx-4 md:text-3xl">
-            <span>Month Summary</span>
+            <span>{t("profile.monthSummary")}</span>
             <span>{currentUser?.name}</span>
           </h3>
           <div className="mx-4 mt-3 sm:flex sm:items-center sm:justify-center">
@@ -52,13 +54,13 @@ const ProfileSummary = ({
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <div>
                   <div>
-                    <span>Spent: </span>
+                    <span>{t("profile.spent")}: </span>
                     <span className="text-negative-dark">
                       -{Number(totalExpenses - investmentExpenses).toFixed(2)}€
                     </span>
                   </div>
                   <div>
-                    <span>Earned: </span>
+                    <span>{t("profile.earned")}: </span>
                     <span className="text-positive-dark">
                       +{totalEarnings.toFixed(2)}€
                     </span>
@@ -66,7 +68,7 @@ const ProfileSummary = ({
                 </div>
                 <div>
                   <div>
-                    <span>Net Balance: </span>
+                    <span>{t("profile.balance")}: </span>
                     <span
                       className={`${netBalance >= 0 ? "text-positive-dark" : "text-negative-dark"} underline underline-offset-3`}
                     >
@@ -80,7 +82,7 @@ const ProfileSummary = ({
                   </div>
                   {investmentExpenses > 0 && (
                     <div>
-                      <span>Invested: </span>
+                      <span>{t("profile.invested")}: </span>
                       <span>{investmentExpenses.toFixed(2)}€</span>
                     </div>
                   )}

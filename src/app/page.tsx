@@ -34,7 +34,6 @@ import { useAddExpense, useExpenses } from "@/utils/hooks/reactQueryExpenses";
 import { useAddEarning } from "@/utils/hooks/reactQueryEarnings";
 
 // TODO add settings menu where currentUser can change color of earning and expenses (red, green or grey, for a negative or neutral value)
-// TODO Add translations
 // TODO go over the whole props passing chain and check if any improper defaults are being used
 const Home = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);

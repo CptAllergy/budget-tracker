@@ -14,6 +14,7 @@ import { getCurrentMonthYear } from "@/utils/utils";
 import ProfileSummary from "@/components/elements/profile/ProfileSummary";
 import { useAddExpense, useExpenses } from "@/utils/hooks/reactQueryExpenses";
 import { useAddEarning, useEarnings } from "@/utils/hooks/reactQueryEarnings";
+import { useTranslate } from "@/utils/hooks/useTranslation";
 
 const Profile = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -128,6 +129,8 @@ const TransactionTabs = ({
   toggleExpenses: boolean;
   setToggleExpenses: Dispatch<SetStateAction<boolean>>;
 }) => {
+  const { t } = useTranslate();
+
   return (
     <div className="mx-auto flex max-w-6xl flex-col">
       <div className="inline-block min-w-full px-3 py-1 align-middle md:py-2">
@@ -136,13 +139,13 @@ const TransactionTabs = ({
             onClick={() => setToggleExpenses(true)}
             className={`${toggleExpenses ? "bg-theme-main hover:bg-theme-hover border-2 border-black" : "hover:bg-theme-highlight-hover"} rounded-md p-1 text-center transition-colors hover:cursor-pointer`}
           >
-            📉 Expenses
+            📉 {t("expenses.expenses")}
           </div>
           <div
             onClick={() => setToggleExpenses(false)}
             className={`${!toggleExpenses ? "bg-theme-main hover:bg-theme-hover border-2 border-black" : "hover:bg-theme-highlight-hover"} rounded-md p-1 text-center transition-colors hover:cursor-pointer`}
           >
-            📈 Earnings
+            📈 {t("earnings.earnings")}
           </div>
         </div>
       </div>

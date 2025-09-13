@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import { Dispatch, SetStateAction } from "react";
 import { EarningDTO, ExpenseDTO } from "@/types/DTO/dataTypes";
 import { DialogComponent } from "@/components/commons/dialogs/ActionDialog";
+import { useTranslate } from "@/utils/hooks/useTranslation";
 
 type DeleteDialogProps = {
   isDialogOpen: boolean;
@@ -32,6 +33,7 @@ const DeleteDialog = ({
     );
   }
 
+  const { t } = useTranslate();
   const transactionType = removeExpenseData ? "expense" : "earning";
 
   const deleteTransaction = () => {
@@ -54,8 +56,8 @@ const DeleteDialog = ({
 
   return (
     <DialogComponent
-      dialogTitle={`Delete ${transactionType.charAt(0).toUpperCase() + transactionType.slice(1)}`}
-      confirmText="Delete"
+      dialogTitle={`${t("actions.delete")} ${t(transactionType === "expense" ? "expenses.expense" : "earnings.earning")}`}
+      confirmText={t("actions.delete")}
       confirmAction={deleteTransaction}
       isDialogOpen={isDialogOpen}
       setIsDialogOpen={setIsDialogOpen}
@@ -75,7 +77,13 @@ const DeleteDialog = ({
         </p>
       )}
       <p className="mt-2 text-sm font-medium">
-        Are you sure you want to delete this {transactionType}?
+        {t("actions.deleteCheck")}{" "}
+        {t(
+          transactionType === "expense"
+            ? "expenses.expense"
+            : "earnings.earning"
+        ).toLowerCase()}
+        ?
       </p>
     </DialogComponent>
   );

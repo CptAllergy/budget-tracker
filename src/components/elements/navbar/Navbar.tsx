@@ -15,6 +15,7 @@ import {
   LuClipboardList,
   LuMenu,
   LuPlus,
+  LuSettings,
   LuUser,
   LuX,
 } from "react-icons/lu";
@@ -32,6 +33,8 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useCurrentUser, useExpenseGroups } from "@/utils/hooks/reactQuery";
 import { useQueryClient } from "@tanstack/react-query";
 import { SetState } from "@/types/componentTypes";
+import { useTranslate } from "@/utils/hooks/useTranslation";
+import { SettingsDialog } from "@/components/commons/dialogs/SettingsDialog";
 
 type NavbarProps = {
   setIsAddDialogOpen?: SetState<boolean>;
@@ -74,6 +77,8 @@ export const Navbar = ({ setIsAddDialogOpen }: NavbarProps) => {
 };
 
 const DrawerMenuButton = () => {
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
   return (
     <Drawer direction="left" snapPoints={undefined} fadeFromIndex={undefined}>
       <DrawerTrigger>
@@ -81,12 +86,17 @@ const DrawerMenuButton = () => {
           <LuMenu size="24" className="stroke-[2.5]" />
         </div>
       </DrawerTrigger>
-      <DrawerMenu />
+      <SettingsDialog isOpen={isSettingsOpen} setIsOpen={setIsSettingsOpen} />
+      <DrawerMenu setIsSettingsOpen={setIsSettingsOpen} />
     </Drawer>
   );
 };
 
-const DrawerMenu = () => {
+const DrawerMenu = ({
+  setIsSettingsOpen,
+}: {
+  setIsSettingsOpen: SetState<boolean>;
+}) => {
   return (
     <DrawerContent
       aria-describedby={"Hello"}
@@ -110,7 +120,14 @@ const DrawerMenu = () => {
         </DrawerClose>
       </DrawerHeader>
       <NavigationList />
-      <DrawerFooter></DrawerFooter>
+      <DrawerFooter className="flex flex-row items-center justify-between">
+        <DrawerClose
+          onClick={() => setIsSettingsOpen(true)}
+          className="bg-theme-highlight hover:bg-theme-highlight-hover mb-2 rounded-md border-2 border-black p-2 shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all hover:shadow-[3px_3px_0px_rgba(0,0,0,1)] sm:mr-1"
+        >
+          <LuSettings className="size-6 flex-shrink-0" />
+        </DrawerClose>
+      </DrawerFooter>
     </DrawerContent>
   );
 };
@@ -119,6 +136,7 @@ const DrawerMenu = () => {
 // TODO allow currentUser to create new groups
 // TODO instantly update the selected option when it's clicked
 const NavigationList = () => {
+  const { t } = useTranslate();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -146,7 +164,7 @@ const NavigationList = () => {
           className={`${selectedPageStyle("/profile")} group flex cursor-pointer items-center gap-2 rounded-md border-2 border-black p-1 text-sm/7 shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all sm:gap-3 sm:p-2 sm:text-base`}
         >
           <LuUser className="size-5 flex-shrink-0" />
-          <p className="truncate font-semibold">Profile</p>
+          <p className="truncate font-semibold">{t("navbar.profile")}</p>
           <LuArrowUpRight className="ml-auto size-5 flex-shrink-0 text-gray-800 group-hover:block sm:hidden" />
         </Link>
         <Link
@@ -154,11 +172,11 @@ const NavigationList = () => {
           className={`${selectedPageStyle("/reports")} group flex cursor-pointer items-center gap-2 rounded-md border-2 border-black p-1 text-sm/7 shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all sm:gap-3 sm:p-2 sm:text-base`}
         >
           <LuClipboardList className="size-5 flex-shrink-0" />
-          <p className="truncate font-semibold">Reports</p>
+          <p className="truncate font-semibold">{t("navbar.reports")}</p>
           <LuArrowUpRight className="ml-auto size-5 flex-shrink-0 text-gray-800 group-hover:block sm:hidden" />
         </Link>
         <hr className="my-4 border-t border-b border-black" />
-        <div className="ml-1 font-semibold">Expense Groups</div>
+        <div className="ml-1 font-semibold">{t("navbar.expenseGroups")}</div>
         <ExpenseGroupList selectedGroupStyle={selectedGroupStyle} />
       </div>
     </div>
@@ -257,9 +275,10 @@ const NavbarUserOptions = ({
 }: {
   setIsAddDialogOpen?: Dispatch<SetStateAction<boolean>>;
 }) => {
+  const { t } = useTranslate();
   const queryClient = useQueryClient();
   return (
-    <div className="flex items-center space-x-5">
+    <div className="flex items-center space-x-3">
       {setIsAddDialogOpen && (
         <div className="flex space-x-2">
           <button
@@ -267,18 +286,18 @@ const NavbarUserOptions = ({
             onClick={() => setIsAddDialogOpen(true)}
           >
             <LuPlus size="20" className="stroke-[2.5]" />
-            <span>New</span>
+            <span>{t("navbar.newTransaction")}</span>
           </button>
         </div>
       )}
       <button
-        className="mr-5 font-bold text-white underline"
+        className="bg-theme-secondary hover:bg-theme-secondary-hover flex items-center space-x-1 rounded-md border-2 border-black px-2 py-1 font-semibold text-black shadow-[3px_3px_0px_rgba(0,0,0,1)] transition-all hover:shadow-[4px_4px_0px_rgba(0,0,0,1)]"
         onClick={() => {
           queryClient.clear();
           void signOut();
         }}
       >
-        Sign Out
+        {t("navbar.signOut")}
       </button>
     </div>
   );

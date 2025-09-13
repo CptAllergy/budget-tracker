@@ -19,6 +19,7 @@ import {
   useDeleteEarning,
   useUpdateEarning,
 } from "@/utils/hooks/reactQueryEarnings";
+import { useTranslate } from "@/utils/hooks/useTranslation";
 
 const EarningsList = ({
   earnings,
@@ -122,6 +123,7 @@ const EarningTable = ({
   showDeleteDialog: (earning: EarningDTO) => void;
   showEditDialog: (earning: EarningDTO) => void;
 }) => {
+  const { t } = useTranslate();
   return (
     <div className="overflow-hidden rounded-md border-2 border-black shadow-[5px_5px_0px_rgba(0,0,0,1)]">
       <table className="w-full">
@@ -131,25 +133,25 @@ const EarningTable = ({
               scope="col"
               className="py-3.5 pr-3 pl-6 text-left text-sm font-semibold text-gray-900"
             >
-              Description
+              {t("form.description")}
             </th>
             <th
               scope="col"
               className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
             >
-              Amount
+              {t("form.amount")}
             </th>
             <th
               scope="col"
               className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
             >
-              Category
+              {t("form.category")}
             </th>
             <th
               scope="col"
               className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell"
             >
-              Date
+              {t("form.date")}
             </th>
             <th
               scope="col"
@@ -164,7 +166,7 @@ const EarningTable = ({
                 colSpan={7}
                 className="px-3 py-4 text-sm whitespace-nowrap text-gray-500"
               >
-                No earnings found
+                {t("earnings.table.noEarnings")}
               </td>
             </tr>
           )}
@@ -217,12 +219,13 @@ const EarningCards = ({
   showDeleteDialog: (earningDTO: EarningDTO) => void;
   showEditDialog: (earningDTO: EarningDTO) => void;
 }) => {
+  const { t } = useTranslate();
   return (
     <div>
       {earnings.length === 0 && (
         <div>
           <div className="bg-theme-highlight mt-3 rounded-md border-2 border-black px-3 py-4 text-sm whitespace-nowrap text-gray-500 shadow-[2px_2px_0px_rgba(0,0,0,1)]">
-            No earnings found
+            {t("earnings.table.noEarnings")}
           </div>
         </div>
       )}
@@ -250,25 +253,22 @@ const EarningCards = ({
               <div className="flex justify-between">
                 <div>
                   <dt className="mb-0.5 text-xs font-medium text-black/40">
-                    Category
+                    {t("form.category")}
                   </dt>
                   <dd className="mb-2 font-semibold text-black/70">
                     {earning.category}
                   </dd>
                   <dt className="mb-0.5 text-xs font-medium text-black/40">
-                    Tags
+                    {t("form.tags")}
                   </dt>
                 </div>
                 <dl className="text-right">
                   <dt className="mb-0.5 text-xs font-medium text-black/40">
-                    Date
+                    {t("form.date")}
                   </dt>
                   <dd className="mb-2 font-semibold text-black/70">
                     {timestampToDate(earning.timestamp)}
                   </dd>
-                  <dt className="mb-0.5 text-xs font-medium text-black/40">
-                    User
-                  </dt>
                 </dl>
               </div>
               <div className="text-right">
@@ -298,6 +298,7 @@ const EarningDropdownMenu = ({
   showDeleteDialog: (earning: EarningDTO) => void;
   showEditDialog: (earning: EarningDTO) => void;
 }) => {
+  const { t } = useTranslate();
   return (
     <div>
       {currentUser.id === selectedEarning.userId && (
@@ -310,14 +311,14 @@ const EarningDropdownMenu = ({
           menuItems={[
             {
               icon: <></>,
-              label: "Edit",
+              label: t("actions.edit"),
               onClick: () => {
                 showEditDialog(selectedEarning);
               },
             },
             {
               icon: <></>,
-              label: "Delete",
+              label: t("actions.delete"),
               onClick: () => {
                 showDeleteDialog(selectedEarning);
               },

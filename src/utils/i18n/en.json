@@ -1,5 +1,77 @@
 {
+  "navbar": {
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "profile": "Profile",
+    "reports": "Reports",
+    "expenseGroups": "Expense Groups",
+    "settings": "Settings",
+    "newTransaction": "New"
+  },
+  "totals": {
+    "owes": "owes"
+  },
+  "profile": {
+    "monthSummary": "Month Summary",
+    "spent": "Spent",
+    "earned": "Earned",
+    "balance": "Net Balance",
+    "invested": "Invested"
+  },
+  "reports": {
+    "filter": "Report Filter",
+    "yearChart": "Year Chart",
+    "yearLoading": "Loading monthly expenses...",
+    "yearEmpty": "Failed to load data for the selected year",
+    "monthChart": "Month Breakdown",
+    "monthEmpty": "No transactions found for the selected month",
+    "profile": "Profile",
+    "selectMonth": "Select Month",
+    "loading": "Loading..."
+  },
+  "login": {
+    "sessionExpired": "Your session has expired. Please login again",
+    "welcome": "Welcome to Budget Tracker!",
+    "description": "Budget Tracker simplifies money management between two people by tracking transactions for both parties. It helps you keep tabs on shared expenses and calculates how much you owe each other."
+  },
+  "settings": {
+    "settings": "Settings",
+    "personalization": "Personalization",
+    "general": "General",
+    "language": "Language"
+  },
+  "actions": {
+    "creating": "Creating",
+    "edit": "Edit",
+    "update": "Update",
+    "delete": "Delete",
+    "deleteCheck": "Are you sure you want to delete this"
+  },
+  "form": {
+    "create": "Create",
+    "cancel": "Cancel",
+    "description": "Description",
+    "amount": "Amount",
+    "category": "Category",
+    "tags": "Tags",
+    "date": "Date",
+    "user": "User",
+    "pickTags": "Pick Tags",
+    "pickDate": "Pick a date",
+    "group": "Group",
+    "descriptionRequired": "Description is required",
+    "amountRequired": "Amount is required",
+    "amountMin": "Amount must be positive",
+    "amountMax": "Amount can't be higher than 5000",
+    "dateRequired": "Date is required",
+    "dateFuture": "Date cannot be in the future"
+  },
   "expenses": {
+    "expense": "Expense",
+    "expenses": "Expenses",
+    "table": {
+      "noExpenses": "No expenses found"
+    },
     "categories": {
       "other": "Other",
       "groceries": "Groceries",
@@ -29,6 +101,11 @@
     }
   },
   "earnings": {
+    "earning": "Earning",
+    "earnings": "Earnings",
+    "table": {
+      "noEarnings": "No earnings found"
+    },
     "categories": {
       "other": "Other",
       "salary": "Salary",

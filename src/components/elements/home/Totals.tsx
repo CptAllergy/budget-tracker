@@ -7,8 +7,10 @@ import { toggleStatusErrorAlert } from "@/utils/toggleAlerts";
 import { TotalsLoading } from "@/components/loading/elements/home/LoadingHome";
 import { ExpenseGroupDTO } from "@/types/DTO/dataTypes";
 import { useCurrentUser, useExpenseGroups } from "@/utils/hooks/reactQuery";
+import { useTranslate } from "@/utils/hooks/useTranslation";
 
 const Totals = ({ groupId }: { groupId?: string }) => {
+  const { t } = useTranslate();
   const alertContext = useRef(useContext(AlertContext));
 
   const [sender, setSender] = useState("");
@@ -64,7 +66,7 @@ const Totals = ({ groupId }: { groupId?: string }) => {
         <div className="bg-theme-secondary w-full max-w-4xl rounded-md border-2 border-black py-1 text-center shadow-[5px_5px_0px_rgba(0,0,0,1)]">
           <div className={`${rancho.className} text-2xl md:text-3xl`}>
             <span className="">
-              {sender} owes {receiver}{" "}
+              {sender} {t("totals.owes")} {receiver}{" "}
             </span>
             <span className="font-bold">{Number(balance).toFixed(2)}€</span>
           </div>

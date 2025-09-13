@@ -1,3 +1,5 @@
+"use client";
+
 import { DayButton, DayPicker, getDefaultClassNames } from "react-day-picker";
 import { cn } from "@/utils/utils";
 import * as React from "react";
@@ -16,6 +18,7 @@ import {
 } from "lucide-react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { Slot } from "@radix-ui/react-slot";
+import { useTranslate } from "@/utils/hooks/useTranslation";
 
 function Calendar({
   className,
@@ -30,6 +33,7 @@ function Calendar({
   buttonVariant?: React.ComponentProps<typeof CalendarButton>["variant"];
 }) {
   const defaultClassNames = getDefaultClassNames();
+  const { locale } = useTranslate();
 
   return (
     <DayPicker
@@ -43,7 +47,7 @@ function Calendar({
       captionLayout={captionLayout}
       formatters={{
         formatMonthDropdown: (date) =>
-          date.toLocaleString("default", { month: "short" }),
+          date.toLocaleString(locale, { month: "short" }),
         ...formatters,
       }}
       classNames={{
@@ -279,6 +283,7 @@ const FormCalendarWrapper = ({
   formState: FormState<CreateExpenseDTO | CreateEarningDTO>;
   currentDate: Date | undefined;
 }>) => {
+  const { t, getFnsLocale } = useTranslate();
   return (
     <FormInputError fieldName="newDate" formState={formState}>
       <Popover>
@@ -292,8 +297,10 @@ const FormCalendarWrapper = ({
               className={`${currentDate ? "text-black" : "text-gray-400"} transition-colors duration-200`}
             >
               {currentDate
-                ? format(currentDate, "do MMM, yyyy")
-                : "Pick a date"}
+                ? format(currentDate, "do MMM, yyyy", {
+                    locale: getFnsLocale(),
+                  })
+                : t("form.pickDate")}
             </p>
           </span>
         </PopoverButton>
@@ -317,6 +324,7 @@ const FormInputExpenseCalendar = ({
   control: Control<CreateExpenseDTO>;
   formState: FormState<CreateExpenseDTO>;
 }) => {
+  const { t } = useTranslate();
   const currentDate = useWatch({ control, name: "newDate" });
   const startMonth = new Date(2020, 0); // January 2020
 
@@ -326,9 +334,8 @@ const FormInputExpenseCalendar = ({
         control={control}
         name="newDate"
         rules={{
-          required: "Date is required",
-          validate: (value) =>
-            isValidDate(value) || "Date cannot be in the future",
+          required: t("form.dateRequired"),
+          validate: (value) => isValidDate(value) || t("form.dateFuture"),
         }}
         render={({ field: { onChange, onBlur } }) => (
           <Calendar
@@ -354,6 +361,7 @@ const FormInputEarningCalendar = ({
   control: Control<CreateEarningDTO>;
   formState: FormState<CreateEarningDTO>;
 }) => {
+  const { t } = useTranslate();
   const currentDate = useWatch({ control, name: "newDate" });
   const startMonth = new Date(2020, 0); // January 2020
 
@@ -363,9 +371,8 @@ const FormInputEarningCalendar = ({
         control={control}
         name="newDate"
         rules={{
-          required: "Date is required",
-          validate: (value) =>
-            isValidDate(value) || "Date cannot be in the future",
+          required: t("form.dateRequired"),
+          validate: (value) => isValidDate(value) || t("form.dateFuture"),
         }}
         render={({ field: { onChange, onBlur } }) => (
           <Calendar

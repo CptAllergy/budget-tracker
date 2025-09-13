@@ -5,6 +5,7 @@ import {
   DialogPanel,
   DialogTitle,
 } from "@headlessui/react";
+import { useTranslate } from "@/utils/hooks/useTranslation";
 
 type DialogProps = {
   dialogTitle: ReactNode;
@@ -24,6 +25,8 @@ const DialogComponent = ({
   setIsDialogOpen,
   children,
 }: PropsWithChildren<DialogProps>) => {
+  const { t } = useTranslate();
+
   return (
     <Dialog
       open={isDialogOpen}
@@ -45,8 +48,8 @@ const DialogComponent = ({
               <div>{dialogTitle}</div>
               {groupName && (
                 <div className="space-x-1 py-2 text-right text-sm font-semibold">
+                  <span>{t("form.group")}</span>
                   <span className="font-semibold underline">{groupName}</span>
-                  <span>group</span>
                 </div>
               )}
             </DialogTitle>
@@ -56,7 +59,7 @@ const DialogComponent = ({
                 className="rounded-md border-2 border-black bg-white px-4 py-2 text-sm font-semibold shadow-[4px_4px_0px_rgba(0,0,0,1)] transition hover:shadow-[5px_5px_0px_rgba(0,0,0,1)] focus:outline-hidden"
                 onClick={() => setIsDialogOpen(false)}
               >
-                Cancel
+                {t("form.cancel")}
               </button>
               <button
                 className="bg-theme-main hover:bg-theme-hover rounded-md border-2 border-black px-4 py-2 text-sm font-semibold text-white shadow-[4px_4px_0px_rgba(0,0,0,1)] transition hover:shadow-[5px_5px_0px_rgba(0,0,0,1)] focus:outline-hidden"

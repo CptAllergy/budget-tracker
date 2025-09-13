@@ -30,6 +30,7 @@ import {
   FormInputExpenseCalendar,
 } from "@/components/commons/input/Calendar";
 import { DialogComponent } from "@/components/commons/dialogs/ActionDialog";
+import { useTranslate } from "@/utils/hooks/useTranslation";
 
 type EditDialogProps = {
   isDialogOpen: boolean;
@@ -98,6 +99,7 @@ const EditExpenseForm = ({
   };
   alertContext: AlertContextType;
 }) => {
+  const { t } = useTranslate();
   const { handleSubmit, onSubmit, register, formState, control } =
     useExpenseForm(
       isDialogOpen,
@@ -109,23 +111,25 @@ const EditExpenseForm = ({
 
   return (
     <DialogComponent
-      dialogTitle="Update Expense"
-      confirmText="Update"
+      dialogTitle={`${t("actions.update")} ${t("expenses.expense")}`}
+      confirmText={t("actions.update")}
       confirmAction={handleSubmit(onSubmit)}
       isDialogOpen={isDialogOpen}
       setIsDialogOpen={setIsDialogOpen}
     >
       <form className="mt-5 flex flex-col space-y-3">
         <div className="space-y-3">
-          <label className="ml-0.5 font-semibold">Description</label>
+          <label className="ml-0.5 font-semibold">
+            {t("form.description")}
+          </label>
           <FormInputExpenseText register={register} formState={formState} />
-          <label className="ml-0.5 font-semibold">Amount</label>
+          <label className="ml-0.5 font-semibold">{t("form.amount")}</label>
           <FormInputExpenseNumber register={register} formState={formState} />
-          <label className="ml-0.5 font-semibold">Category</label>
+          <label className="ml-0.5 font-semibold">{t("form.category")}</label>
           <FormInputExpenseSelect control={control} />
-          <label className="ml-0.5 font-semibold">Tags</label>
+          <label className="ml-0.5 font-semibold">{t("form.tags")}</label>
           <FormInputMultiSelect control={control} />
-          <label className="ml-0.5 font-semibold">Date</label>
+          <label className="ml-0.5 font-semibold">{t("form.date")}</label>
           <FormInputExpenseCalendar control={control} formState={formState} />
         </div>
       </form>
@@ -147,6 +151,7 @@ const EditEarningForm = ({
   };
   alertContext: AlertContextType;
 }) => {
+  const { t } = useTranslate();
   const { handleSubmit, onSubmit, register, formState, control } =
     useEarningForm(
       isDialogOpen,
@@ -155,23 +160,26 @@ const EditEarningForm = ({
       updateEarningData?.earning,
       alertContext
     );
+
   return (
     <DialogComponent
-      dialogTitle="Update Earning"
-      confirmText="Update"
+      dialogTitle={`${t("actions.update")} ${t("earnings.earning")}`}
+      confirmText={t("actions.update")}
       confirmAction={handleSubmit(onSubmit)}
       isDialogOpen={isDialogOpen}
       setIsDialogOpen={setIsDialogOpen}
     >
       <form className="mt-5 flex flex-col space-y-3">
         <div className="space-y-3">
-          <label className="ml-0.5 font-semibold">Description</label>
+          <label className="ml-0.5 font-semibold">
+            {t("form.description")}
+          </label>
           <FormInputEarningText register={register} formState={formState} />
-          <label className="ml-0.5 font-semibold">Amount</label>
+          <label className="ml-0.5 font-semibold">{t("form.amount")}</label>
           <FormInputEarningNumber register={register} formState={formState} />
-          <label className="ml-0.5 font-semibold">Category</label>
+          <label className="ml-0.5 font-semibold">{t("form.category")}</label>
           <FormInputEarningSelect control={control} />
-          <label className="ml-0.5 font-semibold">Date</label>
+          <label className="ml-0.5 font-semibold">{t("form.date")}</label>
           <FormInputEarningCalendar control={control} formState={formState} />
         </div>
       </form>

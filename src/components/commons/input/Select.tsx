@@ -15,7 +15,7 @@ import {
 import { Control, Controller } from "react-hook-form";
 import { CreateEarningDTO, CreateExpenseDTO } from "@/types/DTO/dataTypes";
 import { SelectOptionType } from "@/types/componentTypes";
-import { translate } from "@/services/translationService";
+import { useTranslate } from "@/utils/hooks/useTranslation";
 
 // TODO Instead of hiding the overflowing chip, don't render the final element and show how many more there are, or some other solution
 const MultiSelectChip = ({
@@ -25,9 +25,10 @@ const MultiSelectChip = ({
   option: SelectOptionType;
   removeChip: (label: string) => void;
 }) => {
+  const { t } = useTranslate();
   return (
     <div className="bg-theme-main flex cursor-default items-center space-x-2 rounded-sm p-1 text-sm font-semibold">
-      <span className="">{translate(option.label)}</span>
+      <span className="">{t(option.label)}</span>
       <div
         onMouseDown={(e) => e.stopPropagation()} // Prevents closing the Listbox
         onClick={() => removeChip(option.value)}
@@ -41,6 +42,7 @@ const MultiSelectChip = ({
 
 // TODO display icon for the categories, maybe the tags as well
 const SelectOptions = ({ options }: { options: SelectOptionType[] }) => {
+  const { t } = useTranslate();
   return (
     <ListboxOptions
       className={clsx(
@@ -59,7 +61,7 @@ const SelectOptions = ({ options }: { options: SelectOptionType[] }) => {
           >
             <LuCheck className="text-theme-secondary size-4 [stroke-width:3] opacity-0 transition-all group-data-selected:opacity-100" />
             <div className="text-sm/6 font-semibold text-black group-data-focus:text-white">
-              {translate(option.label)}
+              {t(option.label)}
             </div>
           </ListboxOption>
         ))}
@@ -75,6 +77,7 @@ const MultiSelect = ({
   selectedTags: string[];
   onChange: (value: string[]) => void;
 }) => {
+  const { t } = useTranslate();
   const removeChip = (tag: string) => {
     const updated = selectedTags.filter((chip) => chip !== tag);
     onChange(updated);
@@ -102,7 +105,9 @@ const MultiSelect = ({
               </div>
             ))
           ) : (
-            <span className="flex-shrink-0 text-gray-400">Pick Tags</span>
+            <span className="flex-shrink-0 text-gray-400">
+              {t("form.pickTags")}
+            </span>
           )}
         </div>
         <ChevronDownIcon
@@ -124,6 +129,7 @@ const Select = ({
   onChange: (value: string) => void;
   options: SelectOptionType[];
 }) => {
+  const { t } = useTranslate();
   const label = options.find((opt) => opt.value === selectedCategory)?.label;
 
   return (
@@ -132,7 +138,7 @@ const Select = ({
         className={`relative z-10 block w-full rounded-md border-2 border-black bg-white py-2 pl-3 text-left shadow-[2px_2px_0px_rgba(0,0,0,1)]`}
       >
         <div className="mr-8 flex flex-nowrap gap-1.5 overflow-hidden">
-          <span className="flex-shrink-0">{translate(label)}</span>
+          <span className="flex-shrink-0">{t(label!)}</span>
         </div>
         <ChevronDownIcon className="group pointer-events-none absolute top-2.5 right-2.5 size-4" />
       </ListboxButton>

@@ -1,9 +1,12 @@
+"use client";
+
 import {
   MdOutlineKeyboardArrowLeft,
   MdOutlineKeyboardArrowRight,
 } from "react-icons/md";
 import { Dispatch, SetStateAction } from "react";
 import { MonthYearType } from "@/types/componentTypes";
+import { useTranslate } from "@/utils/hooks/useTranslation";
 
 // TODO reuse some of the duplicate code in MonthNavigation and YearNavigation
 const MonthNavigation = ({
@@ -15,7 +18,13 @@ const MonthNavigation = ({
 }) => {
   const { month, year } = monthYear;
   const date = new Date(year, month, 1);
-  const monthString = date.toLocaleString("en-us", { month: "long" });
+  const { locale } = useTranslate();
+
+  const monthString =
+    locale &&
+    date.toLocaleString(locale, {
+      month: "long",
+    });
 
   const handleMonthYearChange = (isPrevious: boolean) => {
     if (isPrevious) {

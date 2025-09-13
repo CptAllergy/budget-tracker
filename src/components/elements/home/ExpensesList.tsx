@@ -18,11 +18,11 @@ import { DeleteDialog } from "@/components/commons/dialogs/DeleteDialog";
 import { EditDialog } from "@/components/commons/dialogs/EditDialog";
 import { getExpenseGroupName } from "@/utils/utils";
 import { useExpenseGroups } from "@/utils/hooks/reactQuery";
-import { translate } from "@/services/translationService";
 import {
   useDeleteExpense,
   useUpdateExpense,
 } from "@/utils/hooks/reactQueryExpenses";
+import { useTranslate } from "@/utils/hooks/useTranslation";
 
 const ExpensesList = ({
   expenses,
@@ -140,6 +140,7 @@ const ExpenseTable = ({
   isProfile?: boolean;
 }) => {
   // TODO consider adding a loading state for the expense group names
+  const { t } = useTranslate();
   const { expenseGroups, error, isLoading } = useExpenseGroups(currentUser);
   const getGroupName = getExpenseGroupName(expenseGroups);
 
@@ -152,37 +153,37 @@ const ExpenseTable = ({
               scope="col"
               className="py-3.5 pr-3 pl-6 text-left text-sm font-semibold text-gray-900"
             >
-              Description
+              {t("form.description")}
             </th>
             <th
               scope="col"
               className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
             >
-              Amount
+              {t("form.amount")}
             </th>
             <th
               scope="col"
               className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
             >
-              Category
+              {t("form.category")}
             </th>
             <th
               scope="col"
               className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
             >
-              Tags
+              {t("form.tags")}
             </th>
             <th
               scope="col"
               className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell"
             >
-              Date
+              {t("form.date")}
             </th>
             <th
               scope="col"
               className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell"
             >
-              {isProfile ? "Group" : "User"}
+              {isProfile ? t("form.group") : t("form.user")}
             </th>
             <th
               scope="col"
@@ -197,7 +198,7 @@ const ExpenseTable = ({
                 colSpan={7}
                 className="px-3 py-4 text-sm whitespace-nowrap text-gray-500"
               >
-                No expenses found
+                {t("expenses.table.noExpenses")}
               </td>
             </tr>
           )}
@@ -220,9 +221,7 @@ const ExpenseTable = ({
               <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500">
                 <div className="flex gap-1">
                   <div> {getCategoryIcon(expense.category)}</div>
-                  <div>
-                    {translate(`expenses.categories.${expense.category}`)}
-                  </div>
+                  <div>{t(`expenses.categories.${expense.category}`)}</div>
                 </div>
               </td>
               <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500">
@@ -264,6 +263,7 @@ const ExpenseCards = ({
   isProfile?: boolean;
 }) => {
   // TODO consider adding a loading state for the expense group names
+  const { t } = useTranslate();
   const { expenseGroups, error, isLoading } = useExpenseGroups(currentUser);
   const getGroupName = getExpenseGroupName(expenseGroups);
 
@@ -272,7 +272,7 @@ const ExpenseCards = ({
       {expenses.length === 0 && (
         <div>
           <div className="bg-theme-highlight mt-3 rounded-md border-2 border-black px-3 py-4 text-sm whitespace-nowrap text-gray-500 shadow-[2px_2px_0px_rgba(0,0,0,1)]">
-            No expenses found
+            {t("expenses.table.noExpenses")}
           </div>
         </div>
       )}
@@ -300,13 +300,13 @@ const ExpenseCards = ({
               <div className="flex justify-between">
                 <div>
                   <dt className="mb-0.5 text-xs font-medium text-black/40">
-                    Category
+                    {t("form.category")}
                   </dt>
                   <dd className="mb-2 font-semibold text-black/70">
-                    {translate(`expenses.categories.${expense.category}`)}
+                    {t(`expenses.categories.${expense.category}`)}
                   </dd>
                   <dt className="mb-0.5 text-xs font-medium text-black/40">
-                    Tags
+                    {t("form.tags")}
                   </dt>
                   <dd className="mb-2 font-semibold text-black/70">
                     <TagList tags={expense.tags} />
@@ -314,13 +314,13 @@ const ExpenseCards = ({
                 </div>
                 <dl className="text-right">
                   <dt className="mb-0.5 text-xs font-medium text-black/40">
-                    Date
+                    {t("form.date")}
                   </dt>
                   <dd className="mb-2 font-semibold text-black/70">
                     {timestampToDate(expense.timestamp)}
                   </dd>
                   <dt className="mb-0.5 text-xs font-medium text-black/40">
-                    {isProfile ? "Group" : "User"}
+                    {isProfile ? t("form.group") : t("form.user")}
                   </dt>
                   <dd className="mb-2 font-semibold text-black/70">
                     {isProfile
@@ -346,6 +346,7 @@ const ExpenseCards = ({
 };
 
 const TagList = ({ tags, limit }: { tags?: ExpenseTag[]; limit?: number }) => {
+  const { t } = useTranslate();
   return (
     <div>
       {tags &&
@@ -353,7 +354,7 @@ const TagList = ({ tags, limit }: { tags?: ExpenseTag[]; limit?: number }) => {
           <div key={index} className="inline-flex">
             {(!limit || index < limit) && (
               <span className="mr-1 mb-1 inline-flex items-center rounded-md bg-gray-200 px-2 py-1 text-xs font-medium text-gray-700">
-                {translate(`expenses.tags.${tag}`)}
+                {t(`expenses.tags.${tag}`)}
               </span>
             )}
           </div>
@@ -379,6 +380,7 @@ const ExpenseDropdownMenu = ({
   showDeleteDialog: (expense: ExpenseDTO) => void;
   showEditDialog: (expense: ExpenseDTO) => void;
 }) => {
+  const { t } = useTranslate();
   return (
     <div>
       {currentUser.id === selectedExpense.userId && (
@@ -391,14 +393,14 @@ const ExpenseDropdownMenu = ({
           menuItems={[
             {
               icon: <></>,
-              label: "Edit",
+              label: t("actions.edit"),
               onClick: () => {
                 showEditDialog(selectedExpense);
               },
             },
             {
               icon: <></>,
-              label: "Delete",
+              label: t("actions.delete"),
               onClick: () => {
                 showDeleteDialog(selectedExpense);
               },

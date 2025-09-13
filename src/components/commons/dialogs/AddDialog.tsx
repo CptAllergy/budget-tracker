@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Dispatch,
   SetStateAction,
@@ -41,6 +43,7 @@ import { Timestamp } from "firebase/firestore";
 import { DialogComponent } from "@/components/commons/dialogs/ActionDialog";
 import { useExpenseGroups } from "@/utils/hooks/reactQuery";
 import { getExpenseGroupName } from "@/utils/utils";
+import { useTranslate } from "@/utils/hooks/useTranslation";
 
 const AddDialog = ({
   isDialogOpen,
@@ -61,8 +64,8 @@ const AddDialog = ({
 
   const [isExpense, setIsExpense] = useState<boolean>(true);
 
-  // TODO add some animation
-  const { expenseGroups, error, isLoading } = useExpenseGroups(currentUser);
+  const { expenseGroups } = useExpenseGroups(currentUser);
+  const { t } = useTranslate();
   const getGroupName = getExpenseGroupName(expenseGroups);
   const groupName = getGroupName(filterId?.groupId ?? null);
 
@@ -110,7 +113,7 @@ const AddDialog = ({
         <AddDialogTitle isExpense={isExpense} setIsExpense={setIsExpense} />
       }
       groupName={isExpense ? groupName : undefined}
-      confirmText="Create"
+      confirmText={t("form.create")}
       confirmAction={
         isExpense
           ? handleSubmitExpense(onSubmitExpense)
@@ -143,6 +146,8 @@ const AddDialogTitle = ({
   isExpense: boolean;
   setIsExpense: Dispatch<SetStateAction<boolean>>;
 }) => {
+  const { t } = useTranslate();
+
   return (
     <h1>
       <div className="grid grid-cols-2 gap-1 text-base font-semibold">
@@ -150,17 +155,18 @@ const AddDialogTitle = ({
           onClick={() => setIsExpense(true)}
           className={`${isExpense ? "bg-theme-main hover:bg-theme-hover border-2 border-black" : "hover:bg-theme-highlight-hover"} rounded-md p-1 text-center transition-colors hover:cursor-pointer`}
         >
-          📉 Expense
+          📉 {t("expenses.expense")}
         </div>
         <div
           onClick={() => setIsExpense(false)}
           className={`${!isExpense ? "bg-theme-main hover:bg-theme-hover border-2 border-black" : "hover:bg-theme-highlight-hover"} rounded-md p-1 text-center transition-colors hover:cursor-pointer`}
         >
-          📈 Earning
+          📈 {t("earnings.earning")}
         </div>
       </div>
       <div className="mt-3 text-base font-semibold">
-        Creating {isExpense ? "Expense" : "Earning"}
+        {t("actions.creating")}{" "}
+        {isExpense ? t("expenses.expense") : t("earnings.earning")}
       </div>
     </h1>
   );
@@ -175,16 +181,17 @@ const AddExpenseForm = ({
   formState: FormState<CreateExpenseDTO>;
   control: Control<CreateExpenseDTO>;
 }) => {
+  const { t } = useTranslate();
   return (
     <form className="mt-5 flex flex-col space-y-3">
       <div className="space-y-3">
-        <label className="ml-0.5 font-semibold">Description</label>
+        <label className="ml-0.5 font-semibold">{t("form.description")}</label>
         <FormInputExpenseText register={register} formState={formState} />
-        <label className="ml-0.5 font-semibold">Amount</label>
+        <label className="ml-0.5 font-semibold">{t("form.amount")}</label>
         <FormInputExpenseNumber register={register} formState={formState} />
-        <label className="ml-0.5 font-semibold">Category</label>
+        <label className="ml-0.5 font-semibold">{t("form.category")}</label>
         <FormInputExpenseSelect control={control} />
-        <label className="ml-0.5 font-semibold">Tags</label>
+        <label className="ml-0.5 font-semibold">{t("form.tags")}</label>
         <FormInputMultiSelect control={control} />
       </div>
     </form>
@@ -200,14 +207,15 @@ const AddEarningForm = ({
   formState: FormState<CreateEarningDTO>;
   control: Control<CreateEarningDTO>;
 }) => {
+  const { t } = useTranslate();
   return (
     <form className="mt-5 flex flex-col space-y-3">
       <div className="space-y-3">
-        <label className="ml-0.5 font-semibold">Description</label>
+        <label className="ml-0.5 font-semibold">{t("form.description")}</label>
         <FormInputEarningText register={register} formState={formState} />
-        <label className="ml-0.5 font-semibold">Amount</label>
+        <label className="ml-0.5 font-semibold">{t("form.amount")}</label>
         <FormInputEarningNumber register={register} formState={formState} />
-        <label className="ml-0.5 font-semibold">Category</label>
+        <label className="ml-0.5 font-semibold">{t("form.category")}</label>
         <FormInputEarningSelect control={control} />
       </div>
     </form>

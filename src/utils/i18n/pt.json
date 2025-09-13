@@ -1,0 +1,119 @@
+{
+  "navbar": {
+    "signIn": "Iniciar sessão",
+    "signOut": "Terminar sessão",
+    "profile": "Perfil",
+    "reports": "Relatórios",
+    "expenseGroups": "Grupos de Despesas",
+    "settings": "Definições",
+    "newTransaction": "Novo"
+  },
+  "totals": {
+    "owes": "deve a"
+  },
+  "profile": {
+    "monthSummary": "Resumo Mensal",
+    "spent": "Despesas",
+    "earned": "Receitas",
+    "balance": "Total",
+    "invested": "Investido"
+  },
+  "reports": {
+    "filter": "Filtrar Grupo",
+    "yearChart": "Ano",
+    "yearLoading": "A carregar despesas mensais...",
+    "yearEmpty": "Erro ao carregar dados para o ano selecionado",
+    "monthChart": "Mês",
+    "monthEmpty": "Não foram encontrados movimentos para o mês selecionado",
+    "profile": "Perfil",
+    "selectMonth": "Selecionar Mês",
+    "loading": "A carregar..."
+  },
+  "login": {
+    "sessionExpired": "A sessão expirou. Por favor inicie sessão novamente",
+    "welcome": "Bem-vindo ao Budget Tracker!",
+    "description": "O Budget Tracker simplifica a gestão do dinheiro entre duas pessoas, através da análise de movimentos de ambas as partes. Ajuda a controlar as despesas partilhadas e calcula quanto cada um deve ao outro."
+  },
+  "settings": {
+    "settings": "Definições",
+    "personalization": "Personalização",
+    "general": "Geral",
+    "language": "Idioma"
+  },
+  "actions": {
+    "creating": "A adicionar nova",
+    "edit": "Editar",
+    "update": "Editar",
+    "delete": "Eliminar",
+    "deleteCheck": "Pretende eliminar esta"
+  },
+  "form": {
+    "create": "Adicionar",
+    "cancel": "Cancelar",
+    "description": "Descrição",
+    "amount": "Montante",
+    "category": "Categoria",
+    "tags": "Tags",
+    "date": "Data",
+    "user": "Utilizador",
+    "pickTags": "Escolher Tags",
+    "pickDate": "Escolher uma data",
+    "group": "Grupo",
+    "descriptionRequired": "Descrição obrigatória",
+    "amountRequired": "Montante obrigatório",
+    "amountMin": "Montante deve ser positivo",
+    "amountMax": "Montante não pode ser superior a 5000",
+    "dateRequired": "Data obrigatória",
+    "dateFuture": "Data não pode ser no futuro"
+  },
+  "expenses": {
+    "expense": "Despesa",
+    "expenses": "Despesas",
+    "table": {
+      "noExpenses": "Não foram encontradas despesas"
+    },
+    "categories": {
+      "other": "Outros",
+      "groceries": "Supermercado",
+      "dining": "Restaurantes",
+      "transportation": "Transportes",
+      "investments": "Investimentos",
+      "gifts": "Presentes",
+      "housingUtilities": "Despesas & Habitação",
+      "homeGoods": "Artigos para Casa",
+      "health": "Saúde",
+      "entertainment": "Entretenimento",
+      "personalCare": "Cuidados Pessoais",
+      "repairs": "Reparações",
+      "personalSpending": "Despesas Pessoais"
+    },
+    "tags": {
+      "food": "Comida",
+      "drinks": "Bebidas",
+      "vacation": "Férias",
+      "publicTransport": "Transportes Públicos",
+      "gas": "Combustível",
+      "pharmacy": "Farmácia",
+      "games": "Jogos",
+      "clothing": "Vestuário",
+      "electronics": "Eletrónica",
+      "subscriptions": "Subscrições"
+    }
+  },
+  "earnings": {
+    "earning": "Receita",
+    "earnings": "Receitas",
+    "table": {
+      "noEarnings": "Não foram encontradas receitas"
+    },
+    "categories": {
+      "other": "Outros",
+      "salary": "Salário",
+      "mealAllowance": "Subsídio de Alimentação",
+      "investmentReturns": "Lucro Investimento",
+      "refunds": "Reembolsos",
+      "gifts": "Presentes",
+      "bonuses": "Bónus"
+    }
+  }
+}

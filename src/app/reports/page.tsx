@@ -59,9 +59,11 @@ import {
   useEarnings,
   useMonthlyEarningTotal,
 } from "@/utils/hooks/reactQueryEarnings";
+import { useTranslate } from "@/utils/hooks/useTranslation";
 
 // TODO add a bar graph alternative to the pie chart, should make some months easier to read
 // TODO add a flag to include or remove investments from the pie chart
+// TODO split this code into smaller components
 const Reports = () => {
   return (
     <div>
@@ -160,6 +162,7 @@ const ExpenseGroupReports = ({
   selectedYear: number;
   setMonthYear: Dispatch<SetStateAction<MonthYearType | undefined>>;
 }) => {
+  const { t } = useTranslate();
   const {
     expenses,
     isLoading: isLoadingExpenses,
@@ -168,7 +171,7 @@ const ExpenseGroupReports = ({
   } = useExpenses(filterId, monthYear, true);
 
   if (isLoadingExpenses && !isPlaceholderData) {
-    return <div>Loading expenses...</div>;
+    return <div>{t("reports.loading")}</div>;
   }
 
   return (
@@ -193,6 +196,7 @@ const ProfileReports = ({
   selectedYear: number;
   setMonthYear: Dispatch<SetStateAction<MonthYearType | undefined>>;
 }) => {
+  const { t } = useTranslate();
   const { earnings, isLoading: isLoadingEarnings } = useEarnings(
     filterId?.userId,
     monthYear
@@ -206,7 +210,7 @@ const ProfileReports = ({
   } = useExpenses(filterId, monthYear, true);
 
   if (isLoadingEarnings && !isPlaceholderData) {
-    return <div>Loading earnings...</div>;
+    return <div>{t("reports.loading")}</div>;
   }
 
   return (
@@ -230,6 +234,7 @@ const YearlyExpenseChart = ({
   monthYear?: MonthYearType;
   setMonthYear: Dispatch<SetStateAction<MonthYearType | undefined>>;
 }) => {
+  const { t } = useTranslate();
   const {
     monthlyExpenseTotals,
     isLoading: isLoadingExpenses,
@@ -247,11 +252,11 @@ const YearlyExpenseChart = ({
     (isLoadingExpenses || isLoadingEarnings) &&
     (!monthlyExpenseTotals || !monthlyEarningTotals)
   ) {
-    return <div>Loading monthly expenses...</div>;
+    return <div>{t("reports.yearLoading")}</div>;
   }
 
   if (!monthlyExpenseTotals) {
-    return <div>No monthly expense totals found for the selected period.</div>;
+    return <div>{t("reports.yearEmpty")}</div>;
   }
 
   const testTotals: MonthlyTransactionTotal[] = monthlyExpenseTotals.map(
@@ -270,11 +275,11 @@ const YearlyExpenseChart = ({
 
   const chartConfig = {
     totalExpenses: {
-      label: "Expenses",
+      label: t("expenses.expenses"),
       color: "var(--chart-1)",
     },
     totalEarnings: {
-      label: "Earnings",
+      label: t("earnings.earnings"),
       color: "var(--chart-2)",
     },
   } satisfies ChartConfig;
@@ -307,7 +312,7 @@ const YearlyExpenseChart = ({
   return (
     <Card className="bg-theme-highlight border-0 shadow-none outline-none">
       <CardHeader className="px-4 md:px-6">
-        <CardTitle>Year Chart</CardTitle>
+        <CardTitle>{t("reports.yearChart")}</CardTitle>
         <CardDescription className="relative">
           {year}
           {(isFetchingExpenses || isFetchingEarnings) && (
@@ -387,6 +392,7 @@ const DonutPieChart = ({
   selectedYear: number;
   setMonthYear: Dispatch<SetStateAction<MonthYearType | undefined>>;
 }) => {
+  const { t, getFnsLocale } = useTranslate();
   type ExpenseChartData = {
     category: string;
     amount: number;
@@ -438,58 +444,58 @@ const DonutPieChart = ({
 
   const chartConfig = {
     amount: {
-      label: "Amount",
+      label: t("form.amount"),
     },
     other: {
-      label: "Other",
+      label: t("expenses.categories.other"),
       color: "var(--chart-other)",
     },
     groceries: {
-      label: "Groceries",
+      label: t("expenses.categories.groceries"),
       color: "var(--chart-groceries)",
     },
     dining: {
-      label: "Dining",
+      label: t("expenses.categories.dining"),
       color: "var(--chart-dining)",
     },
     transportation: {
-      label: "Transportation",
+      label: t("expenses.categories.transportation"),
       color: "var(--chart-transportation)",
     },
     investments: {
-      label: "Investments",
+      label: t("expenses.categories.investments"),
       color: "var(--chart-investments)",
     },
     gifts: {
-      label: "Gifts",
+      label: t("expenses.categories.gifts"),
       color: "var(--chart-gifts)",
     },
     housingUtilities: {
-      label: "Housing & Utilities",
+      label: t("expenses.categories.housingUtilities"),
       color: "var(--chart-housingUtilities)",
     },
     homeGoods: {
-      label: "Home Goods",
+      label: t("expenses.categories.homeGoods"),
       color: "var(--chart-homeGoods)",
     },
     health: {
-      label: "Health",
+      label: t("expenses.categories.health"),
       color: "var(--chart-health)",
     },
     entertainment: {
-      label: "Entertainment",
+      label: t("expenses.categories.entertainment"),
       color: "var(--chart-entertainment)",
     },
     personalCare: {
-      label: "Personal Care",
+      label: t("expenses.categories.personalCare"),
       color: "var(--chart-personalCare)",
     },
     repairs: {
-      label: "Repairs",
+      label: t("expenses.categories.repairs"),
       color: "var(--chart-repairs)",
     },
     personalSpending: {
-      label: "Personal Spending",
+      label: t("expenses.categories.personalSpending"),
       color: "var(--chart-personalSpending)",
     },
   } satisfies ChartConfig;
@@ -510,7 +516,7 @@ const DonutPieChart = ({
   return (
     <Card className="bg-theme-highlight flex flex-col border-0 shadow-none outline-none">
       <CardHeader className="items-center px-4 pb-0 md:px-6">
-        <CardTitle>Month breakdown</CardTitle>
+        <CardTitle>{t("reports.monthChart")}</CardTitle>
         <CardDescription>
           <div className="flex items-center gap-1">
             <DropdownMenu modal={false}>
@@ -518,11 +524,17 @@ const DonutPieChart = ({
                 asChild
                 className={`bg-theme-highlight hover:bg-theme-highlight-hover rounded-md border-2 border-black p-1 text-center transition-colors outline-none hover:cursor-pointer`}
               >
-                <button className="flex items-center justify-center gap-1 px-2">
+                <button className="flex items-center justify-center gap-1 px-2 capitalize">
                   <span>
                     {monthYear
-                      ? `${format(new Date(monthYear.year, monthYear.month, 1), "LLLL")}`
-                      : "Select Month"}
+                      ? `${format(
+                          new Date(monthYear.year, monthYear.month, 1),
+                          "LLLL",
+                          {
+                            locale: getFnsLocale(),
+                          }
+                        )}`
+                      : t("reports.selectMonth")}
                   </span>
                   <LuChevronDown />
                 </button>
@@ -539,8 +551,11 @@ const DonutPieChart = ({
                           year: selectedYear,
                         })
                       }
+                      className="capitalize"
                     >
-                      {format(new Date(selectedYear, month, 1), "LLLL")}
+                      {format(new Date(selectedYear, month, 1), "LLLL", {
+                        locale: getFnsLocale(),
+                      })}
                     </DropdownMenuRadioItem>
                   ))}
                 </DropdownMenuRadioGroup>
@@ -602,7 +617,7 @@ const DonutPieChart = ({
           </ChartContainer>
         ) : (
           monthYear?.month != null && (
-            <p className="text-sm">No expenses found</p>
+            <p className="text-sm">{t("reports.monthEmpty")}</p>
           )
         )}
       </CardContent>
@@ -619,6 +634,7 @@ const FilterSelector = ({
   expenseGroups: ExpenseGroupDTO[];
   setFilterId: Dispatch<SetStateAction<ExpenseListType | undefined>>;
 }) => {
+  const { t } = useTranslate();
   const [filterName, setFilterName] = useState("profile");
 
   return (
@@ -631,12 +647,14 @@ const FilterSelector = ({
               className={`bg-theme-main hover:bg-theme-hover w-full rounded-md border-2 border-black p-1 text-center transition-colors outline-none hover:cursor-pointer`}
             >
               <button className="flex items-center justify-center gap-1 px-2">
-                <span className="first-letter:uppercase">{filterName}</span>
+                <span className="first-letter:uppercase">
+                  {filterName === "profile" ? t("reports.profile") : filterName}
+                </span>
                 <LuChevronDown />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56">
-              <DropdownMenuLabel>Report Filter</DropdownMenuLabel>
+              <DropdownMenuLabel>{t("reports.filter")}</DropdownMenuLabel>
               <DropdownMenuRadioGroup
                 value={filterName}
                 onValueChange={setFilterName}
@@ -645,7 +663,7 @@ const FilterSelector = ({
                   value="profile"
                   onClick={() => setFilterId({ userId: currentUser.id })}
                 >
-                  Profile
+                  {t("reports.profile")}
                 </DropdownMenuRadioItem>
                 {expenseGroups.length > 0 && <DropdownMenuSeparator />}
                 {expenseGroups.map((expenseGroup) => (

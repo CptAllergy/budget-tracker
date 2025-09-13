@@ -7,21 +7,23 @@ import { toggleStatusAlert } from "@/utils/toggleAlerts";
 import { rancho } from "@/styles/fonts";
 import budgetTrackerCoinLogo from "../../../public/assets/coin_budget_tracker.png";
 import Image from "next/image";
+import { useTranslate } from "@/utils/hooks/useTranslation";
 
 const Login = () => {
   const alertContext = useRef(useContext(AlertContext));
+  const { t, locale } = useTranslate();
 
   useEffect(() => {
     const sessionError = sessionStorage.getItem("session_error");
-    if (sessionError) {
+    if (sessionError && locale) {
       toggleStatusAlert(
         alertContext.current,
-        "Your session has expired. Please login again",
+        t("login.sessionExpired"),
         "warning"
       );
       sessionStorage.removeItem("session_error");
     }
-  }, []);
+  }, [t, locale]);
 
   return (
     <div className="flex flex-col items-center">
@@ -30,7 +32,7 @@ const Login = () => {
         <p
           className={`${rancho.className} text-2xl font-semibold underline underline-offset-4 sm:text-3xl md:text-4xl`}
         >
-          Welcome to Budget Tracker!
+          {t("login.welcome")}
         </p>
         <div className="my-5 h-32 w-32 sm:my-10 md:h-44 md:w-44">
           <Image
@@ -41,9 +43,7 @@ const Login = () => {
         </div>
 
         <p className="text-justify font-medium sm:w-80 sm:text-lg">
-          Budget Tracker simplifies money management between two people by
-          tracking transactions for both parties. It helps you keep tabs on
-          shared expenses and calculates how much you owe each other.
+          {t("login.description")}
         </p>
       </div>
     </div>
