@@ -1,22 +1,13 @@
-import { Navbar } from "@/components/elements/navbar/Navbar";
-import Link from "next/link";
+import { getServerUser } from "@/utils/firebase/serverApp";
+import { User } from "@firebase/auth";
+import ForbiddenPage from "@/components/pages/forbidden/ForbiddenPage";
 
-const Forbidden = () => {
+export default async function Login() {
+  const { serverUser } = await getServerUser();
+
   return (
-    <div className="flex flex-col items-center">
-      <Navbar />
-      <p className="mt-10">
-        You do not have permission to access Budget Tracker. Only authorized
-        users can access the application.
-      </p>
-      <p>
-        You can check a preview{" "}
-        <Link href="/preview" className="font-bold hover:underline">
-          here
-        </Link>
-      </p>
-    </div>
+    <main>
+      <ForbiddenPage initialUser={serverUser?.toJSON() as User} />
+    </main>
   );
-};
-
-export default Forbidden;
+}

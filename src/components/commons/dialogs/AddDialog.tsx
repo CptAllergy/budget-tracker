@@ -41,7 +41,7 @@ import {
 } from "@/types/transactionFilterTypes";
 import { Timestamp } from "firebase/firestore";
 import { DialogComponent } from "@/components/commons/dialogs/ActionDialog";
-import { useExpenseGroups } from "@/utils/hooks/reactQuery";
+import { useExpenseGroups } from "@/utils/hooks/reactQueryUser";
 import { getExpenseGroupName } from "@/utils/utils";
 import { useTranslate } from "@/utils/hooks/useTranslation";
 

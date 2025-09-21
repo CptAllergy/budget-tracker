@@ -186,7 +186,7 @@ const EarningTable = ({
               <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500">
                 <div className="flex gap-1">
                   <div> {getCategoryIcon(earning.category)}</div>
-                  <div> {earning.category}</div>
+                  <div> {t(`earnings.categories.${earning.category}`)}</div>
                 </div>
               </td>
               <td className="hidden px-3 py-4 text-sm whitespace-nowrap text-gray-500 sm:table-cell">
@@ -256,7 +256,7 @@ const EarningCards = ({
                     {t("form.category")}
                   </dt>
                   <dd className="mb-2 font-semibold text-black/70">
-                    {earning.category}
+                    {t(`earnings.categories.${earning.category}`)}
                   </dd>
                   <dt className="mb-0.5 text-xs font-medium text-black/40">
                     {t("form.tags")}

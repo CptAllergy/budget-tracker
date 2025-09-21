@@ -17,7 +17,7 @@ import { ExpenseTag } from "@/types/transactionFilterTypes";
 import { DeleteDialog } from "@/components/commons/dialogs/DeleteDialog";
 import { EditDialog } from "@/components/commons/dialogs/EditDialog";
 import { getExpenseGroupName } from "@/utils/utils";
-import { useExpenseGroups } from "@/utils/hooks/reactQuery";
+import { useExpenseGroups } from "@/utils/hooks/reactQueryUser";
 import {
   useDeleteExpense,
   useUpdateExpense,
@@ -141,7 +141,7 @@ const ExpenseTable = ({
 }) => {
   // TODO consider adding a loading state for the expense group names
   const { t } = useTranslate();
-  const { expenseGroups, error, isLoading } = useExpenseGroups(currentUser);
+  const { expenseGroups, isLoading } = useExpenseGroups(currentUser);
   const getGroupName = getExpenseGroupName(expenseGroups);
 
   return (
@@ -264,7 +264,7 @@ const ExpenseCards = ({
 }) => {
   // TODO consider adding a loading state for the expense group names
   const { t } = useTranslate();
-  const { expenseGroups, error, isLoading } = useExpenseGroups(currentUser);
+  const { expenseGroups, isLoading } = useExpenseGroups(currentUser);
   const getGroupName = getExpenseGroupName(expenseGroups);
 
   return (

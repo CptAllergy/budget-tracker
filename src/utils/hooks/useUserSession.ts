@@ -1,0 +1,28 @@
+import { onIdTokenChanged, User } from "@firebase/auth";
+import { useEffect } from "react";
+import { auth } from "@/utils/firebase/config";
+import { deleteCookie, setCookie } from "cookies-next";
+import { useQueryClient } from "@tanstack/react-query";
+
+// TODO set cookies to http only
+// TODO can I use preexisting package for cookies?
+export function useUserSession(initialUser: User | null) {
+  const queryClient = useQueryClient();
+  useEffect(() => {
+    return onIdTokenChanged(auth, async (user: User | null) => {
+      if (user) {
+        const idToken = await user.getIdToken();
+        await setCookie("__session", idToken);
+      } else {
+        await deleteCookie("__session");
+        queryClient.clear();
+      }
+      if (initialUser?.uid === user?.uid) {
+        return;
+      }
+      window.location.reload();
+    });
+  }, [initialUser, queryClient]);
+
+  return initialUser;
+}

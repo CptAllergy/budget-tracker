@@ -6,7 +6,7 @@ import { AlertContext } from "@/contexts/AlertContext";
 import { toggleStatusErrorAlert } from "@/utils/toggleAlerts";
 import { TotalsLoading } from "@/components/loading/elements/home/LoadingHome";
 import { ExpenseGroupDTO } from "@/types/DTO/dataTypes";
-import { useCurrentUser, useExpenseGroups } from "@/utils/hooks/reactQuery";
+import { useCurrentUser, useExpenseGroups } from "@/utils/hooks/reactQueryUser";
 import { useTranslate } from "@/utils/hooks/useTranslation";
 
 const Totals = ({ groupId }: { groupId?: string }) => {
@@ -20,7 +20,7 @@ const Totals = ({ groupId }: { groupId?: string }) => {
 
   // TODO improve the state of this class
   const { currentUser } = useCurrentUser();
-  const { expenseGroups, error, isLoading } = useExpenseGroups(currentUser);
+  const { expenseGroups, isLoading } = useExpenseGroups(currentUser);
 
   useEffect(() => {
     if (expenseGroups) {

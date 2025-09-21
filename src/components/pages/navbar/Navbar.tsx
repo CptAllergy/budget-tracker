@@ -3,8 +3,7 @@
 import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
 import Link from "next/link";
 import { LoadingRoundedButton } from "@/components/loading/buttons/LoadingRoundedButton";
-import { signOut, useSession } from "next-auth/react";
-import SignIn from "@/components/elements/login/SignIn";
+import SignIn from "@/components/pages/navbar/SignIn";
 import { spaceGrotesk } from "@/styles/fonts";
 import Image from "next/image";
 import budgetTrackerCoinLogo from "../../../../public/assets/coin_budget_tracker.png";
@@ -30,42 +29,42 @@ import {
   DrawerTrigger,
 } from "@/components/commons/menus/DrawerMenu";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useCurrentUser, useExpenseGroups } from "@/utils/hooks/reactQuery";
+import { useCurrentUser, useExpenseGroups } from "@/utils/hooks/reactQueryUser";
 import { useQueryClient } from "@tanstack/react-query";
 import { SetState } from "@/types/componentTypes";
 import { useTranslate } from "@/utils/hooks/useTranslation";
 import { SettingsDialog } from "@/components/commons/dialogs/SettingsDialog";
+import { auth } from "@/utils/firebase/config";
+import { User } from "@firebase/auth";
+import { useUserSession } from "@/utils/hooks/useUserSession";
+import { Ring2 } from "ldrs/react";
+import "ldrs/react/Ring2.css";
 
 type NavbarProps = {
+  initialUser: User | null;
   setIsAddDialogOpen?: SetState<boolean>;
 };
 
-export const Navbar = ({ setIsAddDialogOpen }: NavbarProps) => {
-  const { data: session } = useSession();
+export const Navbar = ({ initialUser, setIsAddDialogOpen }: NavbarProps) => {
+  const user = useUserSession(initialUser);
   const [loading, setLoading] = useState<boolean>(true);
-
   useEffect(() => {
-    if (session?.user) {
-      // session loaded and currentUser is logged in
-      setLoading(false);
-    }
-    if (session === null) {
-      // session loaded but no currentUser
-      setLoading(false);
-    }
-  }, [session]);
+    setLoading(false);
+  }, [user]);
 
   return (
     <>
       <div className="bg-theme-main relative z-10 h-16 w-full border-b-2 border-black">
         <div className="absolute top-0 bottom-0 left-0 ml-2 flex items-center gap-3">
-          {session?.user && <DrawerMenuButton />}
+          {/*TODO must check for currentUser*/}
+          {user && <DrawerMenuButton />}
           <NavbarBudgetTrackerLogo />
         </div>
         <div className="absolute top-0 right-0 bottom-0 mt-1 mr-2 flex items-center md:mr-4">
           {loading ? (
             <NavbarLoadingSkeleton />
-          ) : session?.user ? (
+          ) : user ? (
+            // TODO must check for current user
             <NavbarUserOptions setIsAddDialogOpen={setIsAddDialogOpen} />
           ) : (
             <NavbarSignInOptions />
@@ -106,7 +105,7 @@ const DrawerMenu = ({
         <DrawerTitle className="-ml-1.5 text-base sm:ml-0">
           <div className="h-10 w-10">
             <Image
-              quality={100}
+              quality={90}
               src={budgetTrackerCoinLogo}
               alt="Budget Tracker Logo"
             />
@@ -188,32 +187,27 @@ const ExpenseGroupList = ({
 }: {
   selectedGroupStyle: (groupId: string) => string;
 }) => {
+  const { t } = useTranslate();
   const { currentUser } = useCurrentUser();
-  const { expenseGroups, error, isLoading } = useExpenseGroups(currentUser);
+  const { expenseGroups, isLoading } = useExpenseGroups(currentUser);
 
-  // TODO improve the loading animation
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center">loading groups...</div>
-    );
-  }
-
-  // TODO toggle the status error alert here instead
-  if (error) {
-    return (
-      <div className="ml-2 text-sm font-semibold sm:text-base">
-        Error loading groups: {error.message}
+      <div className="ml-1 pt-2">
+        <Ring2
+          size="30"
+          stroke="5"
+          strokeLength="0.25"
+          bgOpacity="0.1"
+          speed="0.9"
+          color="black"
+        />
       </div>
     );
   }
 
-  // TODO improve the way this looks a bit
   if (expenseGroups?.length === 0) {
-    return (
-      <div className="ml-2 text-sm font-semibold sm:text-base">
-        You don&#39;t have any groups
-      </div>
-    );
+    return <div className="ml-1 pt-2">{t("navbar.noExpenseGroups")}</div>;
   }
 
   return (
@@ -240,7 +234,7 @@ const NavbarBudgetTrackerLogo = () => {
     <Link href="/" className="flex items-center space-x-1 sm:space-x-2">
       <div className="h-10 w-10">
         <Image
-          quality={100}
+          quality={90}
           src={budgetTrackerCoinLogo}
           alt="Budget Tracker Logo"
         />
@@ -294,7 +288,7 @@ const NavbarUserOptions = ({
         className="bg-theme-secondary hover:bg-theme-secondary-hover flex items-center space-x-1 rounded-md border-2 border-black px-2 py-1 font-semibold text-black shadow-[3px_3px_0px_rgba(0,0,0,1)] transition-all hover:shadow-[4px_4px_0px_rgba(0,0,0,1)]"
         onClick={() => {
           queryClient.clear();
-          void signOut();
+          void auth.signOut();
         }}
       >
         {t("navbar.signOut")}

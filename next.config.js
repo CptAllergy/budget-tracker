@@ -4,4 +4,8 @@ const nextConfig = {
 };
 
 // next.config.js
-module.exports = {};
+module.exports = {
+  images: {
+    qualities: [25, 50, 75, 90],
+  },
+};

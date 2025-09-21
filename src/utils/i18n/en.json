@@ -5,6 +5,7 @@
     "profile": "Profile",
     "reports": "Reports",
     "expenseGroups": "Expense Groups",
+    "noExpenseGroups": "You don't have any groups.",
     "settings": "Settings",
     "newTransaction": "New"
   },

@@ -5,6 +5,7 @@
     "profile": "Perfil",
     "reports": "Relatórios",
     "expenseGroups": "Grupos de Despesas",
+    "noExpenseGroups": "Não existem grupos.",
     "settings": "Definições",
     "newTransaction": "Novo"
   },
