@@ -1,6 +1,5 @@
 "use client";
 
-import { rancho } from "@/styles/fonts";
 import { TotalsLoading } from "@/components/loading/elements/home/LoadingHome";
 import { EarningDTO, ExpenseDTO, UserDTO } from "@/types/DTO/dataTypes";
 import { useMemo } from "react";
@@ -42,10 +41,8 @@ const ProfileSummary = ({
   return (
     <>
       {currentUser ? (
-        <div
-          className={`${rancho.className} bg-theme-secondary w-full max-w-4xl rounded-md border-2 border-black py-2 text-center text-2xl shadow-[5px_5px_0px_rgba(0,0,0,1)] md:text-2xl`}
-        >
-          <h3 className="mx-2 mb-2 flex justify-between text-xl md:mx-4 md:text-3xl">
+        <div className="bg-theme-secondary w-full max-w-4xl rounded-md border-2 border-black py-2 text-center font-medium shadow-[5px_5px_0px_rgba(0,0,0,1)]">
+          <h3 className="mx-2 mb-2 flex justify-between text-base md:mx-4 md:text-xl">
             <span>{t("profile.monthSummary")}</span>
             <span>{currentUser?.name}</span>
           </h3>

@@ -6,7 +6,7 @@ import { LoadingRoundedButton } from "@/components/loading/buttons/LoadingRounde
 import SignIn from "@/components/pages/navbar/SignIn";
 import { spaceGrotesk } from "@/styles/fonts";
 import Image from "next/image";
-import budgetTrackerCoinLogo from "../../../../public/assets/coin_budget_tracker.png";
+import budgetTrackerCoinLogo from "public/assets/coin_budget_tracker.png";
 import {
   LuArrowUpRight,
   LuBookmark,

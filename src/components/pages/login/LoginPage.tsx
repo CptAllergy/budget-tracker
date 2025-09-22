@@ -4,8 +4,7 @@ import React, { useContext, useEffect, useRef } from "react";
 import { AlertContext } from "@/contexts/AlertContext";
 import { toggleStatusAlert } from "@/utils/toggleAlerts";
 import { rancho } from "@/styles/fonts";
-// TODO change this relative import into something better
-import budgetTrackerCoinLogo from "../../../../public/assets/coin_budget_tracker.png";
+import budgetTrackerCoinLogo from "public/assets/coin_budget_tracker.png";
 import Image from "next/image";
 import { useTranslate } from "@/utils/hooks/useTranslation";
 import { Navbar } from "@/components/pages/navbar/Navbar";

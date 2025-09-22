@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/card";
 import { ExpenseDTO, ExpenseGroupDTO, UserDTO } from "@/types/DTO/dataTypes";
 import { EXPENSE_CATEGORIES } from "@/types/transactionFilterTypes";
-import { YearNavigation } from "@/components/pages/home/MonthNavigation";
+import { YearNavigation } from "@/components/pages/home/TimeNavigation";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -636,6 +636,11 @@ const FilterSelector = ({
 }) => {
   const { t } = useTranslate();
   const [filterName, setFilterName] = useState("profile");
+
+  if (expenseGroups.length === 0) {
+    // No need to show the filter if there are no options
+    return;
+  }
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col">

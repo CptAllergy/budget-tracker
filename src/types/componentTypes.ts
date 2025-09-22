@@ -22,6 +22,7 @@ export type FormInputType = {
 export type SelectOptionType = {
   label: string;
   value: string;
+  icon?: string;
 };
 
 export type ExpenseListType =

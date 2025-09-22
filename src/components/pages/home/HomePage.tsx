@@ -8,11 +8,10 @@ import {
   ExpenseGroupDTO,
 } from "@/types/DTO/dataTypes";
 import ExpensesList from "@/components/pages/home/ExpensesList";
-import NewChanges from "@/components/pages/home/NewChanges";
 import { LuPlus } from "react-icons/lu";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCurrentUser, useExpenseGroups } from "@/utils/hooks/reactQueryUser";
-import { MonthNavigation } from "@/components/pages/home/MonthNavigation";
+import { MonthNavigation } from "@/components/pages/home/TimeNavigation";
 import { AddDialog } from "@/components/commons/dialogs/AddDialog";
 import {
   ExpenseListType,
@@ -132,12 +131,6 @@ const PageContents = ({
           filterId={filterId}
         />
       )}
-      <div className="right sticky top-0 z-10 ml-auto flex w-max justify-end">
-        <NewChanges
-          isChangeFound={isChangeFound}
-          setIsChangeFound={setIsChangeFound}
-        />
-      </div>
       <div className="fixed right-0 bottom-0 z-5 m-4 sm:hidden">
         {!firebaseLoading && currentUser && (
           <button
@@ -148,7 +141,7 @@ const PageContents = ({
           </button>
         )}
       </div>
-      <div className="mx-1.5 -mt-12">
+      <div className="mx-1.5 mt-12">
         <section className="mx-4 flex flex-col items-center">
           <Totals groupId={filterId?.groupId} />
         </section>

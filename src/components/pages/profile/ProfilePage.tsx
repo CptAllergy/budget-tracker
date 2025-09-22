@@ -7,7 +7,7 @@ import ExpensesList from "@/components/pages/home/ExpensesList";
 import { LuPlus } from "react-icons/lu";
 import { useCurrentUser } from "@/utils/hooks/reactQueryUser";
 import EarningsList from "@/components/pages/profile/EarningsList";
-import { MonthNavigation } from "@/components/pages/home/MonthNavigation";
+import { MonthNavigation } from "@/components/pages/home/TimeNavigation";
 import { AddDialog } from "@/components/commons/dialogs/AddDialog";
 import { ExpenseListType, MonthYearType } from "@/types/componentTypes";
 import { getCurrentMonthYear } from "@/utils/utils";

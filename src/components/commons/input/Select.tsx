@@ -16,6 +16,7 @@ import { Control, Controller } from "react-hook-form";
 import { CreateEarningDTO, CreateExpenseDTO } from "@/types/DTO/dataTypes";
 import { SelectOptionType } from "@/types/componentTypes";
 import { useTranslate } from "@/utils/hooks/useTranslation";
+import { getCategoryIcon } from "@/utils/styles/transactionFilterStyles";
 
 // TODO Instead of hiding the overflowing chip, don't render the final element and show how many more there are, or some other solution
 const MultiSelectChip = ({
@@ -40,7 +41,6 @@ const MultiSelectChip = ({
   );
 };
 
-// TODO display icon for the categories, maybe the tags as well
 const SelectOptions = ({ options }: { options: SelectOptionType[] }) => {
   const { t } = useTranslate();
   return (
@@ -60,8 +60,13 @@ const SelectOptions = ({ options }: { options: SelectOptionType[] }) => {
             className="group m-0.5 flex cursor-default items-center gap-2 rounded-sm px-3 py-1.5 select-none data-focus:bg-white/15"
           >
             <LuCheck className="text-theme-secondary size-4 [stroke-width:3] opacity-0 transition-all group-data-selected:opacity-100" />
-            <div className="text-sm/6 font-semibold text-black group-data-focus:text-white">
-              {t(option.label)}
+            <div className="flex items-center gap-2 text-sm/6 font-semibold text-black group-data-focus:text-white">
+              {option.icon && (
+                <span className="bg-theme-highlight inline-flex h-6 w-6 items-center justify-center rounded-full">
+                  {option.icon}
+                </span>
+              )}
+              <span>{t(option.label)}</span>
             </div>
           </ListboxOption>
         ))}
@@ -130,7 +135,7 @@ const Select = ({
   options: SelectOptionType[];
 }) => {
   const { t } = useTranslate();
-  const label = options.find((opt) => opt.value === selectedCategory)?.label;
+  const selected = options.find((opt) => opt.value === selectedCategory);
 
   return (
     <Listbox value={selectedCategory} onChange={onChange}>
@@ -138,7 +143,10 @@ const Select = ({
         className={`relative z-10 block w-full rounded-md border-2 border-black bg-white py-2 pl-3 text-left shadow-[2px_2px_0px_rgba(0,0,0,1)]`}
       >
         <div className="mr-8 flex flex-nowrap gap-1.5 overflow-hidden">
-          <span className="flex-shrink-0">{t(label!)}</span>
+          <span className="flex flex-shrink-0 items-center gap-1">
+            {selected?.icon && <span>{selected?.icon}</span>}
+            <span>{t(selected?.label!)}</span>
+          </span>
         </div>
         <ChevronDownIcon className="group pointer-events-none absolute top-2.5 right-2.5 size-4" />
       </ListboxButton>
@@ -170,7 +178,11 @@ const FormInputExpenseSelect = ({
 }) => {
   const values = [...EXPENSE_CATEGORIES];
   const options: SelectOptionType[] = values.map((cat) => {
-    return { label: `expenses.categories.${cat}`, value: cat };
+    return {
+      label: `expenses.categories.${cat}`,
+      value: cat,
+      icon: getCategoryIcon(cat),
+    };
   });
 
   return (
@@ -195,7 +207,11 @@ const FormInputEarningSelect = ({
 }) => {
   const values = [...EARNING_CATEGORIES];
   const options: SelectOptionType[] = values.map((cat) => {
-    return { label: `earnings.categories.${cat}`, value: cat };
+    return {
+      label: `earnings.categories.${cat}`,
+      value: cat,
+      icon: getCategoryIcon(cat),
+    };
   });
 
   return (

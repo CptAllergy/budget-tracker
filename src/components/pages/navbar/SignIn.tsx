@@ -9,7 +9,6 @@ export default function SignIn() {
   const { t } = useTranslate();
   const provider = new GoogleAuthProvider();
 
-  // TODO worth it to change to redirect sign in?
   const handleGoogleSignIn = async () => {
     await signInWithPopup(auth, provider);
   };
