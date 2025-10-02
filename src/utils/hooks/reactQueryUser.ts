@@ -1,14 +1,28 @@
-import { useContext, useEffect, useRef } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   getCurrentUserFirebase,
   getExpenseGroupsFirebase,
 } from "@/services/firebaseService";
-import { UserDTO } from "@/types/DTO/dataTypes";
+import { EarningDTO, ExpenseDTO, UserDTO } from "@/types/DTO/dataTypes";
 import { toggleStatusErrorAlert } from "@/utils/toggleAlerts";
 import { AlertContext } from "@/contexts/AlertContext";
 import { useQuery } from "@tanstack/react-query";
 import { sortExpenseGroups } from "@/utils/utils";
 import { useUser } from "@/utils/hooks/useUser";
+import {
+  ExpenseListType,
+  MonthlyEarningTotal,
+  MonthlyExpenseTotal,
+  MonthYearType,
+} from "@/types/componentTypes";
+import {
+  useEarnings,
+  useMonthlyEarningTotal,
+} from "@/utils/hooks/reactQueryEarnings";
+import {
+  useExpenses,
+  useMonthlyExpenseTotal,
+} from "@/utils/hooks/reactQueryExpenses";
 
 export const useCurrentUser = () => {
   const alertContext = useRef(useContext(AlertContext));
@@ -45,7 +59,6 @@ export const useExpenseGroups = (currentUser?: UserDTO) => {
     data: expenseGroups,
     error,
     isLoading,
-    isSuccess,
   } = useQuery({
     queryKey: ["groups"],
     queryFn: async () => {
@@ -62,5 +75,78 @@ export const useExpenseGroups = (currentUser?: UserDTO) => {
     }
   }, [error]);
 
-  return { expenseGroups, isLoading, isSuccess };
+  return { expenseGroups, isLoading };
+};
+
+export const useTransactions = (
+  filterId?: ExpenseListType,
+  monthYear?: MonthYearType
+) => {
+  const earningsQuery = useEarnings(filterId?.userId, monthYear, true);
+  const expensesQuery = useExpenses(filterId, monthYear, true);
+
+  const isLoading = earningsQuery.isLoading || expensesQuery.isLoading;
+  const isFetching = earningsQuery.isFetching || expensesQuery.isFetching;
+
+  const [transactions, setTransactions] = useState<{
+    earnings: EarningDTO[];
+    expenses: ExpenseDTO[];
+  } | null>(null);
+
+  const nextCombined = useMemo(() => {
+    if (!earningsQuery.earnings || !expensesQuery.expenses) return null;
+    return {
+      earnings: earningsQuery.earnings,
+      expenses: expensesQuery.expenses,
+    };
+  }, [earningsQuery.earnings, expensesQuery.expenses]);
+
+  useEffect(() => {
+    if (nextCombined) {
+      setTransactions(nextCombined);
+    }
+  }, [nextCombined]);
+
+  return { transactions, isLoading, isFetching };
+};
+
+export const useMonthlyTransactionTotals = (
+  year: number,
+  filterId?: ExpenseListType
+) => {
+  const earningsQuery = useMonthlyEarningTotal(year, filterId?.userId, true);
+  const expensesQuery = useMonthlyExpenseTotal(year, filterId, true);
+
+  const isLoading = earningsQuery.isLoading || expensesQuery.isLoading;
+  const isFetching = earningsQuery.isFetching || expensesQuery.isFetching;
+
+  const [monthlyTransactionTotals, setMonthlyTransactionTotals] = useState<{
+    monthlyEarningTotals: MonthlyEarningTotal[];
+    monthlyExpenseTotals: MonthlyExpenseTotal[];
+  } | null>(null);
+
+  const nextCombined = useMemo(() => {
+    if (
+      !earningsQuery.monthlyEarningTotals ||
+      !expensesQuery.monthlyExpenseTotals
+    )
+      return null;
+    return {
+      monthlyEarningTotals: earningsQuery.monthlyEarningTotals,
+      monthlyExpenseTotals: expensesQuery.monthlyExpenseTotals,
+    };
+  }, [earningsQuery.monthlyEarningTotals, expensesQuery.monthlyExpenseTotals]);
+
+  useEffect(() => {
+    if (nextCombined) {
+      setMonthlyTransactionTotals(nextCombined);
+    }
+  }, [nextCombined]);
+
+  return {
+    monthlyTransactionTotals,
+    isLoading,
+    isFetching,
+    isEarningEnabled: earningsQuery.isEnabled,
+  };
 };

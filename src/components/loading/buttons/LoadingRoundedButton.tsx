@@ -19,7 +19,7 @@ export const LoadingRoundedButton = ({ size = "md", className }: Props) => {
 
   return (
     <div
-      className={`bg-theme-loading-dark animate-pulse py-5 ${getWidth()} rounded-full ${className}`}
+      className={`bg-theme-loading-dark animate-pulse py-5 ${getWidth()} rounded-md ${className}`}
     ></div>
   );
 };

@@ -232,7 +232,8 @@ export const useUpdateExpense = () => {
 
 export const useMonthlyExpenseTotal = (
   year: number,
-  filterId?: ExpenseListType
+  filterId?: ExpenseListType,
+  showPlaceholderData: boolean = false
 ) => {
   const alertContext = useRef(useContext(AlertContext));
 
@@ -256,7 +257,7 @@ export const useMonthlyExpenseTotal = (
       return results;
     },
     enabled: !!filterId,
-    placeholderData: (prev) => prev,
+    placeholderData: showPlaceholderData ? (prev) => prev : undefined,
     staleTime: 1000 * 60 * 30, // 30 minutes
   });
 

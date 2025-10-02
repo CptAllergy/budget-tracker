@@ -32,6 +32,7 @@ export const useEarnings = (
     data: earnings,
     error,
     isLoading,
+    isFetching,
   } = useQuery({
     queryKey: ["earnings", { monthYear, userId }],
     queryFn: async () => {
@@ -48,7 +49,7 @@ export const useEarnings = (
     }
   }, [error]);
 
-  return { earnings, isLoading };
+  return { earnings, isLoading, isFetching };
 };
 
 export const useAddEarning = () => {
@@ -184,7 +185,11 @@ export const useUpdateEarning = () => {
   return { mutateUpdateEarning };
 };
 
-export const useMonthlyEarningTotal = (year: number, userId?: string) => {
+export const useMonthlyEarningTotal = (
+  year: number,
+  userId?: string,
+  showPlaceholderData: boolean = false
+) => {
   const alertContext = useRef(useContext(AlertContext));
 
   const {
@@ -208,7 +213,7 @@ export const useMonthlyEarningTotal = (year: number, userId?: string) => {
       return results;
     },
     enabled: !!userId,
-    placeholderData: (prev) => prev,
+    placeholderData: showPlaceholderData ? (prev) => prev : undefined,
     staleTime: 1000 * 60 * 30, // 30 minutes
   });
 

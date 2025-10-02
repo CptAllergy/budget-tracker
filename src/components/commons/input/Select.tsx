@@ -18,7 +18,6 @@ import { SelectOptionType } from "@/types/componentTypes";
 import { useTranslate } from "@/utils/hooks/useTranslation";
 import { getCategoryIcon } from "@/utils/styles/transactionFilterStyles";
 
-// TODO Instead of hiding the overflowing chip, don't render the final element and show how many more there are, or some other solution
 const MultiSelectChip = ({
   option,
   removeChip,
@@ -93,8 +92,8 @@ const MultiSelect = ({
     return { label: `expenses.tags.${tag}`, value: tag };
   });
 
-  const selectedOptions = options.filter((opt) =>
-    selectedTags.includes(opt.value)
+  const selectedOptions = selectedTags.map(
+    (tag) => options.find((opt) => opt.value === tag)!
   );
 
   return (
@@ -102,7 +101,7 @@ const MultiSelect = ({
       <ListboxButton
         className={`${selectedTags.length > 0 ? "py-1.5" : "py-2"} relative z-10 block w-full rounded-md border-2 border-black bg-white pl-3 text-left shadow-[2px_2px_0px_rgba(0,0,0,1)]`}
       >
-        <div className="mr-8 flex flex-nowrap gap-1.5 overflow-hidden">
+        <div className="mr-8 flex flex-wrap gap-1.5">
           {selectedOptions.length > 0 ? (
             selectedOptions.map((option) => (
               <div key={option.value} className="flex-shrink-0">

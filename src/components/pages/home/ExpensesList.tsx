@@ -1,7 +1,7 @@
 "use client";
 
 import { ExpenseDTO, UserDTO } from "@/types/DTO/dataTypes";
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { TransactionListLoading } from "@/components/loading/elements/home/LoadingHome";
 import { timestampToDate } from "@/utils/validations";
 import { HiMiniEllipsisHorizontal } from "react-icons/hi2";
@@ -20,19 +20,27 @@ import { getExpenseGroupName } from "@/utils/utils";
 import { useExpenseGroups } from "@/utils/hooks/reactQueryUser";
 import {
   useDeleteExpense,
+  useExpenses,
   useUpdateExpense,
 } from "@/utils/hooks/reactQueryExpenses";
 import { useTranslate } from "@/utils/hooks/useTranslation";
+import { ExpenseListType, MonthYearType } from "@/types/componentTypes";
 
-const ExpensesList = ({
-  expenses,
-  currentUser,
-  isProfile,
-}: {
-  expenses?: ExpenseDTO[];
+type Props = {
+  filterId?: ExpenseListType;
+  monthYear: MonthYearType;
   currentUser?: UserDTO;
   isProfile?: boolean;
-}) => {
+};
+
+const ExpensesList = ({
+  filterId,
+  monthYear,
+  currentUser,
+  isProfile,
+}: Props) => {
+  const { expenses, isLoading } = useExpenses(filterId, monthYear, true);
+
   const { mutateDeleteExpense } = useDeleteExpense();
   const { mutateUpdateExpense } = useUpdateExpense();
 
@@ -44,20 +52,23 @@ const ExpensesList = ({
     mutateUpdateExpense({ expense });
   };
 
+  if (isLoading || !currentUser) {
+    return <TransactionListLoading />;
+  }
+
+  // Fallback check
+  if (!expenses) {
+    return <TransactionListLoading />;
+  }
+
   return (
-    <div>
-      {expenses && currentUser ? (
-        <ExpensesContent
-          expenses={expenses}
-          removeExpense={removeExpense}
-          updateExpense={updateExpense}
-          currentUser={currentUser}
-          isProfile={isProfile}
-        />
-      ) : (
-        <TransactionListLoading />
-      )}
-    </div>
+    <ExpensesContent
+      expenses={expenses}
+      removeExpense={removeExpense}
+      updateExpense={updateExpense}
+      currentUser={currentUser}
+      isProfile={isProfile}
+    />
   );
 };
 
@@ -139,9 +150,8 @@ const ExpenseTable = ({
   showEditDialog: (expense: ExpenseDTO) => void;
   isProfile?: boolean;
 }) => {
-  // TODO consider adding a loading state for the expense group names
   const { t } = useTranslate();
-  const { expenseGroups, isLoading } = useExpenseGroups(currentUser);
+  const { expenseGroups } = useExpenseGroups(currentUser);
   const getGroupName = getExpenseGroupName(expenseGroups);
 
   return (
@@ -187,7 +197,7 @@ const ExpenseTable = ({
             </th>
             <th
               scope="col"
-              className="py-3.5 text-left text-sm font-semibold text-gray-900"
+              className="relative py-3.5 text-left text-sm font-semibold text-gray-900"
             ></th>
           </tr>
         </thead>
@@ -225,7 +235,7 @@ const ExpenseTable = ({
                 </div>
               </td>
               <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500">
-                <TagList tags={expense.tags} limit={3} />
+                {expense.tags && <TagList tags={expense.tags} limit={3} />}
               </td>
               <td className="hidden px-3 py-4 text-sm whitespace-nowrap text-gray-500 sm:table-cell">
                 {timestampToDate(expense.timestamp)}
@@ -262,9 +272,8 @@ const ExpenseCards = ({
   showEditDialog: (expense: ExpenseDTO) => void;
   isProfile?: boolean;
 }) => {
-  // TODO consider adding a loading state for the expense group names
   const { t } = useTranslate();
-  const { expenseGroups, isLoading } = useExpenseGroups(currentUser);
+  const { expenseGroups } = useExpenseGroups(currentUser);
   const getGroupName = getExpenseGroupName(expenseGroups);
 
   return (
@@ -309,7 +318,7 @@ const ExpenseCards = ({
                     {t("form.tags")}
                   </dt>
                   <dd className="mb-2 font-semibold text-black/70">
-                    <TagList tags={expense.tags} />
+                    {expense.tags && <TagList tags={expense.tags} />}
                   </dd>
                 </div>
                 <dl className="text-right">
@@ -345,25 +354,59 @@ const ExpenseCards = ({
   );
 };
 
-const TagList = ({ tags, limit }: { tags?: ExpenseTag[]; limit?: number }) => {
+const TagList = ({ tags, limit }: { tags: ExpenseTag[]; limit?: number }) => {
   const { t } = useTranslate();
+  const [visibleCount, setVisibleCount] = useState<number | undefined>(limit);
+
+  useEffect(() => {
+    if (!limit) {
+      return;
+    }
+
+    function handleResize() {
+      const width = window.innerWidth;
+      if (width < 1024) {
+        setVisibleCount(1);
+      } else if (width < 1280) {
+        setVisibleCount(2);
+      } else if (width < 1536) {
+        setVisibleCount(limit);
+      }
+    }
+
+    window.addEventListener("resize", handleResize);
+    handleResize();
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, [limit]);
+
   return (
     <div>
-      {tags &&
-        tags.map((tag, index) => (
-          <div key={index} className="inline-flex">
-            {(!limit || index < limit) && (
-              <span className="mr-1 mb-1 inline-flex items-center rounded-md bg-gray-200 px-2 py-1 text-xs font-medium text-gray-700">
+      {tags.map((tag, index) => (
+        <div key={index} className="inline-flex">
+          {(!visibleCount || index < visibleCount) && (
+            <span className="mr-1 mb-1 inline-flex items-center rounded-md bg-gray-200 px-2 py-1 text-xs font-medium text-gray-700">
+              {t(`expenses.tags.${tag}`)}
+            </span>
+          )}
+        </div>
+      ))}
+      {visibleCount && tags.length > visibleCount && (
+        <div className="group relative inline-flex">
+          <span className="rounded-md bg-gray-200 px-2 py-1 text-xs text-gray-500">
+            +{tags.length - visibleCount} more
+          </span>
+          <div className="pointer-events-none absolute top-full left-0 z-10 mt-1 flex flex-col rounded-md border bg-white p-2 opacity-0 shadow-lg transition-opacity duration-200 group-hover:pointer-events-auto group-hover:opacity-100">
+            {tags.slice(visibleCount).map((tag, index) => (
+              <span
+                key={index}
+                className="px-2 py-1 text-xs font-medium whitespace-nowrap text-gray-500"
+              >
                 {t(`expenses.tags.${tag}`)}
               </span>
-            )}
+            ))}
           </div>
-        ))}
-      {/*TODO on hover of the more tag, display all of the remaining tags*/}
-      {tags && limit && tags.length > limit && (
-        <span className="rounded-md bg-gray-200 px-2 py-1 text-xs text-gray-500">
-          +{tags.length - limit} more
-        </span>
+        </div>
       )}
     </div>
   );

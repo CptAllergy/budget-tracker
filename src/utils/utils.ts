@@ -14,7 +14,7 @@ export function getCurrentMonthYear(): MonthYearType {
 
 export function getExpenseGroupName(expenseGroups?: ExpenseGroupDTO[]) {
   if (!expenseGroups) {
-    return () => NO_EXPENSE_GROUP;
+    return () => "";
   }
 
   return (groupId: string | null) => {

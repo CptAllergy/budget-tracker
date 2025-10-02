@@ -4,9 +4,12 @@ import {
   MdOutlineKeyboardArrowLeft,
   MdOutlineKeyboardArrowRight,
 } from "react-icons/md";
-import { Dispatch, PropsWithChildren, SetStateAction } from "react";
-import { MonthYearType } from "@/types/componentTypes";
+import React, { Dispatch, PropsWithChildren, SetStateAction } from "react";
+import { ExpenseListType, MonthYearType } from "@/types/componentTypes";
 import { useTranslate } from "@/utils/hooks/useTranslation";
+import "ldrs/react/Ring2.css";
+import { Ring2 } from "ldrs/react";
+import { useExpenses } from "@/utils/hooks/reactQueryExpenses";
 
 const TimeNavigation = ({
   prevAction,
@@ -44,13 +47,16 @@ const TimeNavigation = ({
 const MonthNavigation = ({
   monthYear,
   setMonthYear,
+  filterId,
 }: {
   monthYear: MonthYearType;
   setMonthYear: Dispatch<SetStateAction<MonthYearType>>;
+  filterId?: ExpenseListType;
 }) => {
   const { month, year } = monthYear;
   const date = new Date(year, month, 1);
   const { locale } = useTranslate();
+  const { isFetching } = useExpenses(filterId, monthYear);
 
   const monthString =
     locale &&
@@ -77,9 +83,24 @@ const MonthNavigation = ({
       prevAction={() => handleMonthYearChange(true)}
       nextAction={() => handleMonthYearChange(false)}
     >
-      <p className="-m-2 whitespace-nowrap capitalize">
-        {monthString} - {year}
-      </p>
+      <div className="relative flex items-center gap-5">
+        {isFetching && (
+          <div className="absolute -translate-x-10 translate-y-0.5">
+            <Ring2
+              size="20"
+              stroke="3"
+              strokeLength="0.25"
+              bgOpacity="0.1"
+              speed="0.9"
+              color="black"
+            />
+          </div>
+        )}
+
+        <p className="-m-2 whitespace-nowrap capitalize">
+          {monthString} - {year}
+        </p>
+      </div>
     </TimeNavigation>
   );
 };

@@ -12,8 +12,8 @@ import { AddDialog } from "@/components/commons/dialogs/AddDialog";
 import { ExpenseListType, MonthYearType } from "@/types/componentTypes";
 import { getCurrentMonthYear } from "@/utils/utils";
 import ProfileSummary from "@/components/pages/profile/ProfileSummary";
-import { useAddExpense, useExpenses } from "@/utils/hooks/reactQueryExpenses";
-import { useAddEarning, useEarnings } from "@/utils/hooks/reactQueryEarnings";
+import { useAddExpense } from "@/utils/hooks/reactQueryExpenses";
+import { useAddEarning } from "@/utils/hooks/reactQueryEarnings";
 import { useTranslate } from "@/utils/hooks/useTranslation";
 import { User } from "@firebase/auth";
 
@@ -36,18 +36,6 @@ const Profile = ({ initialUser }: Props) => {
     }
   }, [currentUser]);
 
-  const { earnings, isLoading: isLoadingEarnings } = useEarnings(
-    filterId?.userId,
-    monthYear
-  );
-
-  const {
-    expenses,
-    isLoading: isLoadingExpenses,
-    isPlaceholderData,
-    isEnabled,
-  } = useExpenses(filterId, monthYear);
-
   const { mutateAddExpense } = useAddExpense();
   const { mutateAddEarning } = useAddEarning();
 
@@ -66,7 +54,7 @@ const Profile = ({ initialUser }: Props) => {
   };
 
   return (
-    <div className="">
+    <div>
       <Navbar
         initialUser={initialUser}
         setIsAddDialogOpen={setIsAddDialogOpen}
@@ -94,14 +82,15 @@ const Profile = ({ initialUser }: Props) => {
       <div className="mx-1.5 mt-12">
         <section className="mx-4 flex flex-col items-center">
           <ProfileSummary
+            filterId={filterId}
+            monthYear={monthYear}
             currentUser={currentUser}
-            expenses={expenses ?? []}
-            earnings={earnings ?? []}
           />
         </section>
         <section className="mt-4 md:mt-10">
           <div className="mx-1 mt-5 mb-5">
             <MonthNavigation
+              filterId={filterId}
               monthYear={monthYear}
               setMonthYear={setMonthYear}
             />
@@ -111,15 +100,13 @@ const Profile = ({ initialUser }: Props) => {
             />
             {toggleExpenses ? (
               <ExpensesList
-                expenses={expenses}
+                filterId={filterId}
+                monthYear={monthYear}
                 currentUser={currentUser}
                 isProfile={true}
               />
             ) : (
-              <EarningsList
-                earnings={earnings ?? []}
-                currentUser={currentUser}
-              />
+              <EarningsList monthYear={monthYear} currentUser={currentUser} />
             )}
           </div>
         </section>

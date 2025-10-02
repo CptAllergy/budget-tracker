@@ -13,23 +13,17 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCurrentUser, useExpenseGroups } from "@/utils/hooks/reactQueryUser";
 import { MonthNavigation } from "@/components/pages/home/TimeNavigation";
 import { AddDialog } from "@/components/commons/dialogs/AddDialog";
-import {
-  ExpenseListType,
-  MonthYearType,
-  SetState,
-} from "@/types/componentTypes";
+import { ExpenseListType, MonthYearType } from "@/types/componentTypes";
 import { getCurrentMonthYear } from "@/utils/utils";
 import Totals from "@/components/pages/home/Totals";
-import { useAddExpense, useExpenses } from "@/utils/hooks/reactQueryExpenses";
+import { useAddExpense } from "@/utils/hooks/reactQueryExpenses";
 import { useAddEarning } from "@/utils/hooks/reactQueryEarnings";
 import { User } from "@firebase/auth";
 
 type Props = { initialUser: User | null };
 // TODO add settings menu where currentUser can change color of earning and expenses (red, green or grey, for a negative or neutral value)
-// TODO go over the whole props passing chain and check if any improper defaults are being used
 const Home = ({ initialUser }: Props) => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [filterId, setFilterId] = useState<ExpenseListType>();
 
   return (
     <div>
@@ -41,7 +35,6 @@ const Home = ({ initialUser }: Props) => {
         <PageContents
           isAddDialogOpen={isAddDialogOpen}
           setIsAddDialogOpen={setIsAddDialogOpen}
-          filterIdState={[filterId, setFilterId]}
         />
       </Suspense>
     </div>
@@ -51,19 +44,11 @@ const Home = ({ initialUser }: Props) => {
 const PageContents = ({
   isAddDialogOpen,
   setIsAddDialogOpen,
-  filterIdState,
 }: {
   isAddDialogOpen: boolean;
   setIsAddDialogOpen: Dispatch<SetStateAction<boolean>>;
-  filterIdState: [
-    ExpenseListType | undefined,
-    SetState<ExpenseListType | undefined>,
-  ];
 }) => {
-  const [filterId, setFilterId] = filterIdState;
-
-  // Used to detect new changes
-  const [isChangeFound, setIsChangeFound] = useState<boolean>(false);
+  const [filterId, setFilterId] = useState<ExpenseListType>();
 
   const [monthYear, setMonthYear] = useState<MonthYearType>(
     getCurrentMonthYear()
@@ -73,7 +58,7 @@ const PageContents = ({
   const searchParams = useSearchParams();
 
   const { currentUser, isLoading: firebaseLoading } = useCurrentUser();
-  const { expenseGroups, isLoading } = useExpenseGroups(currentUser);
+  const { expenseGroups } = useExpenseGroups(currentUser);
 
   // Runs after sign in to either redirect to profile page or set group
   useEffect(() => {
@@ -97,13 +82,6 @@ const PageContents = ({
       selectDefaultPage(expenseGroups);
     }
   }, [currentUser, expenseGroups, router, searchParams, setFilterId]);
-
-  const {
-    expenses,
-    isLoading: isLoadingExpenses,
-    isPlaceholderData,
-    isEnabled,
-  } = useExpenses(filterId, monthYear);
 
   const { mutateAddExpense } = useAddExpense();
   const { mutateAddEarning } = useAddEarning();
@@ -148,10 +126,15 @@ const PageContents = ({
         <section className="mt-4 md:mt-10">
           <div className="mx-1 mt-5 mb-5">
             <MonthNavigation
+              filterId={filterId}
               monthYear={monthYear}
               setMonthYear={setMonthYear}
             />
-            <ExpensesList expenses={expenses} currentUser={currentUser} />
+            <ExpensesList
+              filterId={filterId}
+              monthYear={monthYear}
+              currentUser={currentUser}
+            />
           </div>
         </section>
       </div>

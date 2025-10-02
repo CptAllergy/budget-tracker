@@ -8,7 +8,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/commons/Accordion";
-import { useState } from "react";
+import React, { useState } from "react";
 import { DropdownMenu } from "@/components/commons/menus/DropdownMenu";
 import { HiMiniEllipsisHorizontal } from "react-icons/hi2";
 
@@ -17,17 +17,20 @@ import { EditDialog } from "@/components/commons/dialogs/EditDialog";
 import { getCategoryIcon } from "@/utils/styles/transactionFilterStyles";
 import {
   useDeleteEarning,
+  useEarnings,
   useUpdateEarning,
 } from "@/utils/hooks/reactQueryEarnings";
 import { useTranslate } from "@/utils/hooks/useTranslation";
+import { MonthYearType } from "@/types/componentTypes";
+import { TransactionListLoading } from "@/components/loading/elements/home/LoadingHome";
 
-const EarningsList = ({
-  earnings,
-  currentUser,
-}: {
-  earnings: EarningDTO[];
+type Props = {
+  monthYear: MonthYearType;
   currentUser?: UserDTO;
-}) => {
+};
+
+const EarningsList = ({ monthYear, currentUser }: Props) => {
+  const { earnings, isLoading } = useEarnings(currentUser?.id, monthYear, true);
   const { mutateDeleteEarning } = useDeleteEarning();
   const { mutateUpdateEarning } = useUpdateEarning();
 
@@ -38,17 +41,23 @@ const EarningsList = ({
   const updateEarning = async (earning: EarningDTO) => {
     mutateUpdateEarning({ earning });
   };
+
+  if (isLoading || !currentUser) {
+    return <TransactionListLoading />;
+  }
+
+  // Fallback check
+  if (!earnings) {
+    return <TransactionListLoading />;
+  }
+
   return (
-    <div>
-      {currentUser && (
-        <EarningsContent
-          earnings={earnings}
-          currentUser={currentUser}
-          removeEarning={removeEarning}
-          updateEarning={updateEarning}
-        />
-      )}
-    </div>
+    <EarningsContent
+      earnings={earnings}
+      currentUser={currentUser}
+      removeEarning={removeEarning}
+      updateEarning={updateEarning}
+    />
   );
 };
 
@@ -76,6 +85,7 @@ const EarningsContent = ({
     setSelectedEarning(earning);
     setIsEditDialogOpen(true);
   };
+
   return (
     <div>
       <DeleteDialog

@@ -1,5 +1,3 @@
-"use client";
-
 import { AlertContextType, AlertType } from "@/contexts/AlertContext";
 import { CustomErrorCode } from "@/types/errorTypes";
 

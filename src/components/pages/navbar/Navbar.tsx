@@ -56,7 +56,6 @@ export const Navbar = ({ initialUser, setIsAddDialogOpen }: NavbarProps) => {
     <>
       <div className="bg-theme-main relative z-10 h-16 w-full border-b-2 border-black">
         <div className="absolute top-0 bottom-0 left-0 ml-2 flex items-center gap-3">
-          {/*TODO must check for currentUser*/}
           {user && <DrawerMenuButton />}
           <NavbarBudgetTrackerLogo />
         </div>
@@ -64,7 +63,6 @@ export const Navbar = ({ initialUser, setIsAddDialogOpen }: NavbarProps) => {
           {loading ? (
             <NavbarLoadingSkeleton />
           ) : user ? (
-            // TODO must check for current user
             <NavbarUserOptions setIsAddDialogOpen={setIsAddDialogOpen} />
           ) : (
             <NavbarSignInOptions />
@@ -76,7 +74,12 @@ export const Navbar = ({ initialUser, setIsAddDialogOpen }: NavbarProps) => {
 };
 
 const DrawerMenuButton = () => {
+  const { currentUser } = useCurrentUser();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  if (!currentUser) {
+    return null;
+  }
 
   return (
     <Drawer direction="left" snapPoints={undefined} fadeFromIndex={undefined}>
@@ -251,7 +254,7 @@ const NavbarBudgetTrackerLogo = () => {
 const NavbarLoadingSkeleton = () => {
   return (
     <>
-      <LoadingRoundedButton size="md" className="mr-4" />
+      <LoadingRoundedButton size="md" className="mr-2" />
     </>
   );
 };
