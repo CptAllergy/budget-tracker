@@ -18,7 +18,7 @@
     --color-positive-dark: #228b22;
     --color-positive-light: #00a86b;
     --color-negative-dark: #b22222;
-    --color-negative-light: #dc0f1d;
+    --color-negative-light: #d3212c;
 }
 
 @layer base {
@@ -27,7 +27,7 @@
         --chart-groceries: oklch(0.822 0.234 133.925);    /* leafy green */
         --chart-dining: oklch(0.68 0.22 30);        /* warm orange for food */
         --chart-transportation: oklch(0.62 0.20 250); /* transit blue */
-        --chart-investments: oklch(0.892 0.187 102.874);   /* bright golden yellow (happier) */
+        --chart-investments: oklch(0.851 0.174 94.467);   /* bright golden yellow (happier) */
         --chart-gifts: oklch(0.727 0.182 344.734);        /* pink-red festive */
         --chart-housingUtilities: oklch(0.874 0.04 73.397); /* brownish orange (earthy, home) */
         --chart-homeGoods: oklch(0.562 0.207 264.547);     /* olive green (furniture/appliances) */

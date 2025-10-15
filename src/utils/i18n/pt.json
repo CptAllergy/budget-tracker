@@ -39,7 +39,13 @@
     "settings": "Definições",
     "personalization": "Personalização",
     "general": "Geral",
-    "language": "Idioma"
+    "language": "Idioma",
+    "investmentState": "Investimento como despesa",
+    "expenseColors": "Despesas coloridas",
+    "earningColors": "Receitas coloridas",
+    "investmentStateDescription": "Os investimentos serão contabilizados como despesas nas métricas",
+    "expenseColorsDescription": "Realçar montantes negativos a vermelho",
+    "earningColorsDescription": "Realçar montantes positivos a verde"
   },
   "actions": {
     "creating": "A adicionar nova",
@@ -63,7 +69,7 @@
     "descriptionRequired": "Descrição obrigatória",
     "amountRequired": "Montante obrigatório",
     "amountMin": "Montante deve ser positivo",
-    "amountMax": "Montante não pode ser superior a 5000",
+    "amountMax": "Montante não pode ser superior a 10000",
     "dateRequired": "Data obrigatória",
     "dateFuture": "Data não pode ser no futuro"
   },

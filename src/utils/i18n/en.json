@@ -39,7 +39,13 @@
     "settings": "Settings",
     "personalization": "Personalization",
     "general": "General",
-    "language": "Language"
+    "language": "Language",
+    "investmentState": "Investment as expense",
+    "expenseColors": "Expense color",
+    "earningColors": "Earning color",
+    "investmentStateDescription": "Investments will be used in expense metrics",
+    "expenseColorsDescription": "Highlight negative amounts in red",
+    "earningColorsDescription": "Highlight positive amounts in green"
   },
   "actions": {
     "creating": "Creating",
@@ -63,7 +69,7 @@
     "descriptionRequired": "Description is required",
     "amountRequired": "Amount is required",
     "amountMin": "Amount must be positive",
-    "amountMax": "Amount can't be higher than 5000",
+    "amountMax": "Amount can't be higher than 10000",
     "dateRequired": "Date is required",
     "dateFuture": "Date cannot be in the future"
   },

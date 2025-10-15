@@ -8,7 +8,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/commons/Accordion";
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { DropdownMenu } from "@/components/commons/menus/DropdownMenu";
 import { HiMiniEllipsisHorizontal } from "react-icons/hi2";
 
@@ -23,6 +23,7 @@ import {
 import { useTranslate } from "@/utils/hooks/useTranslation";
 import { MonthYearType } from "@/types/componentTypes";
 import { TransactionListLoading } from "@/components/loading/elements/home/LoadingHome";
+import { SettingsContext } from "@/contexts/SettingsContext";
 
 type Props = {
   monthYear: MonthYearType;
@@ -134,6 +135,7 @@ const EarningTable = ({
   showEditDialog: (earning: EarningDTO) => void;
 }) => {
   const { t } = useTranslate();
+  const { isEarningColorEnabled } = useContext(SettingsContext);
   return (
     <div className="overflow-hidden rounded-md border-2 border-black shadow-[5px_5px_0px_rgba(0,0,0,1)]">
       <table className="w-full">
@@ -190,8 +192,11 @@ const EarningTable = ({
                   </dt>
                 </dl>
               </td>
-              <td className="px-3 py-4 text-sm font-medium whitespace-nowrap text-emerald-500">
-                +{Number(earning.amount).toFixed(2)}€
+              <td
+                className={`${isEarningColorEnabled ? "text-positive-light/80" : "text-gray-500"} px-3 py-4 text-sm font-medium whitespace-nowrap`}
+              >
+                {isEarningColorEnabled && "+"}
+                {Number(earning.amount).toFixed(2)}€
               </td>
               <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500">
                 <div className="flex gap-1">
@@ -230,6 +235,7 @@ const EarningCards = ({
   showEditDialog: (earningDTO: EarningDTO) => void;
 }) => {
   const { t } = useTranslate();
+  const { isEarningColorEnabled } = useContext(SettingsContext);
   return (
     <div>
       {earnings.length === 0 && (
@@ -255,7 +261,10 @@ const EarningCards = ({
                   {earning.label}
                 </span>
               </div>
-              <span className="text-sm whitespace-nowrap text-gray-500/50">
+              <span
+                className={`${isEarningColorEnabled ? "text-positive-light/70" : "text-gray-500/50"} text-sm whitespace-nowrap`}
+              >
+                {isEarningColorEnabled && "+"}
                 {Number(earning.amount).toFixed(2)}€
               </span>
             </AccordionTrigger>

@@ -15,7 +15,7 @@ import {
   ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart";
+} from "@/components/commons/charts/Chart";
 import { CartesianGrid, Dot, DotProps, Line, LineChart, XAxis } from "recharts";
 import {
   Card,
@@ -23,11 +23,12 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "@/components/commons/charts/Card";
 import { Ring2 } from "ldrs/react";
 import { format } from "date-fns";
 import "ldrs/react/Ring2.css";
 
+// TODO remove earnings parts when earnings are disabled
 export const YearlyExpenseChart = ({
   filterId,
   year,

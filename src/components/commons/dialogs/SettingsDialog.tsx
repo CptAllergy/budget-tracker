@@ -1,11 +1,19 @@
 "use client";
 
-import React, { Dispatch, SetStateAction, useState } from "react";
+import React, {
+  Dispatch,
+  PropsWithChildren,
+  SetStateAction,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import { useTranslate } from "@/utils/hooks/useTranslation";
 import {
-  LuBlocks,
   LuChevronDown,
+  LuInfo,
   LuPaintBucket,
   LuSettings2,
   LuX,
@@ -16,7 +24,10 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/commons/menus/ShadDropdownMenu";
+import { Switch } from "@/components/commons/input/Switch";
+import { SettingsContext } from "@/contexts/SettingsContext";
+import { cn } from "@/utils/utils";
 
 type DialogProps = {
   isOpen: boolean;
@@ -111,8 +122,21 @@ const SelectedSetting = ({
 };
 
 const GeneralSettings = () => {
-  const { t, locale, setLocale } = useTranslate();
+  const { t } = useTranslate();
 
+  return (
+    <div>
+      <span className="text-lg font-semibold">{t("settings.general")}</span>
+      <div className="mt-6 space-y-4 text-sm sm:text-base">
+        <LanguageSetting />
+        <InvestmentStatusSetting />
+      </div>
+    </div>
+  );
+};
+
+const LanguageSetting = () => {
+  const { t, locale, setLocale } = useTranslate();
   const languageMap = {
     "en-us": { label: "English" },
     "pt-pt": { label: "Português" },
@@ -121,39 +145,55 @@ const GeneralSettings = () => {
   if (!locale) return null;
 
   return (
-    <div>
-      <span className="text-lg font-semibold">{t("settings.general")}</span>
-      <div className="mt-6">
-        <div className="flex flex-row items-center justify-between">
-          <span className="font-semibold">{t("settings.language")}</span>
-          <DropdownMenu modal={false}>
-            <DropdownMenuTrigger
-              asChild
-              className={`bg-theme-main hover:bg-theme-hover mr-4 rounded-md border-2 border-black p-1 text-center transition-colors outline-none hover:cursor-pointer`}
-            >
-              <button className="flex items-center justify-center gap-1 px-2">
-                <span className="first-letter:uppercase">
-                  {languageMap[locale].label}
-                </span>
-                <LuChevronDown />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56">
-              <DropdownMenuRadioGroup
-                value={locale}
-                onValueChange={setLocale as (value: string) => void}
-              >
-                <DropdownMenuRadioItem value="en-us">
-                  {languageMap["en-us"].label}
-                </DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="pt-pt">
-                  {languageMap["pt-pt"].label}
-                </DropdownMenuRadioItem>
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
+    <div className="flex flex-row items-center justify-between">
+      <span className="font-semibold">{t("settings.language")}</span>
+      <DropdownMenu modal={false}>
+        <DropdownMenuTrigger
+          asChild
+          className={`bg-theme-main hover:bg-theme-hover rounded-md border-2 border-black p-1 text-center transition-colors outline-none hover:cursor-pointer md:mr-2`}
+        >
+          <button className="flex items-center justify-center gap-1 px-2">
+            <span className="first-letter:uppercase">
+              {languageMap[locale].label}
+            </span>
+            <LuChevronDown />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-56">
+          <DropdownMenuRadioGroup
+            value={locale}
+            onValueChange={setLocale as (value: string) => void}
+          >
+            <DropdownMenuRadioItem value="en-us">
+              {languageMap["en-us"].label}
+            </DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="pt-pt">
+              {languageMap["pt-pt"].label}
+            </DropdownMenuRadioItem>
+          </DropdownMenuRadioGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+};
+
+const InvestmentStatusSetting = () => {
+  const { t } = useTranslate();
+  const { isInvestmentExpense, setBooleanSetting } =
+    useContext(SettingsContext);
+
+  return (
+    <div className="flex flex-row items-center justify-between">
+      <span className="font-semibold">{t("settings.investmentState")}</span>
+      <InfoTooltip text={t("settings.investmentStateDescription")}>
+        <Switch
+          checked={isInvestmentExpense}
+          onCheckedChange={(checked) =>
+            setBooleanSetting("investment_expense", checked)
+          }
+          className="md:mr-2"
+        />
+      </InfoTooltip>
     </div>
   );
 };
@@ -165,8 +205,100 @@ const PersonalizationSettings = () => {
       <span className="text-lg font-semibold">
         {t("settings.personalization")}
       </span>
-      <div>
-        <LuBlocks className="mt-5 size-6 flex-shrink-0" />
+      <div className="mt-6 space-y-4 text-sm sm:text-base">
+        <TransactionColorSetting />
+      </div>
+    </div>
+  );
+};
+
+const TransactionColorSetting = () => {
+  const { t } = useTranslate();
+  const { isExpenseColorEnabled, isEarningColorEnabled, setBooleanSetting } =
+    useContext(SettingsContext);
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-row items-center justify-between">
+        <span className="font-semibold">{t("settings.expenseColors")}</span>
+        <InfoTooltip text={t("settings.expenseColorsDescription")}>
+          <Switch
+            checked={isExpenseColorEnabled}
+            onCheckedChange={(checked) =>
+              setBooleanSetting("expense_color", checked)
+            }
+            className="md:mr-2"
+          />
+        </InfoTooltip>
+      </div>
+      <div className="flex flex-row items-center justify-between">
+        <span className="font-semibold">{t("settings.earningColors")}</span>
+        <InfoTooltip text={t("settings.earningColorsDescription")}>
+          <Switch
+            checked={isEarningColorEnabled}
+            onCheckedChange={(checked) =>
+              setBooleanSetting("earning_color", checked)
+            }
+            className="md:mr-2"
+          />
+        </InfoTooltip>
+      </div>
+    </div>
+  );
+};
+
+const InfoTooltip = ({
+  text,
+  children,
+}: PropsWithChildren<{ text: string }>) => {
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent | PointerEvent) {
+      if (
+        wrapperRef.current &&
+        !wrapperRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false);
+      }
+    }
+
+    if (open) {
+      document.addEventListener("pointerdown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("pointerdown", handleClickOutside);
+    };
+  }, [open]);
+
+  return (
+    <div ref={wrapperRef} className="group relative flex items-center">
+      {children}
+
+      <span
+        className="ml-2 md:hidden"
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen((prev) => !prev);
+        }}
+      >
+        <LuInfo size={16} />
+      </span>
+
+      <div
+        className={cn(
+          "z-10 inline-block rounded-md border bg-white p-2 text-center text-sm break-words transition-all duration-400",
+          "w-[90vw] max-w-sm md:max-w-[10rem] lg:max-w-[20rem]",
+          "fixed bottom-4 left-1/2 -translate-x-1/2 md:absolute md:top-full md:bottom-auto md:left-1/2 md:mt-1 md:-translate-x-1/2",
+          open
+            ? "pointer-events-auto translate-y-0 opacity-100"
+            : "pointer-events-none translate-y-4 opacity-0 md:translate-y-0",
+          "group-hover:pointer-events-auto md:group-hover:opacity-100"
+        )}
+      >
+        {text}
       </div>
     </div>
   );

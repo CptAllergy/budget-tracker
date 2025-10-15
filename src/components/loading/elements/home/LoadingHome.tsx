@@ -19,6 +19,17 @@ export const TotalsLoading = () => {
   );
 };
 
+export const FilterSelectorLoading = () => {
+  return (
+    <div className="mb-2 flex w-full justify-center">
+      <LoadingRoundedText
+        theme="dark"
+        className="mx-4 mt-2 h-[3.5rem] w-full max-w-[70.5rem]"
+      />
+    </div>
+  );
+};
+
 export const SummaryLoading = () => {
   return (
     <div className="flex w-full justify-center">

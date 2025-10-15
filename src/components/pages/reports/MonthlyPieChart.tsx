@@ -1,6 +1,6 @@
 import { ExpenseDTO } from "@/types/DTO/dataTypes";
 import { ExpenseListType, MonthYearType } from "@/types/componentTypes";
-import { Dispatch, SetStateAction, useMemo } from "react";
+import { Dispatch, SetStateAction, useContext, useMemo } from "react";
 import { useTranslate } from "@/utils/hooks/useTranslation";
 import { EXPENSE_CATEGORIES } from "@/types/transactionFilterTypes";
 import {
@@ -8,26 +8,27 @@ import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart";
+} from "@/components/commons/charts/Chart";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "@/components/commons/charts/Card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/commons/menus/ShadDropdownMenu";
 import { format } from "date-fns";
 import { LuChevronDown } from "react-icons/lu";
 import { Label, Pie, PieChart } from "recharts";
 import { useExpenses } from "@/utils/hooks/reactQueryExpenses";
 import "ldrs/react/Ring2.css";
+import { SettingsContext } from "@/contexts/SettingsContext";
 
 type ExpenseChartData = {
   category: string;
@@ -54,21 +55,6 @@ export const MonthlyPieChart = ({
     isPlaceholderData,
     isEnabled,
   } = useExpenses(filterId, monthYear, true);
-
-  // if (isLoadingExpenses && !isPlaceholderData) {
-  //   return (
-  //     <div className="flex aspect-[16/9] w-full items-center justify-center">
-  //       <Ring2
-  //         size="30"
-  //         stroke="5"
-  //         strokeLength="0.25"
-  //         bgOpacity="0.1"
-  //         speed="0.9"
-  //         color="gray"
-  //       />
-  //     </div>
-  //   );
-  // }
 
   const chartConfig = {
     amount: {
@@ -157,6 +143,7 @@ const MonthlyPieChartContent = ({
   isPending?: boolean;
 }) => {
   const { t, getFnsLocale } = useTranslate();
+  const { isInvestmentExpense } = useContext(SettingsContext);
 
   const chartData = useMemo(() => {
     const buildExpenseChartData = (
@@ -194,12 +181,13 @@ const MonthlyPieChartContent = ({
       // Sort categories alphabetically so that the chart animation is consistent
       chartData.sort((a, b) => a.category.localeCompare(b.category));
 
-      // TODO might want to make this filter optional since it can take up so much space
-      return chartData.filter((data) => data.category !== "investments");
+      return isInvestmentExpense
+        ? chartData
+        : chartData.filter((data) => data.category !== "investments");
     };
 
     return buildExpenseChartData(expenses);
-  }, [expenses]);
+  }, [expenses, isInvestmentExpense]);
 
   const months = Array.from({ length: 12 }, (_, i) => i);
 

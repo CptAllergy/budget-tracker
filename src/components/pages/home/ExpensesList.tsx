@@ -1,7 +1,7 @@
 "use client";
 
 import { ExpenseDTO, UserDTO } from "@/types/DTO/dataTypes";
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { TransactionListLoading } from "@/components/loading/elements/home/LoadingHome";
 import { timestampToDate } from "@/utils/validations";
 import { HiMiniEllipsisHorizontal } from "react-icons/hi2";
@@ -25,6 +25,7 @@ import {
 } from "@/utils/hooks/reactQueryExpenses";
 import { useTranslate } from "@/utils/hooks/useTranslation";
 import { ExpenseListType, MonthYearType } from "@/types/componentTypes";
+import { SettingsContext } from "@/contexts/SettingsContext";
 
 type Props = {
   filterId?: ExpenseListType;
@@ -151,6 +152,7 @@ const ExpenseTable = ({
   isProfile?: boolean;
 }) => {
   const { t } = useTranslate();
+  const { isExpenseColorEnabled } = useContext(SettingsContext);
   const { expenseGroups } = useExpenseGroups(currentUser);
   const getGroupName = getExpenseGroupName(expenseGroups);
 
@@ -225,7 +227,10 @@ const ExpenseTable = ({
                   </dt>
                 </dl>
               </td>
-              <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500">
+              <td
+                className={`${isExpenseColorEnabled ? "text-negative-light/80" : "text-gray-500"} px-3 py-4 text-sm font-medium whitespace-nowrap`}
+              >
+                {isExpenseColorEnabled && "-"}
                 {Number(expense.amount).toFixed(2)}€
               </td>
               <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500">
@@ -273,6 +278,7 @@ const ExpenseCards = ({
   isProfile?: boolean;
 }) => {
   const { t } = useTranslate();
+  const { isExpenseColorEnabled } = useContext(SettingsContext);
   const { expenseGroups } = useExpenseGroups(currentUser);
   const getGroupName = getExpenseGroupName(expenseGroups);
 
@@ -301,7 +307,10 @@ const ExpenseCards = ({
                   {expense.label}
                 </span>
               </div>
-              <span className="text-sm whitespace-nowrap text-gray-500/50">
+              <span
+                className={`${isExpenseColorEnabled ? "text-negative-light/65" : "text-gray-500/50"} text-sm whitespace-nowrap`}
+              >
+                {isExpenseColorEnabled && "-"}
                 {Number(expense.amount).toFixed(2)}€
               </span>
             </AccordionTrigger>

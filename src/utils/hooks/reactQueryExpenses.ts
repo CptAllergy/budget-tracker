@@ -28,6 +28,7 @@ import {
   ExpenseGroupDTO,
 } from "@/types/DTO/dataTypes";
 import { Timestamp } from "firebase/firestore";
+import { SettingsContext } from "@/contexts/SettingsContext";
 
 export const useExpenses = (
   filterId?: ExpenseListType,
@@ -88,26 +89,12 @@ export const useAddExpense = () => {
           }
         );
 
-        queryClient.setQueryData<MonthlyExpenseTotal[]>(
-          [
+        void queryClient.invalidateQueries({
+          queryKey: [
             "yearExpenses",
-            {
-              year: monthYear.year,
-              filterId: filterId,
-            },
+            { year: monthYear.year, filterId: filterId },
           ],
-          (oldData) => {
-            const monthData = oldData?.find(
-              (data) => data.month === monthYear.month
-            );
-            if (monthData && oldData) {
-              monthData.totalExpenses += createdExpense.amount;
-              return oldData.map((m) =>
-                m.month === monthData.month ? monthData : m
-              );
-            }
-          }
-        );
+        });
       };
 
       // Update caches
@@ -154,26 +141,12 @@ export const useDeleteExpense = () => {
           }
         );
 
-        queryClient.setQueryData<MonthlyExpenseTotal[]>(
-          [
+        void queryClient.invalidateQueries({
+          queryKey: [
             "yearExpenses",
-            {
-              year: monthYear.year,
-              filterId: filterId,
-            },
+            { year: monthYear.year, filterId: filterId },
           ],
-          (oldData) => {
-            const monthData = oldData?.find(
-              (data) => data.month === monthYear.month
-            );
-            if (monthData && oldData) {
-              monthData.totalExpenses -= expense.amount;
-              return oldData.map((m) =>
-                m.month === monthData.month ? monthData : m
-              );
-            }
-          }
-        );
+        });
       };
 
       // Update caches
@@ -201,21 +174,16 @@ export const useUpdateExpense = () => {
 
   const { mutate: mutateUpdateExpense, error } = useMutation({
     mutationFn: async ({ expense }: { expense: ExpenseDTO }) => {
-      const { newUserTotal, prevAmount, prevTimestamp } =
+      const { newUserTotal, prevTimestamp } =
         await updateExpenseFirebase(expense);
-      return { newUserTotal, prevAmount, prevTimestamp, expense };
+      return { newUserTotal, prevTimestamp, expense };
     },
-    onSuccess: ({ newUserTotal, prevAmount, prevTimestamp, expense }) => {
+    onSuccess: ({ newUserTotal, prevTimestamp, expense }) => {
       setUserTotalInCache(queryClient, expense, newUserTotal);
 
       updateExpenseInCache(queryClient, expense, prevTimestamp);
 
-      updateMonthlyExpensesTotalInCache(
-        queryClient,
-        expense,
-        prevAmount,
-        prevTimestamp
-      );
+      invalidateExpensesTotalInCache(queryClient, expense, prevTimestamp);
 
       toggleStatusAlert(alertContext.current, "Expense updated");
     },
@@ -236,6 +204,7 @@ export const useMonthlyExpenseTotal = (
   showPlaceholderData: boolean = false
 ) => {
   const alertContext = useRef(useContext(AlertContext));
+  const { isInvestmentExpense } = useContext(SettingsContext);
 
   const {
     data: monthlyExpenseTotals,
@@ -243,15 +212,16 @@ export const useMonthlyExpenseTotal = (
     isLoading,
     isFetching,
   } = useQuery({
-    queryKey: ["yearExpenses", { year, filterId }],
+    queryKey: ["yearExpenses", { year, filterId }, { isInvestmentExpense }],
     queryFn: async () => {
       const results: MonthlyExpenseTotal[] = [];
 
       for (let month = 0; month < 12; month++) {
-        const sum = await getExpensesMonthlySumFirebase(filterId!, {
-          month,
-          year,
-        });
+        const sum = await getExpensesMonthlySumFirebase(
+          filterId!,
+          { month, year },
+          isInvestmentExpense
+        );
         results.push({ month, totalExpenses: sum ?? -1 });
       }
       return results;
@@ -331,91 +301,32 @@ function updateExpenseInCache(
   }
 }
 
-function updateMonthlyExpensesTotalInCache(
+function invalidateExpensesTotalInCache(
   queryClient: QueryClient,
   expense: ExpenseDTO,
-  prevAmount: number,
   prevTimestamp: Timestamp
 ) {
-  const newMonthYear: MonthYearType = {
-    month: expense.timestamp.toDate().getMonth(),
-    year: expense.timestamp.toDate().getFullYear(),
-  };
-  const prevMonthYear: MonthYearType = {
-    month: prevTimestamp.toDate().getMonth(),
-    year: prevTimestamp.toDate().getFullYear(),
-  };
+  const newYear = expense.timestamp.toDate().getFullYear();
+  const prevYear = prevTimestamp.toDate().getFullYear();
 
-  const isSameMonth =
-    newMonthYear.month === prevMonthYear.month &&
-    newMonthYear.year === prevMonthYear.year;
+  const isSameYear = newYear === prevYear;
 
-  const updatePrevMonth = (filterId: ExpenseListType) => {
-    queryClient.setQueryData<MonthlyExpenseTotal[]>(
-      ["yearExpenses", { year: prevMonthYear.year, filterId: filterId }],
-      (oldData) => {
-        const monthData = oldData?.find(
-          (data) => data.month === prevMonthYear.month
-        );
-
-        if (!monthData || !oldData) {
-          return;
-        }
-
-        if (isSameMonth) {
-          // If the expense is still in the same month, update the total by the difference between the new and prev amount
-          monthData.totalExpenses += expense.amount - prevAmount;
-          return oldData.map((m) =>
-            m.month === monthData.month ? monthData : m
-          );
-        } else {
-          // If the expense has moved to a different month, subtract the prev amount from the prev month
-          monthData.totalExpenses -= prevAmount;
-          return oldData.map((m) =>
-            m.month === monthData.month ? monthData : m
-          );
-        }
-      }
-    );
+  const invalidateYear = (filterId: ExpenseListType, year: number) => {
+    void queryClient.invalidateQueries({
+      queryKey: ["yearExpenses", { year: year, filterId: filterId }],
+    });
   };
 
-  const updateNewMonth = (filterId: ExpenseListType) => {
-    queryClient.setQueryData<MonthlyExpenseTotal[]>(
-      [
-        "yearExpenses",
-        {
-          year: newMonthYear.year,
-          filterId: filterId,
-        },
-      ],
-      (oldData) => {
-        const monthData = oldData?.find(
-          (data) => data.month === newMonthYear.month
-        );
-
-        if (!monthData || !oldData) {
-          return;
-        }
-
-        // If the expense has moved to a different month, add the new amount to the new month
-        monthData.totalExpenses += expense.amount;
-        return oldData.map((m) =>
-          m.month === monthData.month ? monthData : m
-        );
-      }
-    );
-  };
-
-  updatePrevMonth({ userId: expense.userId });
+  invalidateYear({ userId: expense.userId }, prevYear);
   if (expense.groupId) {
-    updatePrevMonth({ groupId: expense.groupId });
+    invalidateYear({ groupId: expense.groupId }, prevYear);
   }
 
-  if (!isSameMonth) {
-    // Only update the new month if the month has changed
-    updateNewMonth({ userId: expense.userId });
+  if (!isSameYear) {
+    // Only invalidate the new year if the year has changed
+    invalidateYear({ userId: expense.userId }, newYear);
     if (expense.groupId) {
-      updateNewMonth({ groupId: expense.groupId });
+      invalidateYear({ groupId: expense.groupId }, newYear);
     }
   }
 }

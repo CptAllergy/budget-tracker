@@ -21,7 +21,7 @@ import { useAddEarning } from "@/utils/hooks/reactQueryEarnings";
 import { User } from "@firebase/auth";
 
 type Props = { initialUser: User | null };
-// TODO add settings menu where currentUser can change color of earning and expenses (red, green or grey, for a negative or neutral value)
+
 const Home = ({ initialUser }: Props) => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 

@@ -7,7 +7,7 @@ export function isNumeric(str: any): boolean {
 
 export function isValidAmount(amount: string): boolean {
   const amountNumber = Number(amount);
-  return isNumeric(amount) && amountNumber > 0 && amountNumber <= 5000;
+  return isNumeric(amount) && amountNumber > 0 && amountNumber <= 10000;
 }
 
 export function isValidDate(date: Date | undefined): boolean {

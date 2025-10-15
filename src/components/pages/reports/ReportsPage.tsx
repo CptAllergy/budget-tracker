@@ -14,17 +14,16 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/commons/menus/ShadDropdownMenu";
 import { LuChevronDown } from "react-icons/lu";
 import "ldrs/react/Ring2.css";
 import { useTranslate } from "@/utils/hooks/useTranslation";
 import { User } from "@firebase/auth";
 import { YearlyExpenseChart } from "@/components/pages/reports/YearlyExpenseChart";
 import { MonthlyPieChart } from "@/components/pages/reports/MonthlyPieChart";
-import { TotalsLoading } from "@/components/loading/elements/home/LoadingHome";
+import { FilterSelectorLoading } from "@/components/loading/elements/home/LoadingHome";
 
 type Props = { initialUser: User | null };
-// TODO add a flag to include or remove investments from the pie chart
 const Reports = ({ initialUser }: Props) => {
   return (
     <div>
@@ -159,7 +158,7 @@ const FilterSelector = ({
   const [filterName, setFilterName] = useState("profile");
 
   if (!currentUser || !expenseGroups) {
-    return <TotalsLoading />;
+    return <FilterSelectorLoading />;
   }
 
   if (expenseGroups.length === 0) {

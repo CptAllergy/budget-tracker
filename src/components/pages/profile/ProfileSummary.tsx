@@ -2,12 +2,13 @@
 
 import { SummaryLoading } from "@/components/loading/elements/home/LoadingHome";
 import { EarningDTO, ExpenseDTO, UserDTO } from "@/types/DTO/dataTypes";
-import React, { useMemo } from "react";
+import React, { useContext, useMemo } from "react";
 import { useTranslate } from "@/utils/hooks/useTranslation";
 import { ExpenseListType, MonthYearType } from "@/types/componentTypes";
 import "ldrs/react/Ring2.css";
 import { Ring2 } from "ldrs/react";
 import { useTransactions } from "@/utils/hooks/reactQueryUser";
+import { SettingsContext } from "@/contexts/SettingsContext";
 
 type Props = {
   filterId?: ExpenseListType;
@@ -58,6 +59,7 @@ const SummaryContent = ({
   isFetching: boolean;
 }) => {
   const { t } = useTranslate();
+  const { isInvestmentExpense } = useContext(SettingsContext);
 
   const {
     totalEarnings,
@@ -79,7 +81,9 @@ const SummaryContent = ({
       .filter((expense) => expense.category === "investments")
       .reduce((total, expense) => total + expense.amount, 0);
 
-    const netBalance = totalEarnings - (totalExpenses - investmentExpenses);
+    const netBalance =
+      totalEarnings -
+      (totalExpenses - (isInvestmentExpense ? 0 : investmentExpenses));
 
     const savingsRate =
       totalEarnings > 0 ? (netBalance / totalEarnings) * 100 : 0;
@@ -91,7 +95,7 @@ const SummaryContent = ({
       netBalance,
       savingsRate,
     };
-  }, [earnings, expenses]);
+  }, [earnings, expenses, isInvestmentExpense]);
 
   if (isFetching) {
     return (
@@ -116,7 +120,11 @@ const SummaryContent = ({
             <div className="flex justify-between">
               <span className="text-left">{t("profile.spent")}: </span>
               <span className="text-negative-dark text-right">
-                -{Number(totalExpenses - investmentExpenses).toFixed(2)}€
+                -
+                {Number(
+                  totalExpenses - (isInvestmentExpense ? 0 : investmentExpenses)
+                ).toFixed(2)}
+                €
               </span>
             </div>
             <div className="flex justify-between">
