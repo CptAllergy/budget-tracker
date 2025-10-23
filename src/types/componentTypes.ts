@@ -2,6 +2,7 @@ import { Url } from "next/dist/shared/lib/router/router";
 import { FormState } from "react-hook-form";
 import { CreateEarningDTO, CreateExpenseDTO } from "@/types/DTO/dataTypes";
 import { Dispatch, JSX, SetStateAction } from "react";
+import { ExpenseCategory, ExpenseTag } from "@/types/transactionFilterTypes";
 
 export type DropdownMenuItemType = {
   label: string;
@@ -47,5 +48,22 @@ export type MonthlyEarningTotal = {
 export type MonthlyTransactionTotal = {
   month: number;
   totalExpenses: number;
-  totalEarnings: number;
+  totalEarnings?: number;
+};
+
+export type ReportQueryExpenseCategory = ExpenseCategory | "all";
+export type ReportQueryExpenseTag = ExpenseTag | "all";
+
+export type ReportQueryType = {
+  firstDay: Date;
+  lastDay: Date;
+  category: ReportQueryExpenseCategory;
+  tag: ReportQueryExpenseTag;
+};
+
+export type ReportQueryTypeInputs = {
+  firstDay: string;
+  lastDay: string;
+  category: ReportQueryExpenseCategory;
+  tag: ReportQueryExpenseTag;
 };

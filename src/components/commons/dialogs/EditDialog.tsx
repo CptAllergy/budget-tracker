@@ -194,6 +194,8 @@ const useExpenseForm = (
   expense: ExpenseDTO | undefined,
   alertContext: AlertContextType
 ) => {
+  const { t } = useTranslate();
+
   if (!updateExpense) {
     throw new Error("updateExpense function is required for expense update");
   }
@@ -229,6 +231,7 @@ const useExpenseForm = (
     if (!expense || !updatedData.newDate) {
       toggleStatusErrorAlert(
         alertContext,
+        t,
         "UPDATE_FAILED",
         "Invalid expense data"
       );
@@ -239,17 +242,27 @@ const useExpenseForm = (
     const amountString = updatedData.amount.toString().replace(",", ".");
 
     if (!isValidAmount(amountString)) {
-      toggleStatusErrorAlert(alertContext, "UPDATE_FAILED", "Invalid amount");
+      toggleStatusErrorAlert(
+        alertContext,
+        t,
+        "UPDATE_FAILED",
+        "Invalid amount"
+      );
       throw "Invalid expense data: Invalid amount";
     }
 
     if (!isValidDate(updatedData.newDate)) {
-      toggleStatusErrorAlert(alertContext, "UPDATE_FAILED", "Invalid date");
+      toggleStatusErrorAlert(alertContext, t, "UPDATE_FAILED", "Invalid date");
       throw "Invalid expense data: Invalid date";
     }
 
     if (!EXPENSE_CATEGORIES.includes(updatedData.category)) {
-      toggleStatusErrorAlert(alertContext, "UPDATE_FAILED", "Invalid category");
+      toggleStatusErrorAlert(
+        alertContext,
+        t,
+        "UPDATE_FAILED",
+        "Invalid category"
+      );
       throw "Invalid expense data: Invalid category";
     }
 
@@ -279,6 +292,8 @@ const useEarningForm = (
   earning: EarningDTO | undefined,
   alertContext: AlertContextType
 ) => {
+  const { t } = useTranslate();
+
   if (!updateEarning) {
     throw new Error("updateEarning function is required for earning update");
   }
@@ -312,6 +327,7 @@ const useEarningForm = (
     if (!earning || !updatedData.newDate) {
       toggleStatusErrorAlert(
         alertContext,
+        t,
         "UPDATE_FAILED",
         "Invalid earning data"
       );
@@ -322,17 +338,27 @@ const useEarningForm = (
     const amountString = updatedData.amount.toString().replace(",", ".");
 
     if (!isValidAmount(amountString)) {
-      toggleStatusErrorAlert(alertContext, "UPDATE_FAILED", "Invalid amount");
+      toggleStatusErrorAlert(
+        alertContext,
+        t,
+        "UPDATE_FAILED",
+        "Invalid amount"
+      );
       throw "Invalid earning data: Invalid amount";
     }
 
     if (!isValidDate(updatedData.newDate)) {
-      toggleStatusErrorAlert(alertContext, "UPDATE_FAILED", "Invalid date");
+      toggleStatusErrorAlert(alertContext, t, "UPDATE_FAILED", "Invalid date");
       throw "Invalid earning data: Invalid date";
     }
 
     if (!EARNING_CATEGORIES.includes(updatedData.category)) {
-      toggleStatusErrorAlert(alertContext, "UPDATE_FAILED", "Invalid category");
+      toggleStatusErrorAlert(
+        alertContext,
+        t,
+        "UPDATE_FAILED",
+        "Invalid category"
+      );
       throw "Invalid earning data: Invalid category";
     }
 

@@ -23,9 +23,11 @@ import {
   useExpenses,
   useMonthlyExpenseTotal,
 } from "@/utils/hooks/reactQueryExpenses";
+import { useTranslate } from "@/utils/hooks/useTranslation";
 
 export const useCurrentUser = () => {
   const alertContext = useRef(useContext(AlertContext));
+  const { t } = useTranslate();
   const user = useUser();
   const uid = user?.uid;
 
@@ -45,15 +47,16 @@ export const useCurrentUser = () => {
 
   useEffect(() => {
     if (error) {
-      toggleStatusErrorAlert(alertContext.current, "GENERIC", error);
+      toggleStatusErrorAlert(alertContext.current, t, "GENERIC", error);
     }
-  }, [error]);
+  }, [error, t]);
 
   return { currentUser, isLoading };
 };
 
 export const useExpenseGroups = (currentUser?: UserDTO) => {
   const alertContext = useRef(useContext(AlertContext));
+  const { t } = useTranslate();
 
   const {
     data: expenseGroups,
@@ -71,9 +74,9 @@ export const useExpenseGroups = (currentUser?: UserDTO) => {
 
   useEffect(() => {
     if (error) {
-      toggleStatusErrorAlert(alertContext.current, "GENERIC", error);
+      toggleStatusErrorAlert(alertContext.current, t, "GENERIC", error);
     }
-  }, [error]);
+  }, [error, t]);
 
   return { expenseGroups, isLoading };
 };

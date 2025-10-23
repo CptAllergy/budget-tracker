@@ -15,6 +15,7 @@ import {
   deleteExpenseFirebase,
   getExpensesFirebase,
   getExpensesMonthlySumFirebase,
+  getQueryExpensesFirebase,
   postExpenseFirebase,
   updateExpenseFirebase,
 } from "@/services/firebaseService";
@@ -29,6 +30,8 @@ import {
 } from "@/types/DTO/dataTypes";
 import { Timestamp } from "firebase/firestore";
 import { SettingsContext } from "@/contexts/SettingsContext";
+import { ExpenseCategory, ExpenseTag } from "@/types/transactionFilterTypes";
+import { useTranslate } from "@/utils/hooks/useTranslation";
 
 export const useExpenses = (
   filterId?: ExpenseListType,
@@ -36,6 +39,7 @@ export const useExpenses = (
   showPlaceholderData: boolean = false
 ) => {
   const alertContext = useRef(useContext(AlertContext));
+  const { t } = useTranslate();
 
   const {
     data: expenses,
@@ -56,9 +60,60 @@ export const useExpenses = (
 
   useEffect(() => {
     if (error) {
-      toggleStatusErrorAlert(alertContext.current, "EXPENSES_FAILED", error);
+      toggleStatusErrorAlert(alertContext.current, t, "EXPENSES_FAILED", error);
     }
-  }, [error]);
+  }, [error, t]);
+
+  return { expenses, isLoading, isFetching, isPlaceholderData, isEnabled };
+};
+
+export const useQueryExpenses = (
+  activeQuery?: {
+    firstDay: Date;
+    lastDay: Date;
+    category?: ExpenseCategory;
+    tag?: ExpenseTag;
+  },
+  filterId?: ExpenseListType,
+  showPlaceholderData: boolean = false
+) => {
+  const alertContext = useRef(useContext(AlertContext));
+  const { t } = useTranslate();
+
+  const {
+    data: expenses,
+    error,
+    isLoading,
+    isFetching,
+    isPlaceholderData,
+    isEnabled,
+  } = useQuery({
+    queryKey: ["filteredExpenses", { filterId, ...activeQuery }],
+    queryFn: async () => {
+      const expenses = await getQueryExpensesFirebase(
+        filterId!,
+        activeQuery!.firstDay,
+        activeQuery!.lastDay,
+        activeQuery!.category,
+        activeQuery!.tag
+      );
+
+      // Sort expenses by timestamp ascending
+      expenses.sort((a, b) => (a.timestamp > b.timestamp ? 1 : -1));
+      return expenses;
+    },
+    enabled: !!filterId && !!activeQuery,
+    placeholderData: showPlaceholderData ? (prev) => prev : undefined,
+    gcTime: 1000 * 10, // 10 seconds
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
+
+  useEffect(() => {
+    if (error) {
+      toggleStatusErrorAlert(alertContext.current, t, "EXPENSES_FAILED", error);
+    }
+  }, [error, t]);
 
   return { expenses, isLoading, isFetching, isPlaceholderData, isEnabled };
 };
@@ -66,6 +121,7 @@ export const useExpenses = (
 export const useAddExpense = () => {
   const queryClient = useQueryClient();
   const alertContext = useRef(useContext(AlertContext));
+  const { t } = useTranslate();
 
   const { mutate: mutateAddExpense, error } = useMutation({
     mutationFn: async ({ newExpense }: { newExpense: CreateExpenseDTO }) => {
@@ -103,15 +159,15 @@ export const useAddExpense = () => {
         addExpenseInCache({ groupId: createdExpense.groupId });
       }
 
-      toggleStatusAlert(alertContext.current, "New expense created");
+      toggleStatusAlert(alertContext.current, t("alerts.info.expenseNew"));
     },
   });
 
   useEffect(() => {
     if (error) {
-      toggleStatusErrorAlert(alertContext.current, "ADD_FAILED", error);
+      toggleStatusErrorAlert(alertContext.current, t, "ADD_FAILED", error);
     }
-  }, [error]);
+  }, [error, t]);
 
   return { mutateAddExpense };
 };
@@ -119,6 +175,7 @@ export const useAddExpense = () => {
 export const useDeleteExpense = () => {
   const queryClient = useQueryClient();
   const alertContext = useRef(useContext(AlertContext));
+  const { t } = useTranslate();
 
   const { mutate: mutateDeleteExpense, error } = useMutation({
     mutationFn: async ({ expense }: { expense: ExpenseDTO }) => {
@@ -155,15 +212,15 @@ export const useDeleteExpense = () => {
         deleteExpenseInCache({ groupId: expense.groupId });
       }
 
-      toggleStatusAlert(alertContext.current, "Expense deleted");
+      toggleStatusAlert(alertContext.current, t("alerts.info.expenseDeleted"));
     },
   });
 
   useEffect(() => {
     if (error) {
-      toggleStatusErrorAlert(alertContext.current, "DELETE_FAILED", error);
+      toggleStatusErrorAlert(alertContext.current, t, "DELETE_FAILED", error);
     }
-  }, [error]);
+  }, [error, t]);
 
   return { mutateDeleteExpense };
 };
@@ -171,6 +228,7 @@ export const useDeleteExpense = () => {
 export const useUpdateExpense = () => {
   const queryClient = useQueryClient();
   const alertContext = useRef(useContext(AlertContext));
+  const { t } = useTranslate();
 
   const { mutate: mutateUpdateExpense, error } = useMutation({
     mutationFn: async ({ expense }: { expense: ExpenseDTO }) => {
@@ -185,15 +243,15 @@ export const useUpdateExpense = () => {
 
       invalidateExpensesTotalInCache(queryClient, expense, prevTimestamp);
 
-      toggleStatusAlert(alertContext.current, "Expense updated");
+      toggleStatusAlert(alertContext.current, t("alerts.info.expenseUpdated"));
     },
   });
 
   useEffect(() => {
     if (error) {
-      toggleStatusErrorAlert(alertContext.current, "UPDATE_FAILED", error);
+      toggleStatusErrorAlert(alertContext.current, t, "UPDATE_FAILED", error);
     }
-  }, [error]);
+  }, [error, t]);
 
   return { mutateUpdateExpense };
 };
@@ -204,6 +262,7 @@ export const useMonthlyExpenseTotal = (
   showPlaceholderData: boolean = false
 ) => {
   const alertContext = useRef(useContext(AlertContext));
+  const { t } = useTranslate();
   const { isInvestmentExpense } = useContext(SettingsContext);
 
   const {
@@ -233,9 +292,9 @@ export const useMonthlyExpenseTotal = (
 
   useEffect(() => {
     if (error) {
-      toggleStatusErrorAlert(alertContext.current, "EXPENSES_FAILED", error);
+      toggleStatusErrorAlert(alertContext.current, t, "EXPENSES_FAILED", error);
     }
-  }, [error]);
+  }, [error, t]);
 
   return { monthlyExpenseTotals, isLoading, isFetching };
 };

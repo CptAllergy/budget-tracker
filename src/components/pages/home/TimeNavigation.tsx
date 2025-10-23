@@ -85,7 +85,7 @@ const MonthNavigation = ({
     >
       <div className="relative flex items-center gap-5">
         {isFetching && (
-          <div className="absolute -translate-x-10 translate-y-0.5">
+          <div className="absolute hidden -translate-x-10 translate-y-0.5 min-[375px]:block">
             <Ring2
               size="20"
               stroke="3"

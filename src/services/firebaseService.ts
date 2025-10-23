@@ -24,6 +24,7 @@ import {
 import { Dispatch, SetStateAction } from "react";
 import { ExpenseListType, MonthYearType } from "@/types/componentTypes";
 import { db } from "@/utils/firebase/config";
+import { ExpenseCategory, ExpenseTag } from "@/types/transactionFilterTypes";
 
 export async function getCurrentUserFirebase(userId: string) {
   const docRef = doc(db, "users", userId);
@@ -80,6 +81,42 @@ export async function getExpensesFirebase(
     where("timestamp", ">=", firstDay),
     where("timestamp", "<=", lastDay),
     filter,
+    orderBy("timestamp", "desc")
+  );
+
+  const querySnapshot = await getDocs(queryExpenses);
+
+  return querySnapshot.docs.map((doc) => {
+    return { id: doc.id, ...doc.data() } as ExpenseDTO;
+  });
+}
+
+export async function getQueryExpensesFirebase(
+  filterId: ExpenseListType,
+  firstDay: Date,
+  lastDay: Date,
+  category?: ExpenseCategory,
+  tag?: ExpenseTag
+) {
+  const filters = [
+    where("timestamp", ">=", firstDay),
+    where("timestamp", "<=", lastDay),
+    filterId.userId
+      ? where("userId", "==", filterId.userId)
+      : where("groupId", "==", filterId.groupId),
+  ];
+
+  if (category) {
+    filters.push(where("category", "==", category));
+  }
+
+  if (tag) {
+    filters.push(where("tags", "array-contains", tag));
+  }
+
+  const queryExpenses = query(
+    collection(db, "expenses"),
+    ...filters,
     orderBy("timestamp", "desc")
   );
 
@@ -316,7 +353,7 @@ export async function updateEarningFirebase(earningUpdated: EarningDTO) {
   return { prevAmount, prevTimestamp };
 }
 
-function getMonthYearLimits(monthYear?: MonthYearType): {
+export function getMonthYearLimits(monthYear?: MonthYearType): {
   firstDay: Date;
   lastDay: Date;
 } {

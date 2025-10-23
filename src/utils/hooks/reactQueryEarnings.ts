@@ -20,6 +20,7 @@ import {
 } from "@/utils/toggleAlerts";
 import { CreateEarningDTO, EarningDTO } from "@/types/DTO/dataTypes";
 import { Timestamp } from "firebase/firestore";
+import { useTranslate } from "@/utils/hooks/useTranslation";
 
 export const useEarnings = (
   userId?: string,
@@ -27,6 +28,7 @@ export const useEarnings = (
   showPlaceholderData: boolean = false
 ) => {
   const alertContext = useRef(useContext(AlertContext));
+  const { t } = useTranslate();
 
   const {
     data: earnings,
@@ -45,9 +47,9 @@ export const useEarnings = (
 
   useEffect(() => {
     if (error) {
-      toggleStatusErrorAlert(alertContext.current, "EARNINGS_FAILED", error);
+      toggleStatusErrorAlert(alertContext.current, t, "EARNINGS_FAILED", error);
     }
-  }, [error]);
+  }, [error, t]);
 
   return { earnings, isLoading, isFetching };
 };
@@ -55,6 +57,7 @@ export const useEarnings = (
 export const useAddEarning = () => {
   const queryClient = useQueryClient();
   const alertContext = useRef(useContext(AlertContext));
+  const { t } = useTranslate();
 
   const { mutate: mutateAddEarning, error } = useMutation({
     mutationFn: async ({ newEarning }: { newEarning: CreateEarningDTO }) => {
@@ -89,15 +92,15 @@ export const useAddEarning = () => {
         }
       );
 
-      toggleStatusAlert(alertContext.current, "New earning created");
+      toggleStatusAlert(alertContext.current, t("alerts.info.earningNew"));
     },
   });
 
   useEffect(() => {
     if (error) {
-      toggleStatusErrorAlert(alertContext.current, "ADD_FAILED", error);
+      toggleStatusErrorAlert(alertContext.current, t, "ADD_FAILED", error);
     }
-  }, [error]);
+  }, [error, t]);
 
   return { mutateAddEarning };
 };
@@ -105,6 +108,7 @@ export const useAddEarning = () => {
 export const useDeleteEarning = () => {
   const queryClient = useQueryClient();
   const alertContext = useRef(useContext(AlertContext));
+  const { t } = useTranslate();
 
   const { mutate: mutateDeleteEarning, error } = useMutation({
     mutationFn: async ({ earning }: { earning: EarningDTO }) => {
@@ -139,15 +143,15 @@ export const useDeleteEarning = () => {
         }
       );
 
-      toggleStatusAlert(alertContext.current, "Earning deleted");
+      toggleStatusAlert(alertContext.current, t("alerts.info.earningDeleted"));
     },
   });
 
   useEffect(() => {
     if (error) {
-      toggleStatusErrorAlert(alertContext.current, "DELETE_FAILED", error);
+      toggleStatusErrorAlert(alertContext.current, t, "DELETE_FAILED", error);
     }
-  }, [error]);
+  }, [error, t]);
 
   return { mutateDeleteEarning };
 };
@@ -155,6 +159,7 @@ export const useDeleteEarning = () => {
 export const useUpdateEarning = () => {
   const queryClient = useQueryClient();
   const alertContext = useRef(useContext(AlertContext));
+  const { t } = useTranslate();
 
   const { mutate: mutateUpdateEarning, error } = useMutation({
     mutationFn: async ({ earning }: { earning: EarningDTO }) => {
@@ -172,15 +177,15 @@ export const useUpdateEarning = () => {
         prevTimestamp
       );
 
-      toggleStatusAlert(alertContext.current, "Earning updated");
+      toggleStatusAlert(alertContext.current, t("alerts.info.earningUpdated"));
     },
   });
 
   useEffect(() => {
     if (error) {
-      toggleStatusErrorAlert(alertContext.current, "UPDATE_FAILED", error);
+      toggleStatusErrorAlert(alertContext.current, t, "UPDATE_FAILED", error);
     }
-  }, [error]);
+  }, [error, t]);
 
   return { mutateUpdateEarning };
 };
@@ -191,6 +196,7 @@ export const useMonthlyEarningTotal = (
   showPlaceholderData: boolean = false
 ) => {
   const alertContext = useRef(useContext(AlertContext));
+  const { t } = useTranslate();
 
   const {
     data: monthlyEarningTotals,
@@ -219,9 +225,9 @@ export const useMonthlyEarningTotal = (
 
   useEffect(() => {
     if (error) {
-      toggleStatusErrorAlert(alertContext.current, "EARNINGS_FAILED", error);
+      toggleStatusErrorAlert(alertContext.current, t, "EARNINGS_FAILED", error);
     }
-  }, [error]);
+  }, [error, t]);
 
   return { monthlyEarningTotals, isLoading, isFetching, isEnabled };
 };

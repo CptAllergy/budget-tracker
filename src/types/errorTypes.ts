@@ -5,4 +5,5 @@ export type CustomErrorCode =
   | "DELETE_FAILED"
   | "EARNINGS_FAILED"
   | "EXPENSES_FAILED"
+  | "QUERY_FAILED"
   | "GENERIC";

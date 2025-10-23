@@ -38,6 +38,7 @@ const Totals = ({ groupId }: { groupId?: string }) => {
       ) {
         toggleStatusErrorAlert(
           alertContext.current,
+          t,
           "GENERIC",
           "Invalid group data"
         );
@@ -58,7 +59,7 @@ const Totals = ({ groupId }: { groupId?: string }) => {
       setReceiver(receiver);
       setBalance(Math.abs(balance));
     }
-  }, [currentGroup]);
+  }, [currentGroup, t]);
 
   return (
     <>

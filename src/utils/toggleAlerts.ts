@@ -3,6 +3,7 @@ import { CustomErrorCode } from "@/types/errorTypes";
 
 export const toggleStatusErrorAlert = (
   alertContext: AlertContextType,
+  t: (translationKey: string) => string,
   errorCode: CustomErrorCode,
   error: unknown
 ) => {
@@ -16,37 +17,42 @@ export const toggleStatusErrorAlert = (
 
   switch (errorCode) {
     case "SESSION_EXPIRED": {
-      setAlertMessage("Your session has expired");
+      setAlertMessage(t("alerts.error.sessionExpired"));
       setRefreshEnabled(false);
       break;
     }
     case "DELETE_FAILED": {
-      setAlertMessage("Unexpected error while deleting");
+      setAlertMessage(t("alerts.error.deleteFailed"));
       setRefreshEnabled(false);
       break;
     }
     case "ADD_FAILED": {
-      setAlertMessage("Unexpected error while creating");
+      setAlertMessage(t("alerts.error.addFailed"));
       setRefreshEnabled(false);
       break;
     }
     case "UPDATE_FAILED": {
-      setAlertMessage("Unexpected error while updating");
+      setAlertMessage(t("alerts.error.updateFailed"));
       setRefreshEnabled(false);
       break;
     }
     case "EARNINGS_FAILED": {
-      setAlertMessage("Unexpected error while loading earnings");
+      setAlertMessage(t("alerts.error.earningsFailed"));
       setRefreshEnabled(false);
       break;
     }
     case "EXPENSES_FAILED": {
-      setAlertMessage("Unexpected error while loading expenses");
+      setAlertMessage(t("alerts.error.expensesFailed"));
+      setRefreshEnabled(false);
+      break;
+    }
+    case "QUERY_FAILED": {
+      setAlertMessage(t("alerts.error.queryFailed"));
       setRefreshEnabled(false);
       break;
     }
     default: {
-      setAlertMessage("An unexpected error has occurred");
+      setAlertMessage(t("alerts.error.generic"));
       setRefreshEnabled(true);
       break;
     }

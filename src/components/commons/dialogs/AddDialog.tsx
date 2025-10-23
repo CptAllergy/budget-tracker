@@ -230,6 +230,8 @@ const useExpenseForm = (
   alertContext: AlertContextType,
   filterId: ExpenseListType | undefined
 ) => {
+  const { t } = useTranslate();
+
   const { register, handleSubmit, reset, formState, control } =
     useForm<CreateExpenseDTO>({
       defaultValues: {
@@ -253,17 +255,17 @@ const useExpenseForm = (
     const amountString = newData.amount.toString().replace(",", ".");
 
     if (!isValidAmount(amountString)) {
-      toggleStatusErrorAlert(alertContext, "ADD_FAILED", "Invalid amount");
+      toggleStatusErrorAlert(alertContext, t, "ADD_FAILED", "Invalid amount");
       throw "Invalid expense data: Invalid amount";
     }
 
     if (!EXPENSE_CATEGORIES.includes(newData.category)) {
-      toggleStatusErrorAlert(alertContext, "ADD_FAILED", "Invalid category");
+      toggleStatusErrorAlert(alertContext, t, "ADD_FAILED", "Invalid category");
       throw "Invalid expense data: Invalid category";
     }
 
     if (!filterId?.groupId && !filterId?.userId) {
-      toggleStatusErrorAlert(alertContext, "ADD_FAILED", "Invalid group");
+      toggleStatusErrorAlert(alertContext, t, "ADD_FAILED", "Invalid group");
       throw "Invalid expense data: Invalid group";
     }
 
@@ -294,6 +296,8 @@ const useEarningForm = (
   createEarning: (earning: CreateEarningDTO) => void,
   alertContext: AlertContextType
 ) => {
+  const { t } = useTranslate();
+
   const { register, handleSubmit, reset, formState, control } =
     useForm<CreateEarningDTO>({
       defaultValues: {
@@ -315,12 +319,12 @@ const useEarningForm = (
     const amountString = newData.amount.toString().replace(",", ".");
 
     if (!isValidAmount(amountString)) {
-      toggleStatusErrorAlert(alertContext, "ADD_FAILED", "Invalid amount");
+      toggleStatusErrorAlert(alertContext, t, "ADD_FAILED", "Invalid amount");
       throw "Invalid earning data: Invalid amount";
     }
 
     if (!EARNING_CATEGORIES.includes(newData.category)) {
-      toggleStatusErrorAlert(alertContext, "ADD_FAILED", "Invalid category");
+      toggleStatusErrorAlert(alertContext, t, "ADD_FAILED", "Invalid category");
       throw "Invalid earning data: Invalid category";
     }
 

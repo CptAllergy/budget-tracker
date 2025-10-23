@@ -28,7 +28,20 @@
     "monthEmpty": "Não foram encontrados movimentos para o mês selecionado",
     "profile": "Perfil",
     "selectMonth": "Selecionar Mês",
-    "loading": "A carregar..."
+    "spent": "Gastos",
+    "query": {
+      "title": "Explorar Despesas",
+      "firstDay": "Data inicial",
+      "lastDay": "Data final",
+      "category": "Categoria",
+      "tag": "Tag",
+      "datePlaceholder": "DD/MM/AAAA",
+      "firstDayRequired": "Data inicial obrigatória",
+      "lastDayRequired": "Data final obrigatória",
+      "invalidDate": "Data inválida"
+    },
+    "search": "Pesquisar",
+    "pendingSearch": "Pressionar o botão de pesquisa para mostrar resultados"
   },
   "login": {
     "sessionExpired": "A sessão expirou. Por favor inicie sessão novamente",
@@ -76,6 +89,7 @@
   "expenses": {
     "expense": "Despesa",
     "expenses": "Despesas",
+    "all": "Todas",
     "table": {
       "noExpenses": "Não foram encontradas despesas"
     },
@@ -121,6 +135,26 @@
       "refunds": "Reembolsos",
       "gifts": "Presentes",
       "bonuses": "Bónus"
+    }
+  },
+  "alerts": {
+    "error": {
+      "sessionExpired": "A sessão expirou",
+      "deleteFailed": "Erro inesperado ao apagar",
+      "addFailed": "Erro inesperado ao adicionar",
+      "updateFailed": "Erro inesperado ao editar",
+      "earningsFailed": "Erro inesperado ao carregar receitas",
+      "expensesFailed": "Erro inesperado ao carregar despesas",
+      "queryFailed": "Erro inesperado ao filtrar despesas",
+      "generic": "Ocorreu um erro inesperado"
+    },
+    "info": {
+      "earningNew": "Receita adicionada",
+      "earningDeleted": "Receita eliminada",
+      "earningUpdated": "Receita editada",
+      "expenseNew": "Despesa adicionada",
+      "expenseDeleted": "Despesa eliminada",
+      "expenseUpdated": "Despesa editada"
     }
   }
 }

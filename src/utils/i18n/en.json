@@ -28,7 +28,20 @@
     "monthEmpty": "No transactions found for the selected month",
     "profile": "Profile",
     "selectMonth": "Select Month",
-    "loading": "Loading..."
+    "spent": "Spent",
+    "query": {
+      "title": "Expense explorer",
+      "firstDay": "Start date",
+      "lastDay": "End date",
+      "category": "Category",
+      "tag": "Tag",
+      "datePlaceholder": "DD/MM/YYYY",
+      "firstDayRequired": "Start date is required",
+      "lastDayRequired": "End date is required",
+      "invalidDate": "Date is invalid"
+    },
+    "search": "Search",
+    "pendingSearch": "Press search to show filter results"
   },
   "login": {
     "sessionExpired": "Your session has expired. Please login again",
@@ -76,6 +89,7 @@
   "expenses": {
     "expense": "Expense",
     "expenses": "Expenses",
+    "all": "All",
     "table": {
       "noExpenses": "No expenses found"
     },
@@ -121,6 +135,26 @@
       "refunds": "Refunds",
       "gifts": "Gifts",
       "bonuses": "Bonuses"
+    }
+  },
+  "alerts": {
+    "error": {
+      "sessionExpired": "Your session has expired",
+      "deleteFailed": "Unexpected error while deleting",
+      "addFailed": "Unexpected error while creating",
+      "updateFailed": "Unexpected error while updating",
+      "earningsFailed": "Unexpected error while loading earnings",
+      "expensesFailed": "Unexpected error while loading expenses",
+      "queryFailed": "Unexpected error while filtering expenses",
+      "generic": "An unexpected error has occurred"
+    },
+    "info": {
+      "earningNew": "New earning created",
+      "earningDeleted": "Earning deleted",
+      "earningUpdated": "Earning updated",
+      "expenseNew": "New expense created",
+      "expenseDeleted": "Expense deleted",
+      "expenseUpdated": "Expense updated"
     }
   }
 }

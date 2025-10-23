@@ -57,7 +57,7 @@ const Profile = ({ initialUser }: Props) => {
     <div>
       <Navbar
         initialUser={initialUser}
-        setIsAddDialogOpen={setIsAddDialogOpen}
+        setIsAddDialogOpenAction={setIsAddDialogOpen}
       />
       {currentUser && (
         <AddDialog

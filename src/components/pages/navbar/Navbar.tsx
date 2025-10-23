@@ -42,10 +42,13 @@ import "ldrs/react/Ring2.css";
 
 type NavbarProps = {
   initialUser: User | null;
-  setIsAddDialogOpen?: SetState<boolean>;
+  setIsAddDialogOpenAction?: SetState<boolean>;
 };
 
-export const Navbar = ({ initialUser, setIsAddDialogOpen }: NavbarProps) => {
+export const Navbar = ({
+  initialUser,
+  setIsAddDialogOpenAction,
+}: NavbarProps) => {
   const user = useUserSession(initialUser);
   const [loading, setLoading] = useState<boolean>(true);
   useEffect(() => {
@@ -63,7 +66,7 @@ export const Navbar = ({ initialUser, setIsAddDialogOpen }: NavbarProps) => {
           {loading ? (
             <NavbarLoadingSkeleton />
           ) : user ? (
-            <NavbarUserOptions setIsAddDialogOpen={setIsAddDialogOpen} />
+            <NavbarUserOptions setIsAddDialogOpen={setIsAddDialogOpenAction} />
           ) : (
             <NavbarSignInOptions />
           )}

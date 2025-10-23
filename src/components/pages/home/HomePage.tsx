@@ -29,7 +29,7 @@ const Home = ({ initialUser }: Props) => {
     <div>
       <Navbar
         initialUser={initialUser}
-        setIsAddDialogOpen={setIsAddDialogOpen}
+        setIsAddDialogOpenAction={setIsAddDialogOpen}
       />
       <Suspense>
         <PageContents

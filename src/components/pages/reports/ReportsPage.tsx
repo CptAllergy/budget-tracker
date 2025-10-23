@@ -1,6 +1,6 @@
 "use client";
 
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Navbar } from "@/components/pages/navbar/Navbar";
 import { useCurrentUser, useExpenseGroups } from "@/utils/hooks/reactQueryUser";
 import { ExpenseListType, MonthYearType } from "@/types/componentTypes";
@@ -16,12 +16,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/commons/menus/ShadDropdownMenu";
 import { LuChevronDown } from "react-icons/lu";
-import "ldrs/react/Ring2.css";
 import { useTranslate } from "@/utils/hooks/useTranslation";
 import { User } from "@firebase/auth";
 import { YearlyExpenseChart } from "@/components/pages/reports/YearlyExpenseChart";
 import { MonthlyPieChart } from "@/components/pages/reports/MonthlyPieChart";
 import { FilterSelectorLoading } from "@/components/loading/elements/home/LoadingHome";
+import QueryExpenseList from "@/components/pages/reports/QueryExpenseList";
+import { ExpenseCategory } from "@/types/transactionFilterTypes";
 
 type Props = { initialUser: User | null };
 const Reports = ({ initialUser }: Props) => {
@@ -37,6 +38,11 @@ const ReportsContent = () => {
   const [monthYear, setMonthYear] = useState<MonthYearType>();
   const [year, setYear] = useState<number>(new Date().getFullYear());
   const [filterId, setFilterId] = useState<ExpenseListType>();
+  // Used to apply category query when clicking on monthly chart
+  const [pressedCategory, setPressedCategory] = useState<{
+    category: ExpenseCategory;
+    monthYear: MonthYearType;
+  }>();
 
   const { currentUser } = useCurrentUser();
   const { expenseGroups } = useExpenseGroups(currentUser);
@@ -47,6 +53,12 @@ const ReportsContent = () => {
       setFilterId({ userId: currentUser.id });
     }
   }, [currentUser]);
+
+  useEffect(() => {
+    if (year || monthYear) {
+      setPressedCategory(undefined);
+    }
+  }, [year, monthYear]);
 
   return (
     <div>
@@ -72,25 +84,22 @@ const ReportsContent = () => {
                     monthYear={monthYear}
                     setMonthYear={setMonthYear}
                   />
-                  {filterId?.groupId && (
-                    <ExpenseGroupReports
-                      filterId={filterId}
-                      monthYear={monthYear}
-                      selectedYear={year}
-                      setMonthYear={setMonthYear}
-                    />
-                  )}
-                  {filterId?.userId && (
-                    <ProfileReports
-                      filterId={filterId}
-                      monthYear={monthYear}
-                      selectedYear={year}
-                      setMonthYear={setMonthYear}
-                    />
-                  )}
+                  <MonthlyExpenseReport
+                    filterId={filterId}
+                    monthYear={monthYear}
+                    selectedYear={year}
+                    setMonthYear={setMonthYear}
+                    setPressedCategory={setPressedCategory}
+                  />
                 </div>
               </div>
             </div>
+            <QueryExpenseList
+              currentUser={currentUser}
+              filterId={filterId}
+              currentYear={year}
+              lastPressedCategory={pressedCategory}
+            />
           </div>
         </section>
       </div>
@@ -98,16 +107,21 @@ const ReportsContent = () => {
   );
 };
 
-const ExpenseGroupReports = ({
+const MonthlyExpenseReport = ({
   filterId,
   monthYear,
   selectedYear,
   setMonthYear,
+  setPressedCategory,
 }: {
   filterId?: ExpenseListType;
   monthYear?: MonthYearType;
   selectedYear: number;
   setMonthYear: Dispatch<SetStateAction<MonthYearType | undefined>>;
+  setPressedCategory: (pressedCategory?: {
+    category: ExpenseCategory;
+    monthYear: MonthYearType;
+  }) => void;
 }) => {
   return (
     <div className="aspect-[16/9]">
@@ -116,30 +130,7 @@ const ExpenseGroupReports = ({
         monthYear={monthYear}
         setMonthYear={setMonthYear}
         selectedYear={selectedYear}
-      />
-    </div>
-  );
-};
-
-// TODO add earnings report
-const ProfileReports = ({
-  filterId,
-  monthYear,
-  selectedYear,
-  setMonthYear,
-}: {
-  filterId?: ExpenseListType;
-  monthYear?: MonthYearType;
-  selectedYear: number;
-  setMonthYear: Dispatch<SetStateAction<MonthYearType | undefined>>;
-}) => {
-  return (
-    <div className="aspect-[16/9]">
-      <MonthlyPieChart
-        filterId={filterId}
-        monthYear={monthYear}
-        selectedYear={selectedYear}
-        setMonthYear={setMonthYear}
+        setPressedCategory={setPressedCategory}
       />
     </div>
   );

@@ -304,4 +304,4 @@ const InfoTooltip = ({
   );
 };
 
-export { SettingsDialog };
+export { SettingsDialog, InfoTooltip };

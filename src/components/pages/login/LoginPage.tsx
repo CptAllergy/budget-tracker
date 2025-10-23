@@ -1,8 +1,6 @@
 "use client";
 
-import React, { useContext, useEffect, useRef } from "react";
-import { AlertContext } from "@/contexts/AlertContext";
-import { toggleStatusAlert } from "@/utils/toggleAlerts";
+import React from "react";
 import { rancho } from "@/styles/fonts";
 import budgetTrackerCoinLogo from "public/assets/coin_budget_tracker.png";
 import Image from "next/image";
@@ -13,20 +11,7 @@ import { User } from "@firebase/auth";
 type Props = { initialUser: User | null };
 
 const Login = ({ initialUser }: Props) => {
-  const alertContext = useRef(useContext(AlertContext));
-  const { t, locale } = useTranslate();
-
-  useEffect(() => {
-    const sessionError = sessionStorage.getItem("session_error");
-    if (sessionError && locale) {
-      toggleStatusAlert(
-        alertContext.current,
-        t("login.sessionExpired"),
-        "warning"
-      );
-      sessionStorage.removeItem("session_error");
-    }
-  }, [t, locale]);
+  const { t } = useTranslate();
 
   return (
     <div className="flex flex-col items-center">

@@ -120,6 +120,7 @@ const ExpensesContent = ({
               currentUser={currentUser}
               showDeleteDialog={showDeleteDialog}
               showEditDialog={showEditDialog}
+              isEditable={true}
               isProfile={isProfile}
             />
           </div>
@@ -129,6 +130,7 @@ const ExpensesContent = ({
               currentUser={currentUser}
               showDeleteDialog={showDeleteDialog}
               showEditDialog={showEditDialog}
+              isEditable={true}
               isProfile={isProfile}
             />
           </div>
@@ -143,12 +145,14 @@ const ExpenseTable = ({
   currentUser,
   showDeleteDialog,
   showEditDialog,
+  isEditable,
   isProfile,
 }: {
   expenses: ExpenseDTO[];
   currentUser: UserDTO;
   showDeleteDialog: (expense: ExpenseDTO) => void;
   showEditDialog: (expense: ExpenseDTO) => void;
+  isEditable: boolean;
   isProfile?: boolean;
 }) => {
   const { t } = useTranslate();
@@ -197,10 +201,12 @@ const ExpenseTable = ({
             >
               {isProfile ? t("form.group") : t("form.user")}
             </th>
-            <th
-              scope="col"
-              className="relative py-3.5 text-left text-sm font-semibold text-gray-900"
-            ></th>
+            {isEditable && (
+              <th
+                scope="col"
+                className="relative py-3.5 text-left text-sm font-semibold text-gray-900"
+              ></th>
+            )}
           </tr>
         </thead>
         <tbody className="bg-theme-highlight divide-y-2 divide-black">
@@ -248,14 +254,16 @@ const ExpenseTable = ({
               <td className="hidden px-3 py-4 text-sm whitespace-nowrap text-gray-500 lg:table-cell">
                 {isProfile ? getGroupName(expense.groupId) : expense.username}
               </td>
-              <td className="relative py-4 pr-4 text-right text-sm font-medium whitespace-nowrap sm:pr-6">
-                <ExpenseDropdownMenu
-                  selectedExpense={expense}
-                  currentUser={currentUser}
-                  showDeleteDialog={showDeleteDialog}
-                  showEditDialog={showEditDialog}
-                />
-              </td>
+              {isEditable && (
+                <td className="relative py-4 pr-4 text-right text-sm font-medium whitespace-nowrap sm:pr-6">
+                  <ExpenseDropdownMenu
+                    selectedExpense={expense}
+                    currentUser={currentUser}
+                    showDeleteDialog={showDeleteDialog}
+                    showEditDialog={showEditDialog}
+                  />
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
@@ -269,12 +277,14 @@ const ExpenseCards = ({
   currentUser,
   showDeleteDialog,
   showEditDialog,
+  isEditable,
   isProfile,
 }: {
   expenses: ExpenseDTO[];
   currentUser: UserDTO;
   showDeleteDialog: (expense: ExpenseDTO) => void;
   showEditDialog: (expense: ExpenseDTO) => void;
+  isEditable: boolean;
   isProfile?: boolean;
 }) => {
   const { t } = useTranslate();
@@ -347,14 +357,16 @@ const ExpenseCards = ({
                   </dd>
                 </dl>
               </div>
-              <div className="text-right">
-                <ExpenseDropdownMenu
-                  selectedExpense={expense}
-                  currentUser={currentUser}
-                  showDeleteDialog={showDeleteDialog}
-                  showEditDialog={showEditDialog}
-                />
-              </div>
+              {isEditable && (
+                <div className="text-right">
+                  <ExpenseDropdownMenu
+                    selectedExpense={expense}
+                    currentUser={currentUser}
+                    showDeleteDialog={showDeleteDialog}
+                    showEditDialog={showEditDialog}
+                  />
+                </div>
+              )}
             </AccordionContent>
           </AccordionItem>
         ))}
@@ -464,4 +476,5 @@ const ExpenseDropdownMenu = ({
   );
 };
 
+export { ExpenseTable, ExpenseCards };
 export default ExpensesList;

@@ -2,7 +2,10 @@ import { ExpenseDTO } from "@/types/DTO/dataTypes";
 import { ExpenseListType, MonthYearType } from "@/types/componentTypes";
 import { Dispatch, SetStateAction, useContext, useMemo } from "react";
 import { useTranslate } from "@/utils/hooks/useTranslation";
-import { EXPENSE_CATEGORIES } from "@/types/transactionFilterTypes";
+import {
+  EXPENSE_CATEGORIES,
+  ExpenseCategory,
+} from "@/types/transactionFilterTypes";
 import {
   ChartConfig,
   ChartContainer,
@@ -41,11 +44,16 @@ export const MonthlyPieChart = ({
   monthYear,
   selectedYear,
   setMonthYear,
+  setPressedCategory,
 }: {
   filterId?: ExpenseListType;
   monthYear?: MonthYearType;
   selectedYear: number;
   setMonthYear: Dispatch<SetStateAction<MonthYearType | undefined>>;
+  setPressedCategory: (pressedCategory?: {
+    category: ExpenseCategory;
+    monthYear: MonthYearType;
+  }) => void;
 }) => {
   const { t } = useTranslate();
 
@@ -119,6 +127,7 @@ export const MonthlyPieChart = ({
       expenses={expenses && isEnabled ? expenses : []}
       monthYear={monthYear}
       setMonthYear={setMonthYear}
+      setPressedCategory={setPressedCategory}
       selectedYear={selectedYear}
       chartConfig={chartConfig}
       isPending={isLoadingExpenses && !isPlaceholderData}
@@ -126,12 +135,12 @@ export const MonthlyPieChart = ({
   );
 };
 
-// TODO can probably break down this component a bit more
 const MonthlyPieChartContent = ({
   expenses,
   monthYear,
   selectedYear,
   setMonthYear,
+  setPressedCategory,
   chartConfig,
   isPending,
 }: {
@@ -139,10 +148,14 @@ const MonthlyPieChartContent = ({
   monthYear?: MonthYearType;
   selectedYear: number;
   setMonthYear: Dispatch<SetStateAction<MonthYearType | undefined>>;
+  setPressedCategory: (pressedCategory?: {
+    category: ExpenseCategory;
+    monthYear: MonthYearType;
+  }) => void;
   chartConfig: ChartConfig;
   isPending?: boolean;
 }) => {
-  const { t, getFnsLocale } = useTranslate();
+  const { t } = useTranslate();
   const { isInvestmentExpense } = useContext(SettingsContext);
 
   const chartData = useMemo(() => {
@@ -183,13 +196,13 @@ const MonthlyPieChartContent = ({
 
       return isInvestmentExpense
         ? chartData
-        : chartData.filter((data) => data.category !== "investments");
+        : chartData.map((data) =>
+            data.category === "investments" ? { ...data, amount: 0 } : data
+          );
     };
 
     return buildExpenseChartData(expenses);
   }, [expenses, isInvestmentExpense]);
-
-  const months = Array.from({ length: 12 }, (_, i) => i);
 
   const totalAmount = useMemo(() => {
     return chartData.reduce((acc, curr) => acc + curr.amount, 0);
@@ -204,56 +217,11 @@ const MonthlyPieChartContent = ({
 
   return (
     <Card className="bg-theme-highlight flex flex-col border-0 shadow-none outline-none">
-      <CardHeader className="items-center px-4 pb-0 md:px-6">
-        <CardTitle>{t("reports.monthChart")}</CardTitle>
-        <CardDescription>
-          <div className="flex items-center gap-1">
-            <DropdownMenu modal={false}>
-              <DropdownMenuTrigger
-                asChild
-                className={`bg-theme-highlight hover:bg-theme-highlight-hover rounded-md border-2 border-black p-1 text-center transition-colors outline-none hover:cursor-pointer`}
-              >
-                <button className="flex items-center justify-center gap-1 px-2 capitalize">
-                  <span>
-                    {monthYear
-                      ? `${format(
-                          new Date(monthYear.year, monthYear.month, 1),
-                          "LLLL",
-                          {
-                            locale: getFnsLocale(),
-                          }
-                        )}`
-                      : t("reports.selectMonth")}
-                  </span>
-                  <LuChevronDown />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-36">
-                <DropdownMenuRadioGroup value={monthYear?.month.toString()}>
-                  {months.map((month) => (
-                    <DropdownMenuRadioItem
-                      key={month}
-                      value={month.toString()}
-                      onClick={() =>
-                        setMonthYear({
-                          month: month,
-                          year: selectedYear,
-                        })
-                      }
-                      className="capitalize"
-                    >
-                      {format(new Date(selectedYear, month, 1), "LLLL", {
-                        locale: getFnsLocale(),
-                      })}
-                    </DropdownMenuRadioItem>
-                  ))}
-                </DropdownMenuRadioGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            {selectedYear}
-          </div>
-        </CardDescription>
-      </CardHeader>
+      <MonthlyChartHeader
+        monthYear={monthYear}
+        selectedYear={selectedYear}
+        setMonthYear={setMonthYear}
+      />
       <CardContent className="flex-1 pb-0">
         {expenses.length > 0 ? (
           <ChartContainer
@@ -271,6 +239,22 @@ const MonthlyPieChartContent = ({
                 nameKey="category"
                 innerRadius={60}
                 strokeWidth={5}
+                className="cursor-pointer"
+                onClick={(chartEvent) => {
+                  // Only handle clicks on actual data points
+                  if (chartEvent && chartEvent.category) {
+                    if (
+                      typeof chartEvent.category === "string" &&
+                      EXPENSE_CATEGORIES.includes(chartEvent.category) &&
+                      monthYear
+                    ) {
+                      setPressedCategory({
+                        category: chartEvent.category as ExpenseCategory,
+                        monthYear,
+                      });
+                    }
+                  }
+                }}
               >
                 <Label
                   content={({ viewBox }) => {
@@ -281,6 +265,7 @@ const MonthlyPieChartContent = ({
                           y={viewBox.cy}
                           textAnchor="middle"
                           dominantBaseline="middle"
+                          className="cursor-default"
                         >
                           <tspan
                             x={viewBox.cx}
@@ -294,7 +279,7 @@ const MonthlyPieChartContent = ({
                             y={(viewBox.cy || 0) + 24}
                             className="fill-muted-foreground"
                           >
-                            € Spent
+                            € {t("reports.spent")}
                           </tspan>
                         </text>
                       );
@@ -312,5 +297,72 @@ const MonthlyPieChartContent = ({
         )}
       </CardContent>
     </Card>
+  );
+};
+
+const MonthlyChartHeader = ({
+  monthYear,
+  selectedYear,
+  setMonthYear,
+}: {
+  monthYear?: MonthYearType;
+  selectedYear: number;
+  setMonthYear: Dispatch<SetStateAction<MonthYearType | undefined>>;
+}) => {
+  const { t, getFnsLocale } = useTranslate();
+
+  const months = Array.from({ length: 12 }, (_, i) => i);
+
+  return (
+    <CardHeader className="items-center px-4 pb-0 md:px-6">
+      <CardTitle>{t("reports.monthChart")}</CardTitle>
+      <CardDescription>
+        <div className="flex items-center gap-1">
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger
+              asChild
+              className={`bg-theme-highlight hover:bg-theme-highlight-hover rounded-md border-2 border-black p-1 text-center transition-colors outline-none hover:cursor-pointer`}
+            >
+              <button className="flex items-center justify-center gap-1 px-2 capitalize">
+                <span>
+                  {monthYear
+                    ? `${format(
+                        new Date(monthYear.year, monthYear.month, 1),
+                        "LLLL",
+                        {
+                          locale: getFnsLocale(),
+                        }
+                      )}`
+                    : t("reports.selectMonth")}
+                </span>
+                <LuChevronDown />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-36">
+              <DropdownMenuRadioGroup value={monthYear?.month.toString()}>
+                {months.map((month) => (
+                  <DropdownMenuRadioItem
+                    key={month}
+                    value={month.toString()}
+                    onClick={() =>
+                      setMonthYear({
+                        month: month,
+                        year: selectedYear,
+                      })
+                    }
+                    className="capitalize"
+                  >
+                    {format(new Date(selectedYear, month, 1), "LLLL", {
+                      locale: getFnsLocale(),
+                    })}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          {selectedYear}
+        </div>
+      </CardDescription>
+    </CardHeader>
   );
 };
