@@ -1,5 +1,5 @@
 export type CustomErrorCode =
-  | "SESSION_EXPIRED"
+  | "DEFAULT_PAGE_FAILED"
   | "ADD_FAILED"
   | "UPDATE_FAILED"
   | "DELETE_FAILED"

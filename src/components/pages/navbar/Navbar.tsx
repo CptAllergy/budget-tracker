@@ -11,11 +11,13 @@ import {
   LuArrowUpRight,
   LuBookmark,
   LuBookmarkCheck,
+  LuClipboardCheck,
   LuClipboardList,
   LuMenu,
   LuPlus,
   LuSettings,
   LuUser,
+  LuUserCheck,
   LuX,
 } from "react-icons/lu";
 import {
@@ -29,7 +31,11 @@ import {
   DrawerTrigger,
 } from "@/components/commons/menus/DrawerMenu";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useCurrentUser, useExpenseGroups } from "@/utils/hooks/reactQueryUser";
+import {
+  useCurrentUser,
+  useExpenseGroups,
+  useUpdateDefaultPage,
+} from "@/utils/hooks/reactQueryUser";
 import { useQueryClient } from "@tanstack/react-query";
 import { SetState } from "@/types/componentTypes";
 import { useTranslate } from "@/utils/hooks/useTranslation";
@@ -137,28 +143,42 @@ const DrawerMenu = ({
   );
 };
 
-// TODO let currentUser pick a favourite group which will become the default for that currentUser
 // TODO allow currentUser to create new groups
-// TODO instantly update the selected option when it's clicked
 const NavigationList = () => {
   const { t } = useTranslate();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [clickedLink, setClickedLink] = useState<string>();
 
   const { currentUser } = useCurrentUser();
+  const { mutateUserDefaultPage } = useUpdateDefaultPage();
+
+  function handleChangeDefaultPage(page: string) {
+    return (event: React.MouseEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+      mutateUserDefaultPage(page);
+    };
+  }
 
   const selectedPageStyle = (page: string) => {
-    return pathname === page
+    return (!clickedLink && pathname === page) ||
+      (clickedLink && clickedLink === page)
       ? "bg-theme-main hover:bg-theme-hover"
       : "bg-theme-highlight hover:bg-theme-highlight-hover";
   };
 
   const selectedGroupStyle = (groupId: string) => {
-    const selectedGroupId = searchParams.get("groupId") ?? currentUser?.groupId;
+    const selectedGroupId = searchParams.get("groupId");
 
-    return pathname === "/" && selectedGroupId === groupId
+    return (!clickedLink && pathname === "/" && selectedGroupId === groupId) ||
+      (clickedLink && clickedLink === groupId)
       ? "bg-theme-main hover:bg-theme-hover"
       : "bg-theme-highlight hover:bg-theme-highlight-hover";
+  };
+
+  const willNavigateOut = (page: string) => {
+    return pathname !== page;
   };
 
   return (
@@ -166,23 +186,54 @@ const NavigationList = () => {
       <div className="space-y-3">
         <Link
           href="/profile"
+          onClick={() => setClickedLink("/profile")}
           className={`${selectedPageStyle("/profile")} group flex cursor-pointer items-center gap-2 rounded-md border-2 border-black p-1 text-sm/7 shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all sm:gap-3 sm:p-2 sm:text-base`}
         >
-          <LuUser className="size-5 flex-shrink-0" />
+          <div
+            onClick={handleChangeDefaultPage("profile")}
+            className="group/icon relative flex"
+          >
+            {currentUser?.defaultPage === "profile" ? (
+              <LuUserCheck className="z-10 size-5 flex-shrink-0" />
+            ) : (
+              <LuUser className="z-10 size-5 flex-shrink-0" />
+            )}
+            <span className="absolute -inset-1 z-0 rounded-full group-hover/icon:bg-white/80"></span>
+          </div>
           <p className="truncate font-semibold">{t("navbar.profile")}</p>
-          <LuArrowUpRight className="ml-auto size-5 flex-shrink-0 text-gray-800 group-hover:block sm:hidden" />
+          {willNavigateOut("/profile") && (
+            <LuArrowUpRight className="ml-auto size-5 flex-shrink-0 text-gray-800 group-hover:block sm:hidden" />
+          )}
         </Link>
         <Link
           href="/reports"
+          onClick={() => setClickedLink("/reports")}
           className={`${selectedPageStyle("/reports")} group flex cursor-pointer items-center gap-2 rounded-md border-2 border-black p-1 text-sm/7 shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all sm:gap-3 sm:p-2 sm:text-base`}
         >
-          <LuClipboardList className="size-5 flex-shrink-0" />
+          <div
+            onClick={handleChangeDefaultPage("reports")}
+            className="group/icon relative flex"
+          >
+            {currentUser?.defaultPage === "reports" ? (
+              <LuClipboardCheck className="z-10 size-5 flex-shrink-0" />
+            ) : (
+              <LuClipboardList className="z-10 size-5 flex-shrink-0" />
+            )}
+            <span className="absolute -inset-1 z-0 rounded-full group-hover/icon:bg-white/80"></span>
+          </div>
           <p className="truncate font-semibold">{t("navbar.reports")}</p>
-          <LuArrowUpRight className="ml-auto size-5 flex-shrink-0 text-gray-800 group-hover:block sm:hidden" />
+          {willNavigateOut("/reports") && (
+            <LuArrowUpRight className="ml-auto size-5 flex-shrink-0 text-gray-800 group-hover:block sm:hidden" />
+          )}
         </Link>
         <hr className="my-4 border-t border-b border-black" />
         <div className="ml-1 font-semibold">{t("navbar.expenseGroups")}</div>
-        <ExpenseGroupList selectedGroupStyle={selectedGroupStyle} />
+        <ExpenseGroupList
+          selectedGroupStyle={selectedGroupStyle}
+          setClickedLink={setClickedLink}
+          willNavigateOut={willNavigateOut("/")}
+          handleChangeDefaultPage={handleChangeDefaultPage}
+        />
       </div>
     </div>
   );
@@ -190,8 +241,16 @@ const NavigationList = () => {
 
 const ExpenseGroupList = ({
   selectedGroupStyle,
+  setClickedLink,
+  willNavigateOut,
+  handleChangeDefaultPage,
 }: {
   selectedGroupStyle: (groupId: string) => string;
+  setClickedLink: (groupId: string) => void;
+  willNavigateOut: boolean;
+  handleChangeDefaultPage(
+    page: string
+  ): (event: React.MouseEvent<HTMLDivElement>) => void;
 }) => {
   const { t } = useTranslate();
   const { currentUser } = useCurrentUser();
@@ -222,14 +281,24 @@ const ExpenseGroupList = ({
       <Link
         key={group.id}
         href={{ pathname: "/", query: { groupId: group.id } }}
-        className={`${selectedGroupStyle(group.id)} flex cursor-pointer items-center gap-2 rounded-md border-2 border-black p-1 text-sm/7 shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all sm:gap-3 sm:p-2 sm:text-base`}
+        onClick={() => setClickedLink(group.id)}
+        className={`${selectedGroupStyle(group.id)} group flex cursor-pointer items-center gap-2 rounded-md border-2 border-black p-1 text-sm/7 shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all sm:gap-3 sm:p-2 sm:text-base`}
       >
-        {currentUser.groupId === group.id ? (
-          <LuBookmarkCheck size="20" className="size-5 flex-shrink-0" />
-        ) : (
-          <LuBookmark size="20" className="size-5 flex-shrink-0" />
-        )}
+        <div
+          onClick={handleChangeDefaultPage(group.id)}
+          className="group/icon relative flex"
+        >
+          {currentUser.defaultPage === group.id ? (
+            <LuBookmarkCheck size="20" className="z-10 size-5 flex-shrink-0" />
+          ) : (
+            <LuBookmark size="20" className="z-10 size-5 flex-shrink-0" />
+          )}
+          <span className="absolute -inset-1 z-0 rounded-full group-hover/icon:bg-white/80"></span>
+        </div>
         <div className="truncate font-semibold">{group.name}</div>
+        {willNavigateOut && (
+          <LuArrowUpRight className="ml-auto size-5 flex-shrink-0 text-gray-800 group-hover:block sm:hidden" />
+        )}
       </Link>
     ))
   );

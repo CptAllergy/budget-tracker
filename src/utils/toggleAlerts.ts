@@ -16,8 +16,8 @@ export const toggleStatusErrorAlert = (
   console.error(error);
 
   switch (errorCode) {
-    case "SESSION_EXPIRED": {
-      setAlertMessage(t("alerts.error.sessionExpired"));
+    case "DEFAULT_PAGE_FAILED": {
+      setAlertMessage(t("alerts.error.defaultPageFailed"));
       setRefreshEnabled(false);
       break;
     }

@@ -44,7 +44,6 @@
     "pendingSearch": "Pressionar o botão de pesquisa para mostrar resultados"
   },
   "login": {
-    "sessionExpired": "A sessão expirou. Por favor inicie sessão novamente",
     "welcome": "Bem-vindo ao Budget Tracker!",
     "description": "O Budget Tracker simplifica a gestão do dinheiro entre duas pessoas, através da análise de movimentos de ambas as partes. Ajuda a controlar as despesas partilhadas e calcula quanto cada um deve ao outro."
   },
@@ -139,7 +138,7 @@
   },
   "alerts": {
     "error": {
-      "sessionExpired": "A sessão expirou",
+      "defaultPageFailed": "Erro ao alterar a página inicial",
       "deleteFailed": "Erro inesperado ao apagar",
       "addFailed": "Erro inesperado ao adicionar",
       "updateFailed": "Erro inesperado ao editar",

@@ -44,7 +44,6 @@
     "pendingSearch": "Press search to show filter results"
   },
   "login": {
-    "sessionExpired": "Your session has expired. Please login again",
     "welcome": "Welcome to Budget Tracker!",
     "description": "Budget Tracker simplifies money management between two people by tracking transactions for both parties. It helps you keep tabs on shared expenses and calculates how much you owe each other."
   },
@@ -139,7 +138,7 @@
   },
   "alerts": {
     "error": {
-      "sessionExpired": "Your session has expired",
+      "defaultPageFailed": "Error while changing the default home page",
       "deleteFailed": "Unexpected error while deleting",
       "addFailed": "Unexpected error while creating",
       "updateFailed": "Unexpected error while updating",

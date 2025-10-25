@@ -10,6 +10,7 @@ import {
   runTransaction,
   setDoc,
   sum,
+  updateDoc,
   where,
 } from "firebase/firestore";
 import {
@@ -351,6 +352,22 @@ export async function updateEarningFirebase(earningUpdated: EarningDTO) {
   );
 
   return { prevAmount, prevTimestamp };
+}
+
+export async function updateUserDefaultPage(
+  userId: string,
+  defaultPage: string
+) {
+  const docRef = doc(db, "users", userId);
+  const docSnap = await getDoc(docRef);
+
+  if (!docSnap.exists()) {
+    throw new Error("User document does not exist");
+  }
+
+  await updateDoc(docRef, { defaultPage });
+
+  return { id: docSnap.id, ...docSnap.data(), defaultPage } as UserDTO;
 }
 
 export function getMonthYearLimits(monthYear?: MonthYearType): {

@@ -31,7 +31,7 @@ export type CreateExpenseDTO = {
 
 export type UserDTO = {
   id: string;
-  groupId: string;
+  defaultPage?: string;
   name: string;
 };
 

@@ -1,16 +1,11 @@
 "use client";
 
-import { Dispatch, SetStateAction, Suspense, useEffect, useState } from "react";
+import { Dispatch, SetStateAction, Suspense, useState } from "react";
 import { Navbar } from "@/components/pages/navbar/Navbar";
-import {
-  CreateEarningDTO,
-  CreateExpenseDTO,
-  ExpenseGroupDTO,
-} from "@/types/DTO/dataTypes";
+import { CreateEarningDTO, CreateExpenseDTO } from "@/types/DTO/dataTypes";
 import ExpensesList from "@/components/pages/home/ExpensesList";
 import { LuPlus } from "react-icons/lu";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useCurrentUser, useExpenseGroups } from "@/utils/hooks/reactQueryUser";
+import { useCurrentUser } from "@/utils/hooks/reactQueryUser";
 import { MonthNavigation } from "@/components/pages/home/TimeNavigation";
 import { AddDialog } from "@/components/commons/dialogs/AddDialog";
 import { ExpenseListType, MonthYearType } from "@/types/componentTypes";
@@ -19,6 +14,7 @@ import Totals from "@/components/pages/home/Totals";
 import { useAddExpense } from "@/utils/hooks/reactQueryExpenses";
 import { useAddEarning } from "@/utils/hooks/reactQueryEarnings";
 import { User } from "@firebase/auth";
+import { useHomePageRedirect } from "@/utils/hooks/useHomePageRedirect";
 
 type Props = { initialUser: User | null };
 
@@ -54,34 +50,10 @@ const PageContents = ({
     getCurrentMonthYear()
   );
 
-  const router = useRouter();
-  const searchParams = useSearchParams();
-
   const { currentUser, isLoading: firebaseLoading } = useCurrentUser();
-  const { expenseGroups } = useExpenseGroups(currentUser);
 
   // Runs after sign in to either redirect to profile page or set group
-  useEffect(() => {
-    const selectDefaultPage = (groups: ExpenseGroupDTO[]) => {
-      if (!groups || groups.length === 0) {
-        // Redirect to profile page if no groups are found
-        router.push("/profile");
-      } else {
-        // Check if groupId provided in the URl is available
-        const groupIdParam = searchParams.get("groupId");
-        const groupParam = groups.find((group) => group.id === groupIdParam);
-
-        // If groupId is not provided or not found, use the first group (favourite group)
-        setFilterId({
-          groupId: groupParam ? groupParam.id : groups[0].id,
-        });
-      }
-    };
-
-    if (currentUser && expenseGroups) {
-      selectDefaultPage(expenseGroups);
-    }
-  }, [currentUser, expenseGroups, router, searchParams, setFilterId]);
+  useHomePageRedirect(setFilterId);
 
   const { mutateAddExpense } = useAddExpense();
   const { mutateAddEarning } = useAddEarning();

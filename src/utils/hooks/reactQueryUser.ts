@@ -2,11 +2,12 @@ import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   getCurrentUserFirebase,
   getExpenseGroupsFirebase,
+  updateUserDefaultPage,
 } from "@/services/firebaseService";
 import { EarningDTO, ExpenseDTO, UserDTO } from "@/types/DTO/dataTypes";
 import { toggleStatusErrorAlert } from "@/utils/toggleAlerts";
 import { AlertContext } from "@/contexts/AlertContext";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { sortExpenseGroups } from "@/utils/utils";
 import { useUser } from "@/utils/hooks/useUser";
 import {
@@ -54,6 +55,39 @@ export const useCurrentUser = () => {
   return { currentUser, isLoading };
 };
 
+export const useUpdateDefaultPage = () => {
+  const queryClient = useQueryClient();
+  const alertContext = useRef(useContext(AlertContext));
+  const { t } = useTranslate();
+  const user = useUser();
+  const uid = user?.uid;
+
+  const { mutate: mutateUserDefaultPage, error } = useMutation({
+    mutationFn: async (defaultPage: string) => {
+      if (!uid) throw new Error("User not found");
+      return await updateUserDefaultPage(uid, defaultPage);
+    },
+    onSuccess: (newUser) => {
+      queryClient.setQueryData<UserDTO>(["currentUser"], () => {
+        return newUser;
+      });
+    },
+  });
+
+  useEffect(() => {
+    if (error) {
+      toggleStatusErrorAlert(
+        alertContext.current,
+        t,
+        "DEFAULT_PAGE_FAILED",
+        error
+      );
+    }
+  }, [error, t]);
+
+  return { mutateUserDefaultPage };
+};
+
 export const useExpenseGroups = (currentUser?: UserDTO) => {
   const alertContext = useRef(useContext(AlertContext));
   const { t } = useTranslate();
@@ -66,7 +100,7 @@ export const useExpenseGroups = (currentUser?: UserDTO) => {
     queryKey: ["groups"],
     queryFn: async () => {
       const expenseGroups = await getExpenseGroupsFirebase(currentUser!.id);
-      return sortExpenseGroups(expenseGroups, currentUser!.groupId);
+      return sortExpenseGroups(expenseGroups, currentUser!.defaultPage);
     },
     enabled: !!currentUser,
     staleTime: 1000 * 60 * 30, // 30 minutes

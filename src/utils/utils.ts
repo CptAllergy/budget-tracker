@@ -25,15 +25,15 @@ export function getExpenseGroupName(expenseGroups?: ExpenseGroupDTO[]) {
 
 export function sortExpenseGroups(
   groups: ExpenseGroupDTO[],
-  favouriteGroup?: string
+  defaultPage?: string
 ) {
   // Sort groups by name
   const sortedGroups = [...groups].sort((a, b) => a.name.localeCompare(b.name));
 
   // Move the favourite group to the top if it exists
-  if (favouriteGroup) {
+  if (defaultPage) {
     const favouriteIndex = sortedGroups.findIndex(
-      (group) => group.id === favouriteGroup
+      (group) => group.id === defaultPage
     );
     if (favouriteIndex !== -1) {
       const [favouriteGroup] = sortedGroups.splice(favouriteIndex, 1);
