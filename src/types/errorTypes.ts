@@ -6,4 +6,5 @@ export type CustomErrorCode =
   | "EARNINGS_FAILED"
   | "EXPENSES_FAILED"
   | "QUERY_FAILED"
+  | "LEAVE_GROUP_FAILED"
   | "GENERIC";

@@ -12,9 +12,14 @@ import React, {
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import { useTranslate } from "@/utils/hooks/useTranslation";
 import {
+  LuCheck,
   LuChevronDown,
+  LuCoins,
   LuInfo,
+  LuLogOut,
   LuPaintBucket,
+  LuPencil,
+  LuPlus,
   LuSettings2,
   LuX,
 } from "react-icons/lu";
@@ -28,13 +33,22 @@ import {
 import { Switch } from "@/components/commons/input/Switch";
 import { SettingsContext } from "@/contexts/SettingsContext";
 import { cn } from "@/utils/utils";
+import { useCurrentUser } from "@/utils/hooks/reactQueryUser";
+import {
+  useAddExpenseGroup,
+  useExpenseGroups,
+  useLeaveExpenseGroup,
+  useUpdateExpenseGroupName,
+} from "@/utils/hooks/reactQueryGroups";
+import { LeaveGroupDialog } from "@/components/commons/dialogs/LeaveGroupDialog";
+import { ExpenseGroupDTO } from "@/types/DTO/dataTypes";
 
 type DialogProps = {
   isOpen: boolean;
   setIsOpen: Dispatch<SetStateAction<boolean>>;
 };
 
-type SelectedSetting = "general" | "personalization";
+type SelectedSetting = "general" | "expenseGroups" | "personalization";
 
 const SettingsDialog = ({ isOpen, setIsOpen }: DialogProps) => {
   const { t } = useTranslate();
@@ -62,11 +76,14 @@ const SettingsDialog = ({ isOpen, setIsOpen }: DialogProps) => {
         <div className="flex min-h-full items-center justify-center p-4">
           <DialogPanel
             transition
-            className="bg-theme-secondary w-full max-w-2xl rounded-md border-2 border-black p-4 shadow-[4px_4px_0px_rgba(0,0,0,1)] duration-200 data-closed:opacity-0"
+            className="bg-theme-secondary h-[35rem] w-full max-w-2xl rounded-md border-2 border-black p-4 shadow-[4px_4px_0px_rgba(0,0,0,1)] duration-200 data-closed:opacity-0"
           >
-            <div className="flex flex-col gap-4 md:flex-row">
+            <div className="flex h-full flex-col gap-4 md:flex-row">
               <div className="space-y-5 border-b border-black pb-4 md:w-1/3 md:border-r md:border-b-0 md:pr-4 md:pb-0">
-                <div className="flex justify-end md:justify-start">
+                <div className="flex items-center justify-between md:justify-start">
+                  <div className="text-lg font-semibold md:hidden">
+                    {t("navbar.settings")}
+                  </div>
                   <button
                     className="rounded-md border-2 border-black bg-white p-1.5 shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all hover:shadow-[3px_3px_0px_rgba(0,0,0,1)] sm:mr-1"
                     onClick={() => setIsOpen(false)}
@@ -85,6 +102,15 @@ const SettingsDialog = ({ isOpen, setIsOpen }: DialogProps) => {
                     </p>
                   </div>
                   <div
+                    onClick={() => setSelectedSetting("expenseGroups")}
+                    className={`${selectedSettingStyle("expenseGroups")} group flex cursor-pointer items-center gap-2 rounded-md border-2 border-black p-1 text-sm/7 shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all sm:gap-3 sm:p-2 md:text-sm`}
+                  >
+                    <LuCoins className="size-5 flex-shrink-0" />
+                    <p className="truncate font-semibold">
+                      {t("settings.expenseGroups")}
+                    </p>
+                  </div>
+                  <div
                     onClick={() => setSelectedSetting("personalization")}
                     className={`${selectedSettingStyle("personalization")} group flex cursor-pointer items-center gap-2 rounded-md border-2 border-black p-1 text-sm/7 shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all sm:gap-3 sm:p-2 md:text-sm`}
                   >
@@ -97,7 +123,7 @@ const SettingsDialog = ({ isOpen, setIsOpen }: DialogProps) => {
               </div>
 
               {/* Right content */}
-              <div className="flex-1 pt-4 md:pt-0 md:pl-4">
+              <div className="h-full flex-1 pt-4 md:pt-0 md:pl-1">
                 <SelectedSetting selectedSetting={selectedSetting} />
               </div>
             </div>
@@ -116,6 +142,8 @@ const SelectedSetting = ({
   switch (selectedSetting) {
     case "general":
       return <GeneralSettings />;
+    case "expenseGroups":
+      return <ExpenseGroupSettings />;
     case "personalization":
       return <PersonalizationSettings />;
   }
@@ -194,6 +222,128 @@ const InvestmentStatusSetting = () => {
           className="md:mr-2"
         />
       </InfoTooltip>
+    </div>
+  );
+};
+
+const ExpenseGroupSettings = () => {
+  const { t } = useTranslate();
+  const { currentUser } = useCurrentUser();
+  const { expenseGroups } = useExpenseGroups(currentUser);
+
+  const { mutateAddExpenseGroup } = useAddExpenseGroup(currentUser);
+  const { mutateLeaveExpenseGroup } = useLeaveExpenseGroup(currentUser);
+  const { mutateUpdateExpenseGroupName } = useUpdateExpenseGroupName();
+
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editGroup, setEditGroup] = useState<string>();
+  const [deleteGroup, setDeleteGroup] = useState<ExpenseGroupDTO>();
+  const [inputValue, setInputValue] = useState("");
+
+  return (
+    <div>
+      <LeaveGroupDialog
+        expenseGroup={deleteGroup}
+        isDialogOpen={isDialogOpen}
+        setIsDialogOpen={setIsDialogOpen}
+        confirmAction={() => {
+          if (deleteGroup) {
+            mutateLeaveExpenseGroup(deleteGroup.id);
+            setIsDialogOpen(false);
+            setDeleteGroup(undefined);
+          }
+        }}
+      />
+      <button onClick={() => setIsDialogOpen(true)}>Open</button>
+      <div className="flex h-full flex-col">
+        <span className="text-lg font-semibold">
+          {t("settings.expenseGroups")}
+        </span>
+        <span className="flex w-full justify-end space-x-2">
+          <button
+            className="bg-theme-main hover:bg-theme-hover flex items-center rounded-md border-2 border-black py-1 pr-1 pl-1 text-sm font-semibold text-black shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-all hover:shadow-[2px_2px_0px_rgba(0,0,0,1)] sm:space-x-1 sm:pr-2"
+            onClick={() => {
+              mutateAddExpenseGroup();
+              setEditGroup(undefined);
+            }}
+          >
+            <LuPlus size="17" className="stroke-[2.5]" />
+            <span>{t("navbar.newTransaction")}</span>
+          </button>
+        </span>
+
+        <div className="mt-3 h-56 space-y-2 overflow-y-auto text-sm sm:h-48 sm:text-base md:h-full">
+          {expenseGroups && expenseGroups.length > 0 ? (
+            expenseGroups.map((group) => (
+              <div
+                key={group.id}
+                className="bg-theme-highlight group rounded-md border-2 border-black p-1"
+              >
+                <div className="flex justify-between">
+                  {editGroup === group.id ? (
+                    <div className="flex items-center gap-2 p-1">
+                      <input
+                        type="text"
+                        value={inputValue}
+                        autoFocus
+                        onChange={(e) => setInputValue(e.target.value)}
+                        className="bg-white"
+                      />
+                      <button
+                        onClick={() => {
+                          if (inputValue !== "" && inputValue !== group.name) {
+                            mutateUpdateExpenseGroupName({
+                              groupId: group.id,
+                              groupName: inputValue,
+                            });
+                          }
+                          setEditGroup(undefined);
+                        }}
+                        className="bg-theme-main hover:bg-theme-hover rounded-sm border-2 border-black p-1"
+                      >
+                        <LuCheck size={15} />
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="p-1 font-semibold">{group.name}</span>
+                  )}
+                  <div
+                    className={`${editGroup !== group.id ? "flex gap-3 group-hover:flex md:hidden md:gap-2" : "hidden"}`}
+                  >
+                    <span
+                      onClick={() => {
+                        setIsDialogOpen(true);
+                        setDeleteGroup(group);
+                        setEditGroup(undefined);
+                      }}
+                      className="hover:bg-theme-highlight-hover rounded-md p-1 hover:cursor-pointer"
+                    >
+                      <LuLogOut size={18} />
+                    </span>
+                    <span
+                      onClick={() => {
+                        setEditGroup(group.id);
+                        setInputValue(group.name);
+                      }}
+                      className="hover:bg-theme-highlight-hover rounded-md p-1 hover:cursor-pointer"
+                    >
+                      <LuPencil size={18} />
+                    </span>
+                  </div>
+                </div>
+                <div className="mt-2 space-y-1">
+                  <span className="block text-sm">
+                    {t("settings.groupMembers")}{" "}
+                    {group.totals.map((total) => total.name).join(", ")}
+                  </span>
+                </div>
+              </div>
+            ))
+          ) : (
+            <span className="text-sm">{t("settings.noExpenseGroups")}</span>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

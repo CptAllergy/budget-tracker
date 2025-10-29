@@ -51,19 +51,27 @@
     "settings": "Definições",
     "personalization": "Personalização",
     "general": "Geral",
+    "expenseGroups": "Grupos de Despesas",
     "language": "Idioma",
     "investmentState": "Investimento como despesa",
     "expenseColors": "Despesas coloridas",
     "earningColors": "Receitas coloridas",
     "investmentStateDescription": "Os investimentos serão contabilizados como despesas nas métricas",
     "expenseColorsDescription": "Realçar montantes negativos a vermelho",
-    "earningColorsDescription": "Realçar montantes positivos a verde"
+    "earningColorsDescription": "Realçar montantes positivos a verde",
+    "defaultGroupName": "[novo]",
+    "noExpenseGroups": "Não existem grupos de despesas.",
+    "groupName": "Nome:",
+    "groupMembers": "Membros:",
+    "leaveCheckTitle": "Abandonar Grupo",
+    "leaveCheckMessage": "Confirma que pretende abandonar este grupo?"
   },
   "actions": {
     "creating": "A adicionar nova",
     "edit": "Editar",
     "update": "Editar",
     "delete": "Eliminar",
+    "leave": "Sair",
     "deleteCheck": "Pretende eliminar esta"
   },
   "form": {
@@ -142,6 +150,7 @@
       "deleteFailed": "Erro inesperado ao apagar",
       "addFailed": "Erro inesperado ao adicionar",
       "updateFailed": "Erro inesperado ao editar",
+      "leaveGroupFailed": "Erro inesperado ao abandonar grupo",
       "earningsFailed": "Erro inesperado ao carregar receitas",
       "expensesFailed": "Erro inesperado ao carregar despesas",
       "queryFailed": "Erro inesperado ao filtrar despesas",
@@ -153,7 +162,10 @@
       "earningUpdated": "Receita editada",
       "expenseNew": "Despesa adicionada",
       "expenseDeleted": "Despesa eliminada",
-      "expenseUpdated": "Despesa editada"
+      "expenseUpdated": "Despesa editada",
+      "groupNew": "Grupo adicionado",
+      "groupDeleted": "Grupo abandonado",
+      "groupUpdated": "Grupo editado"
     }
   }
 }

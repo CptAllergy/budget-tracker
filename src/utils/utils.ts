@@ -1,7 +1,7 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { MonthYearType } from "@/types/componentTypes";
-import { ExpenseGroupDTO, NO_EXPENSE_GROUP } from "@/types/DTO/dataTypes";
+import { ExpenseGroupDTO } from "@/types/DTO/dataTypes";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -12,14 +12,17 @@ export function getCurrentMonthYear(): MonthYearType {
   return { month: currentDate.getMonth(), year: currentDate.getFullYear() };
 }
 
-export function getExpenseGroupName(expenseGroups?: ExpenseGroupDTO[]) {
+export function getExpenseGroupName(
+  expenseGroups: ExpenseGroupDTO[] | undefined,
+  defaultName: string
+) {
   if (!expenseGroups) {
-    return () => "";
+    return () => defaultName;
   }
 
   return (groupId: string | null) => {
     const group = expenseGroups.find((group) => group.id === groupId);
-    return group ? group.name : NO_EXPENSE_GROUP;
+    return group ? group.name : defaultName;
   };
 }
 

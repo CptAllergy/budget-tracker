@@ -1,14 +1,12 @@
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   getCurrentUserFirebase,
-  getExpenseGroupsFirebase,
-  updateUserDefaultPage,
+  updateUserDefaultPageFirebase,
 } from "@/services/firebaseService";
 import { EarningDTO, ExpenseDTO, UserDTO } from "@/types/DTO/dataTypes";
 import { toggleStatusErrorAlert } from "@/utils/toggleAlerts";
 import { AlertContext } from "@/contexts/AlertContext";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { sortExpenseGroups } from "@/utils/utils";
 import { useUser } from "@/utils/hooks/useUser";
 import {
   ExpenseListType,
@@ -65,7 +63,7 @@ export const useUpdateDefaultPage = () => {
   const { mutate: mutateUserDefaultPage, error } = useMutation({
     mutationFn: async (defaultPage: string) => {
       if (!uid) throw new Error("User not found");
-      return await updateUserDefaultPage(uid, defaultPage);
+      return await updateUserDefaultPageFirebase(uid, defaultPage);
     },
     onSuccess: (newUser) => {
       queryClient.setQueryData<UserDTO>(["currentUser"], () => {
@@ -86,33 +84,6 @@ export const useUpdateDefaultPage = () => {
   }, [error, t]);
 
   return { mutateUserDefaultPage };
-};
-
-export const useExpenseGroups = (currentUser?: UserDTO) => {
-  const alertContext = useRef(useContext(AlertContext));
-  const { t } = useTranslate();
-
-  const {
-    data: expenseGroups,
-    error,
-    isLoading,
-  } = useQuery({
-    queryKey: ["groups"],
-    queryFn: async () => {
-      const expenseGroups = await getExpenseGroupsFirebase(currentUser!.id);
-      return sortExpenseGroups(expenseGroups, currentUser!.defaultPage);
-    },
-    enabled: !!currentUser,
-    staleTime: 1000 * 60 * 30, // 30 minutes
-  });
-
-  useEffect(() => {
-    if (error) {
-      toggleStatusErrorAlert(alertContext.current, t, "GENERIC", error);
-    }
-  }, [error, t]);
-
-  return { expenseGroups, isLoading };
 };
 
 export const useTransactions = (

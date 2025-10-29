@@ -33,7 +33,6 @@ import {
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   useCurrentUser,
-  useExpenseGroups,
   useUpdateDefaultPage,
 } from "@/utils/hooks/reactQueryUser";
 import { useQueryClient } from "@tanstack/react-query";
@@ -45,6 +44,7 @@ import { User } from "@firebase/auth";
 import { useUserSession } from "@/utils/hooks/useUserSession";
 import { Ring2 } from "ldrs/react";
 import "ldrs/react/Ring2.css";
+import { useExpenseGroups } from "@/utils/hooks/reactQueryGroups";
 
 type NavbarProps = {
   initialUser: User | null;
@@ -143,7 +143,6 @@ const DrawerMenu = ({
   );
 };
 
-// TODO allow currentUser to create new groups
 const NavigationList = () => {
   const { t } = useTranslate();
   const pathname = usePathname();
@@ -227,7 +226,9 @@ const NavigationList = () => {
           )}
         </Link>
         <hr className="my-4 border-t border-b border-black" />
-        <div className="ml-1 font-semibold">{t("navbar.expenseGroups")}</div>
+        <div className="ml-1 flex items-center justify-between font-semibold text-nowrap">
+          <span> {t("navbar.expenseGroups")}</span>
+        </div>
         <ExpenseGroupList
           selectedGroupStyle={selectedGroupStyle}
           setClickedLink={setClickedLink}

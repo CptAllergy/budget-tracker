@@ -2,7 +2,7 @@
 
 import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Navbar } from "@/components/pages/navbar/Navbar";
-import { useCurrentUser, useExpenseGroups } from "@/utils/hooks/reactQueryUser";
+import { useCurrentUser } from "@/utils/hooks/reactQueryUser";
 import { ExpenseListType, MonthYearType } from "@/types/componentTypes";
 import { ExpenseGroupDTO, UserDTO } from "@/types/DTO/dataTypes";
 import { YearNavigation } from "@/components/pages/home/TimeNavigation";
@@ -23,6 +23,7 @@ import { MonthlyPieChart } from "@/components/pages/reports/MonthlyPieChart";
 import { FilterSelectorLoading } from "@/components/loading/elements/home/LoadingHome";
 import QueryExpenseList from "@/components/pages/reports/QueryExpenseList";
 import { ExpenseCategory } from "@/types/transactionFilterTypes";
+import { useExpenseGroups } from "@/utils/hooks/reactQueryGroups";
 
 type Props = { initialUser: User | null };
 const Reports = ({ initialUser }: Props) => {

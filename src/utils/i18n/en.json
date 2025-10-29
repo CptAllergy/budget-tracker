@@ -51,19 +51,27 @@
     "settings": "Settings",
     "personalization": "Personalization",
     "general": "General",
+    "expenseGroups": "Expense Groups",
     "language": "Language",
     "investmentState": "Investment as expense",
     "expenseColors": "Expense color",
     "earningColors": "Earning color",
     "investmentStateDescription": "Investments will be used in expense metrics",
     "expenseColorsDescription": "Highlight negative amounts in red",
-    "earningColorsDescription": "Highlight positive amounts in green"
+    "earningColorsDescription": "Highlight positive amounts in green",
+    "defaultGroupName": "[new]",
+    "noExpenseGroups": "You don't have any expense groups.",
+    "groupName": "Name:",
+    "groupMembers": "Members:",
+    "leaveCheckTitle": "Leaving Expense Group",
+    "leaveCheckMessage": "Are you sure you want to leave this group?"
   },
   "actions": {
     "creating": "Creating",
     "edit": "Edit",
     "update": "Update",
     "delete": "Delete",
+    "leave": "Leave",
     "deleteCheck": "Are you sure you want to delete this"
   },
   "form": {
@@ -142,6 +150,7 @@
       "deleteFailed": "Unexpected error while deleting",
       "addFailed": "Unexpected error while creating",
       "updateFailed": "Unexpected error while updating",
+      "leaveGroupFailed": "Unexpected error while leaving group",
       "earningsFailed": "Unexpected error while loading earnings",
       "expensesFailed": "Unexpected error while loading expenses",
       "queryFailed": "Unexpected error while filtering expenses",
@@ -153,7 +162,10 @@
       "earningUpdated": "Earning updated",
       "expenseNew": "New expense created",
       "expenseDeleted": "Expense deleted",
-      "expenseUpdated": "Expense updated"
+      "expenseUpdated": "Expense updated",
+      "groupNew": "New group created",
+      "groupDeleted": "Left group",
+      "groupUpdated": "Group updated"
     }
   }
 }

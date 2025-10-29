@@ -354,7 +354,7 @@ export async function updateEarningFirebase(earningUpdated: EarningDTO) {
   return { prevAmount, prevTimestamp };
 }
 
-export async function updateUserDefaultPage(
+export async function updateUserDefaultPageFirebase(
   userId: string,
   defaultPage: string
 ) {
@@ -368,6 +368,75 @@ export async function updateUserDefaultPage(
   await updateDoc(docRef, { defaultPage });
 
   return { id: docSnap.id, ...docSnap.data(), defaultPage } as UserDTO;
+}
+
+export async function postExpenseGroupFirebase(
+  currentUser: UserDTO,
+  defaultGroupName: string
+) {
+  const groupRef = doc(collection(db, "groups"));
+  const totalRef = doc(collection(groupRef, "totals"), currentUser.id);
+
+  // These Firestore operations must run inside an atomic transaction
+  const groupId = await runTransaction(db, async (fbTransaction) => {
+    fbTransaction.set(groupRef, {
+      name: defaultGroupName,
+      members: [currentUser.id],
+    });
+
+    fbTransaction.set(totalRef, {
+      total: 0,
+      name: currentUser.name,
+    });
+
+    return groupRef.id;
+  });
+
+  // Initial version of the ExpenseGroupDTO
+  return {
+    id: groupId,
+    name: defaultGroupName,
+    members: [currentUser.id],
+    totals: [{ id: currentUser.id, name: currentUser.name, total: 0 }],
+  } as ExpenseGroupDTO;
+}
+
+export async function updateExpenseGroupNameFirebase(
+  groupId: string,
+  groupName: string
+) {
+  const groupRef = doc(db, "groups", groupId);
+  await updateDoc(groupRef, { name: groupName });
+}
+
+export async function leaveExpenseGroupFirebase(
+  userId: string,
+  groupId: string
+) {
+  const groupRef = doc(db, "groups", groupId);
+  const totalRef = doc(collection(groupRef, "totals"), userId);
+
+  // These Firestore operations must run inside an atomic transaction
+  await runTransaction(db, async (fbTransaction) => {
+    const groupDoc = await fbTransaction.get(groupRef);
+    const group = groupDoc.data() as ExpenseGroupDTO;
+
+    // Remove user total
+    fbTransaction.delete(totalRef);
+
+    if (group.members.length > 1) {
+      // Remove user from group members
+      const updatedMembers = group.members.filter(
+        (memberId) => memberId !== userId
+      );
+      fbTransaction.update(groupRef, {
+        members: updatedMembers,
+      });
+    } else {
+      // Delete group if no members left
+      fbTransaction.delete(groupRef);
+    }
+  });
 }
 
 export function getMonthYearLimits(monthYear?: MonthYearType): {

@@ -36,6 +36,11 @@ export const toggleStatusErrorAlert = (
       setRefreshEnabled(false);
       break;
     }
+    case "LEAVE_GROUP_FAILED": {
+      setAlertMessage(t("alerts.error.leaveGroupFailed"));
+      setRefreshEnabled(false);
+      break;
+    }
     case "EARNINGS_FAILED": {
       setAlertMessage(t("alerts.error.earningsFailed"));
       setRefreshEnabled(false);

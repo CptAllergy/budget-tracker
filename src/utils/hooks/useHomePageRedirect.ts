@@ -3,8 +3,9 @@
 import { useEffect } from "react";
 import { ExpenseGroupDTO } from "@/types/DTO/dataTypes";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCurrentUser, useExpenseGroups } from "@/utils/hooks/reactQueryUser";
+import { useCurrentUser } from "@/utils/hooks/reactQueryUser";
 import { ExpenseListType } from "@/types/componentTypes";
+import { useExpenseGroups } from "@/utils/hooks/reactQueryGroups";
 
 export function useHomePageRedirect(
   setFilterId: (filterId: ExpenseListType | undefined) => void

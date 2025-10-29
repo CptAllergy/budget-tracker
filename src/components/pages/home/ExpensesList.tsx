@@ -17,7 +17,6 @@ import { ExpenseTag } from "@/types/transactionFilterTypes";
 import { DeleteDialog } from "@/components/commons/dialogs/DeleteDialog";
 import { EditDialog } from "@/components/commons/dialogs/EditDialog";
 import { getExpenseGroupName } from "@/utils/utils";
-import { useExpenseGroups } from "@/utils/hooks/reactQueryUser";
 import {
   useDeleteExpense,
   useExpenses,
@@ -26,6 +25,7 @@ import {
 import { useTranslate } from "@/utils/hooks/useTranslation";
 import { ExpenseListType, MonthYearType } from "@/types/componentTypes";
 import { SettingsContext } from "@/contexts/SettingsContext";
+import { useExpenseGroups } from "@/utils/hooks/reactQueryGroups";
 
 type Props = {
   filterId?: ExpenseListType;
@@ -158,7 +158,7 @@ const ExpenseTable = ({
   const { t } = useTranslate();
   const { isExpenseColorEnabled } = useContext(SettingsContext);
   const { expenseGroups } = useExpenseGroups(currentUser);
-  const getGroupName = getExpenseGroupName(expenseGroups);
+  const getGroupName = getExpenseGroupName(expenseGroups, t("navbar.profile"));
 
   return (
     <div className="overflow-hidden rounded-md border-2 border-black shadow-[5px_5px_0px_rgba(0,0,0,1)]">
@@ -290,7 +290,7 @@ const ExpenseCards = ({
   const { t } = useTranslate();
   const { isExpenseColorEnabled } = useContext(SettingsContext);
   const { expenseGroups } = useExpenseGroups(currentUser);
-  const getGroupName = getExpenseGroupName(expenseGroups);
+  const getGroupName = getExpenseGroupName(expenseGroups, t("navbar.profile"));
 
   return (
     <div>

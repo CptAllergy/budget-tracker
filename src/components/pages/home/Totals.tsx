@@ -6,8 +6,9 @@ import { AlertContext } from "@/contexts/AlertContext";
 import { toggleStatusErrorAlert } from "@/utils/toggleAlerts";
 import { TotalsLoading } from "@/components/loading/elements/home/LoadingHome";
 import { ExpenseGroupDTO } from "@/types/DTO/dataTypes";
-import { useCurrentUser, useExpenseGroups } from "@/utils/hooks/reactQueryUser";
+import { useCurrentUser } from "@/utils/hooks/reactQueryUser";
 import { useTranslate } from "@/utils/hooks/useTranslation";
+import { useExpenseGroups } from "@/utils/hooks/reactQueryGroups";
 
 const Totals = ({ groupId }: { groupId?: string }) => {
   const { t } = useTranslate();

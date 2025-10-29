@@ -41,9 +41,9 @@ import {
 } from "@/types/transactionFilterTypes";
 import { Timestamp } from "firebase/firestore";
 import { DialogComponent } from "@/components/commons/dialogs/ActionDialog";
-import { useExpenseGroups } from "@/utils/hooks/reactQueryUser";
 import { getExpenseGroupName } from "@/utils/utils";
 import { useTranslate } from "@/utils/hooks/useTranslation";
+import { useExpenseGroups } from "@/utils/hooks/reactQueryGroups";
 
 const AddDialog = ({
   isDialogOpen,
@@ -66,7 +66,7 @@ const AddDialog = ({
 
   const { expenseGroups } = useExpenseGroups(currentUser);
   const { t } = useTranslate();
-  const getGroupName = getExpenseGroupName(expenseGroups);
+  const getGroupName = getExpenseGroupName(expenseGroups, t("navbar.profile"));
   const groupName = getGroupName(filterId?.groupId ?? null);
 
   const {
