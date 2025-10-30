@@ -67,3 +67,9 @@ export type ReportQueryTypeInputs = {
   category: ReportQueryExpenseCategory;
   tag: ReportQueryExpenseTag;
 };
+
+export type TotalSettlementType = {
+  from: string;
+  to: string;
+  amount: number;
+};

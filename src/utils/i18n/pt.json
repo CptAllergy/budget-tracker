@@ -10,7 +10,9 @@
     "newTransaction": "Novo"
   },
   "totals": {
-    "owes": "deve a"
+    "owes": "deve a",
+    "totalSpent": "Total gasto",
+    "settled": "Nada a repartir"
   },
   "profile": {
     "monthSummary": "Métricas",

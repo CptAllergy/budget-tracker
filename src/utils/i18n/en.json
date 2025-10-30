@@ -10,7 +10,9 @@
     "newTransaction": "New"
   },
   "totals": {
-    "owes": "owes"
+    "owes": "owes",
+    "totalSpent": "Total Spent",
+    "settled": "Nothing to settle"
   },
   "profile": {
     "monthSummary": "Overview",
