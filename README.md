@@ -14,8 +14,6 @@
     <a href="https://budget-tracker-house.vercel.app" target="_blank"><strong>Check the website »</strong></a>
     <br />
     <br />
-    Currently, only households with 2 members are supported.
-    <br />
     <br />
   </p>
 </div>
