@@ -29,7 +29,7 @@
     "jwt-decode": "^4.0.0",
     "ldrs": "^1.1.7",
     "lucide-react": "^0.548.0",
-    "next": "^15.5.3",
+    "next": "15.5.9",
     "react": "^19.1.1",
     "react-day-picker": "^9.8.0",
     "react-dom": "^19.1.1",
