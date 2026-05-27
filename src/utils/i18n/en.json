@@ -91,7 +91,7 @@
     "descriptionRequired": "Description is required",
     "amountRequired": "Amount is required",
     "amountMin": "Amount must be positive",
-    "amountMax": "Amount can't be higher than 10000",
+    "amountMax": "Amount can't be higher than 50000",
     "dateRequired": "Date is required",
     "dateFuture": "Date cannot be in the future"
   },

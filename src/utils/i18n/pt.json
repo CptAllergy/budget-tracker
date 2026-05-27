@@ -91,7 +91,7 @@
     "descriptionRequired": "Descrição obrigatória",
     "amountRequired": "Montante obrigatório",
     "amountMin": "Montante deve ser positivo",
-    "amountMax": "Montante não pode ser superior a 10000",
+    "amountMax": "Montante não pode ser superior a 50000",
     "dateRequired": "Data obrigatória",
     "dateFuture": "Data não pode ser no futuro"
   },
