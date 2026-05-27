@@ -45,7 +45,7 @@ const FormInputExpenseNumber = ({
           {...register("amount", {
             required: t("form.amountRequired"),
             min: { value: 0.01, message: t("form.amountMin") },
-            max: { value: 10000, message: t("form.amountMax") },
+            max: { value: 50000, message: t("form.amountMax") },
           })}
         />
       </div>
@@ -95,7 +95,7 @@ const FormInputEarningNumber = ({
           {...register("amount", {
             required: t("form.amountRequired"),
             min: { value: 0.01, message: t("form.amountMin") },
-            max: { value: 5000, message: t("form.amountMax") },
+            max: { value: 50000, message: t("form.amountMax") },
           })}
         />
       </div>
