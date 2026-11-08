@@ -10,7 +10,7 @@ import EarningsList from "@/components/pages/profile/EarningsList";
 import { MonthNavigation } from "@/components/pages/home/TimeNavigation";
 import { AddDialog } from "@/components/commons/dialogs/AddDialog";
 import { ExpenseListType, MonthYearType } from "@/types/componentTypes";
-import { getCurrentMonthYear } from "@/utils/utils";
+import { getCurrentMonthYear, getMonthYearFromTimestamp } from "@/utils/utils";
 import ProfileSummary from "@/components/pages/profile/ProfileSummary";
 import { useAddExpense } from "@/utils/hooks/reactQueryExpenses";
 import { useAddEarning } from "@/utils/hooks/reactQueryEarnings";
@@ -43,14 +43,14 @@ const Profile = ({ initialUser }: Props) => {
     mutateAddExpense({ newExpense });
 
     setToggleExpenses(true);
-    setMonthYear(getCurrentMonthYear());
+    setMonthYear(getMonthYearFromTimestamp(newExpense.timestamp));
   };
 
   const createEarning = async (newEarning: CreateEarningDTO) => {
     mutateAddEarning({ newEarning });
 
     setToggleExpenses(false);
-    setMonthYear(getCurrentMonthYear());
+    setMonthYear(getMonthYearFromTimestamp(newEarning.timestamp));
   };
 
   return (

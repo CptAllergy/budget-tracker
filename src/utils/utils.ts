@@ -2,6 +2,7 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { MonthYearType, TotalSettlementType } from "@/types/componentTypes";
 import { ExpenseGroupDTO } from "@/types/DTO/dataTypes";
+import { Timestamp } from "firebase/firestore";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -10,6 +11,11 @@ export function cn(...inputs: ClassValue[]) {
 export function getCurrentMonthYear(): MonthYearType {
   const currentDate = new Date();
   return { month: currentDate.getMonth(), year: currentDate.getFullYear() };
+}
+
+export function getMonthYearFromTimestamp(timestamp: Timestamp): MonthYearType {
+  const date = timestamp.toDate();
+  return { month: date.getMonth(), year: date.getFullYear() };
 }
 
 export function getExpenseGroupName(

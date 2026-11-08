@@ -33,7 +33,7 @@ import {
   FormInputMultiSelect,
 } from "@/components/commons/input/Select";
 import { ExpenseListType } from "@/types/componentTypes";
-import { isValidAmount } from "@/utils/validations";
+import { isValidAmount, isValidDate } from "@/utils/validations";
 import { toggleStatusErrorAlert } from "@/utils/toggleAlerts";
 import {
   EARNING_CATEGORIES,
@@ -44,6 +44,10 @@ import { DialogComponent } from "@/components/commons/dialogs/ActionDialog";
 import { getExpenseGroupName } from "@/utils/utils";
 import { useTranslate } from "@/utils/hooks/useTranslation";
 import { useExpenseGroups } from "@/utils/hooks/reactQueryGroups";
+import {
+  FormInputEarningCalendar,
+  FormInputExpenseCalendar,
+} from "@/components/commons/input/Calendar";
 
 const AddDialog = ({
   isDialogOpen,
@@ -193,6 +197,8 @@ const AddExpenseForm = ({
         <FormInputExpenseSelect control={control} />
         <label className="ml-0.5 font-semibold">{t("form.tags")}</label>
         <FormInputMultiSelect control={control} />
+        <label className="ml-0.5 font-semibold">{t("form.date")}</label>
+        <FormInputExpenseCalendar control={control} formState={formState} />
       </div>
     </form>
   );
@@ -217,6 +223,8 @@ const AddEarningForm = ({
         <FormInputEarningNumber register={register} formState={formState} />
         <label className="ml-0.5 font-semibold">{t("form.category")}</label>
         <FormInputEarningSelect control={control} />
+        <label className="ml-0.5 font-semibold">{t("form.date")}</label>
+        <FormInputEarningCalendar control={control} formState={formState} />
       </div>
     </form>
   );
@@ -237,6 +245,7 @@ const useExpenseForm = (
       defaultValues: {
         tags: [],
         category: "other",
+        newDate: new Date(),
       },
     });
 
@@ -246,6 +255,7 @@ const useExpenseForm = (
       reset({
         tags: [],
         category: "other",
+        newDate: new Date(),
       });
     }, 400);
   }, [reset, isDialogOpen]);
@@ -269,6 +279,12 @@ const useExpenseForm = (
       throw "Invalid expense data: Invalid group";
     }
 
+    const expenseDate = newData.newDate ?? new Date();
+    if (!isValidDate(expenseDate)) {
+      toggleStatusErrorAlert(alertContext, t, "ADD_FAILED", "Invalid date");
+      throw "Invalid expense data: Invalid date";
+    }
+
     const groupId = filterId.groupId ? filterId.groupId : null;
 
     const newExpense: CreateExpenseDTO = {
@@ -277,7 +293,7 @@ const useExpenseForm = (
       userId: user.id,
       groupId: groupId,
       username: user.name,
-      timestamp: Timestamp.fromDate(new Date()),
+      timestamp: Timestamp.fromDate(expenseDate),
       tags: newData.tags,
       category: newData.category,
     };
@@ -302,6 +318,7 @@ const useEarningForm = (
     useForm<CreateEarningDTO>({
       defaultValues: {
         category: "other",
+        newDate: new Date(),
       },
     });
 
@@ -310,6 +327,7 @@ const useEarningForm = (
     setTimeout(() => {
       reset({
         category: "other",
+        newDate: new Date(),
       });
     }, 400);
   }, [reset, isDialogOpen]);
@@ -328,11 +346,17 @@ const useEarningForm = (
       throw "Invalid earning data: Invalid category";
     }
 
+    const expenseDate = newData.newDate ?? new Date();
+    if (!isValidDate(expenseDate)) {
+      toggleStatusErrorAlert(alertContext, t, "ADD_FAILED", "Invalid date");
+      throw "Invalid expense data: Invalid date";
+    }
+
     const newEarning: CreateEarningDTO = {
       label: newData.label,
       amount: Number(amountString),
       userId: user.id,
-      timestamp: Timestamp.fromDate(new Date()),
+      timestamp: Timestamp.fromDate(expenseDate),
       category: newData.category,
     };
 

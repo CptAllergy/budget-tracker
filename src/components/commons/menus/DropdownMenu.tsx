@@ -3,7 +3,8 @@ import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { Url } from "next/dist/shared/lib/router/router";
 import Link from "next/link";
 import { DropdownMenuItemType } from "@/types/componentTypes";
-import { AnchorProps } from "@headlessui/react/dist/internal/floating";
+
+type AnchorProps = React.ComponentProps<typeof MenuItems>["anchor"];
 
 interface Props {
   menuButton: JSX.Element;

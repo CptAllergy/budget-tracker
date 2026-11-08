@@ -141,7 +141,12 @@ export const useAddExpense = () => {
         queryClient.setQueryData<ExpenseDTO[]>(
           ["expenses", { monthYear, filterId: filterId }],
           (oldData) => {
-            return oldData && [createdExpense, ...oldData];
+            return (
+              oldData &&
+              [createdExpense, ...oldData].sort((a, b) =>
+                a.timestamp < b.timestamp ? 1 : -1
+              )
+            );
           }
         );
 

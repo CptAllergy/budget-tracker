@@ -73,7 +73,12 @@ export const useAddEarning = () => {
       queryClient.setQueryData<EarningDTO[]>(
         ["earnings", { monthYear, userId: createdEarning.userId }],
         (oldData) => {
-          return oldData && [createdEarning, ...oldData];
+          return (
+            oldData &&
+            [createdEarning, ...oldData].sort((a, b) =>
+              a.timestamp < b.timestamp ? 1 : -1
+            )
+          );
         }
       );
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtDecode } from "jwt-decode";
 
-export default async function middleware(req: NextRequest) {
+export default async function proxy(req: NextRequest) {
   const firebaseSession = req.cookies.get("__session")?.value;
   const isAuthorized = await isUserAuthorized(firebaseSession);
 

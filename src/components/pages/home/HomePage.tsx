@@ -9,7 +9,7 @@ import { useCurrentUser } from "@/utils/hooks/reactQueryUser";
 import { MonthNavigation } from "@/components/pages/home/TimeNavigation";
 import { AddDialog } from "@/components/commons/dialogs/AddDialog";
 import { ExpenseListType, MonthYearType } from "@/types/componentTypes";
-import { getCurrentMonthYear } from "@/utils/utils";
+import { getCurrentMonthYear, getMonthYearFromTimestamp } from "@/utils/utils";
 import Totals from "@/components/pages/home/Totals";
 import { useAddExpense } from "@/utils/hooks/reactQueryExpenses";
 import { useAddEarning } from "@/utils/hooks/reactQueryEarnings";
@@ -62,7 +62,7 @@ const PageContents = ({
     mutateAddExpense({ newExpense });
 
     // Navigate to page with new content
-    setMonthYear(getCurrentMonthYear());
+    setMonthYear(getMonthYearFromTimestamp(newExpense.timestamp));
   };
 
   const createEarning = async (newEarning: CreateEarningDTO) => {
